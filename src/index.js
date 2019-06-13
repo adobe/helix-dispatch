@@ -9,16 +9,19 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
+// openwhisk is pre-installed on the container, so we don't want to
+// declare or package it.
+// eslint-disable-next-line import/no-extraneous-dependencies
+const openwhisk = require('openwhisk');
 
+const ow = openwhisk();
 /**
  * This is the main function
  * @param {string} name name of the person to greet
  * @returns {object} a greeting
  */
-function main({ name = 'world' } = {}) {
-  return {
-    body: `Hello, ${name}.`,
-  };
+function main(params) {
+  return ow.actions.invoke('static', params);
 }
 
 module.exports = { main };

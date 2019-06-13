@@ -12,15 +12,37 @@
 
 /* eslint-env mocha */
 
-'use strict';
-
+const proxyquire = require('proxyquire');
 const assert = require('assert');
-const index = require('../src/index.js').main;
+
+const index = proxyquire('../src/index.js', {
+  openwhisk() {
+    return {
+      actions: {
+        invoke() {
+          return {
+            body: `<pingdom_http_custom_check>
+    <status>OK</status>
+    <version>1.1.0</version>
+    <response_time>172</response_time>
+</pingdom_http_custom_check>`,
+          };
+        },
+      },
+    };
+  },
+}).main;
 
 describe('Index Tests', () => {
   it('index function is present', async () => {
     const result = await index({});
-    assert.deepEqual(result, { body: 'Hello, world.' });
+    assert.deepEqual(result, {
+      body: `<pingdom_http_custom_check>
+    <status>OK</status>
+    <version>1.1.0</version>
+    <response_time>172</response_time>
+</pingdom_http_custom_check>`,
+    });
   });
 
   it('index function returns an object', async () => {
