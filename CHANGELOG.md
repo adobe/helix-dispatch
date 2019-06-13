@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/adobe/helix-experimental-dispatch/compare/v1.0.0...v1.1.0) (2019-06-13)
+
+
+### Features
+
+* **index:** fetch from static action ([a20b4ed](https://github.com/adobe/helix-experimental-dispatch/commit/a20b4ed))
+
 # 1.0.0 (2019-06-13)
 
 
