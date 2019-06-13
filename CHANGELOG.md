@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/adobe/helix-experimental-dispatch/compare/v1.1.2...v1.2.0) (2019-06-13)
+
+
+### Features
+
+* **fetchers:** fetch from content, pipeline, static, 404 (content), 404 (static) repositories ([fbc2244](https://github.com/adobe/helix-experimental-dispatch/commit/fbc2244))
+
 ## [1.1.2](https://github.com/adobe/helix-experimental-dispatch/compare/v1.1.1...v1.1.2) (2019-06-13)
 
 
