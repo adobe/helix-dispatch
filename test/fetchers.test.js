@@ -9,22 +9,34 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-// openwhisk is pre-installed on the container, so we don't want to
-// declare or package it.
-// eslint-disable-next-line import/no-extraneous-dependencies
-const openwhisk = require('openwhisk');
-const race = require('./race');
-const { fetchers } = require('./fetchers');
 
-/**
- * This is the main function
- * @param {string} name name of the person to greet
- * @returns {object} a greeting
- */
-function main(params) {
-  const ow = openwhisk();
+/* eslint-env mocha */
+const assert = require('assert');
+const { fetchers } = require('../src/fetchers');
 
-  return race(fetchers(params).map(ow.actions.invoke));
-}
+describe('testing fetchers.js', () => {
+  it('fetch basic HTML', () => {
+    const res = fetchers({
+      path: 'example.html'
+    });
 
-module.exports = { main };
+    console.log(res);
+  });
+
+  it('fetch HTML with selector', () => {
+    const res = fetchers({
+      path: 'example.nav.html'
+    });
+
+    console.log(res);
+  });
+
+  it('fetch directory index', () => {
+    const res = fetchers({
+      path: '/exampledir'
+    });
+
+    console.log(res);
+  });
+});
+
