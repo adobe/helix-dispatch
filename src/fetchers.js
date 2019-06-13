@@ -12,14 +12,14 @@
 const path = require('path');
 
 function strict(res) {
-  if (res.statusCode >= 400) {
+  if (res && res.statusCode >= 400) {
     return Promise.reject(new Error(`Error ${res.statusCode}`));
   }
   return Promise.resolve(res);
 }
 
 function lenient(res) {
-  if (res.statusCode === 200) {
+  if (res && res.statusCode === 200) {
     res.statusCode = 404;
     return Promise.resolve(res);
   }

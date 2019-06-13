@@ -12,7 +12,8 @@
 
 /* eslint-env mocha */
 const assert = require('assert');
-const { fetchers } = require('../src/fetchers');
+const { AssertionError } = require('assert');
+const { fetchers, strict, lenient } = require('../src/fetchers');
 
 const opts = {
   'static.owner': 'adobe',
@@ -21,6 +22,7 @@ const opts = {
 };
 
 function logres(res) {
+  // eslint-disable-next-line no-console
   console.table(res.map(r => ({
     name: r.name,
     owner: r.params.owner,
@@ -32,6 +34,7 @@ describe('testing fetchers.js', () => {
   it('fetch nothing', () => {
     const res = fetchers();
 
+    assert.equal(res.length, 8);
     logres(res);
   });
 
@@ -41,6 +44,7 @@ describe('testing fetchers.js', () => {
       path: '/dir/example.html',
     });
 
+    assert.equal(res.length, 5);
     logres(res);
   });
 
@@ -50,6 +54,7 @@ describe('testing fetchers.js', () => {
       path: '/dir/example.nav.html',
     });
 
+    assert.equal(res.length, 5);
     logres(res);
   });
 
@@ -59,6 +64,55 @@ describe('testing fetchers.js', () => {
       path: '/example/dir',
     });
 
+    assert.equal(res.length, 8);
     logres(res);
+  });
+});
+
+
+describe('testing strict promise resolver', () => {
+  it('strict promise resolver accepts status 200', async () => {
+    const res = await Promise.resolve({
+      statusCode: 200,
+    }).then(strict);
+    assert.ok(res);
+  });
+
+  it('strict promise resolver throws on status 400', async () => {
+    try {
+      await Promise.resolve({
+        statusCode: 400,
+      }).then(strict);
+      assert.fail('this should never happen');
+    } catch (e) {
+      if (e instanceof AssertionError) {
+        throw e;
+      }
+      assert.equal(e.message, 'Error 400');
+    }
+  });
+});
+
+describe('testing lenient promise resolver', () => {
+  it('lenient promise resolver accepts status 200', async () => {
+    const res = await Promise.resolve({
+      statusCode: 200,
+    }).then(lenient);
+    assert.equal(res.statusCode, 404);
+    assert.ok(res);
+  });
+
+  it('lenient promise resolver throws on status 400', async () => {
+    try {
+      await Promise.resolve({
+        statusCode: 400,
+      }).then(lenient);
+      assert.fail('this should never happen');
+    } catch (e) {
+      if (e instanceof AssertionError) {
+        throw e;
+      }
+      assert.equal(e.message, 'No Error Page Found');
+    }
   });
 });
