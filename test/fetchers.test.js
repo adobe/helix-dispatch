@@ -14,29 +14,51 @@
 const assert = require('assert');
 const { fetchers } = require('../src/fetchers');
 
+const opts = {
+  'static.owner': 'adobe',
+  'content.owner': 'trieloff',
+  'content.package': '60ef2a011a6a91647eba00f798e9c16faa9f78ce',
+};
+
+function logres(res) {
+  console.table(res.map(r => ({
+    name: r.name,
+    owner: r.params.owner,
+    path: r.params.path,
+  })));
+}
+
 describe('testing fetchers.js', () => {
+  it('fetch nothing', () => {
+    const res = fetchers();
+
+    logres(res);
+  });
+
   it('fetch basic HTML', () => {
     const res = fetchers({
-      path: 'example.html'
+      ...opts,
+      path: '/dir/example.html',
     });
 
-    console.log(res);
+    logres(res);
   });
 
   it('fetch HTML with selector', () => {
     const res = fetchers({
-      path: 'example.nav.html'
+      ...opts,
+      path: '/dir/example.nav.html',
     });
 
-    console.log(res);
+    logres(res);
   });
 
   it('fetch directory index', () => {
     const res = fetchers({
-      path: '/exampledir'
+      ...opts,
+      path: '/example/dir',
     });
 
-    console.log(res);
+    logres(res);
   });
 });
-

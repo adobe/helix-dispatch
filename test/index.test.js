@@ -21,6 +21,7 @@ const index = proxyquire('../src/index.js', {
       actions: {
         invoke() {
           return Promise.resolve({
+            statusCode: 200,
             body: `<pingdom_http_custom_check>
     <status>OK</status>
     <version>1.1.0</version>
@@ -37,6 +38,7 @@ describe('Index Tests', () => {
   it('index function is present', async () => {
     const result = await index({});
     assert.deepEqual(result, {
+      statusCode: 200,
       body: `<pingdom_http_custom_check>
     <status>OK</status>
     <version>1.1.0</version>

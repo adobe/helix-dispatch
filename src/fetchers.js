@@ -11,11 +11,25 @@
  */
 const path = require('path');
 
-function fetchers(params = {}) {
+function strict(res) {
+  if (res.statusCode >= 400) {
+    return Promise.reject(new Error(`Error ${res.statusCode}`));
+  }
+  return Promise.resolve(res);
+}
 
+function lenient(res) {
+  if (res.statusCode === 200) {
+    res.statusCode = 404;
+    return Promise.resolve(res);
+  }
+  return Promise.reject(new Error('No Error Page Found'));
+}
+
+function fetchers(params = {}) {
   const url = params.path || '/';
   const {
-    dir, ext, base
+    dir, ext, base,
   } = path.parse(url);
 
   const names = [];
@@ -28,7 +42,7 @@ function fetchers(params = {}) {
       return allnames;
     }, names);
   } else {
-    names.push(base);
+    names.push(path.resolve(dir, base));
   }
 
   const staticOpts = {
@@ -43,20 +57,84 @@ function fetchers(params = {}) {
     owner: params['content.owner'],
     repo: params['content.repo'],
     ref: params['content.ref'],
+    package: params['content.package'],
     esi: false,
   };
 
-  // eslint-disable-next-line no-console
-  console.log(names);
+  const attempts = [];
+  const staticaction = contentOpts.package ? `${contentOpts.package}/hlx--static` : 'helix-services/static@v1';
 
-  return [
-    {
-      name: 'helix-services/static@latest',
+  // first, try to get the raw content from the content repo
+  names.forEach((name) => {
+    attempts.push({
+      resolve: strict,
+      name: staticaction,
       blocking: true,
       result: true,
-      params,
-    }
-  ];
+      params: {
+        path: name,
+        ...contentOpts,
+      },
+    });
+  });
+
+  // then, try to call the action
+  names.forEach((name) => {
+    const extension = path.extname(name);
+    const selector = (path.basename(name, extension).match(/\.(.*)/) || ['', ''])[1];
+    const actionname = `${contentOpts.package || 'default'}/${selector ? `${selector}_` : ''}${extension.replace(/^\./, '')}`;
+
+    attempts.push({
+      resolve: strict,
+      name: actionname,
+      blocking: true,
+      result: true,
+      params: {
+        path: name,
+        ...contentOpts,
+      },
+    });
+  });
+
+  // then, try to get the raw content from the static repo
+  names.forEach((name) => {
+    attempts.push({
+      resolve: strict,
+      name: staticaction,
+      blocking: true,
+      result: true,
+      params: {
+        path: name,
+        ...staticOpts,
+      },
+    });
+  });
+
+  // then get the 404.html from the content repo
+  attempts.push({
+    resolve: lenient,
+    name: staticaction,
+    blocking: true,
+    result: true,
+    params: {
+      path: '/404.html',
+      ...contentOpts,
+    },
+  });
+
+  // if all fails, get the 404.html from the static repo
+  attempts.push({
+    resolve: lenient,
+    name: staticaction,
+    blocking: true,
+    result: true,
+    params: {
+      path: '/404.html',
+      ...staticOpts,
+    },
+  });
+
+  return attempts;
 }
 
-module.exports = { fetchers };
+module.exports = { fetchers, strict, lenient };

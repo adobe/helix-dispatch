@@ -24,7 +24,7 @@ const { fetchers } = require('./fetchers');
 function main(params) {
   const ow = openwhisk();
 
-  return race(fetchers(params).map(ow.actions.invoke));
+  return race(fetchers(params).map(fetcher => ow.actions.invoke(fetcher).then(fetcher.resolve)));
 }
 
 module.exports = { main };
