@@ -21,8 +21,12 @@ const openwhisk = require('openwhisk');
  */
 function main(params) {
   const ow = openwhisk();
-
-  return ow.actions.invoke('helix-services/static@latest', params);
+  return ow.actions.invoke({
+    name: 'helix-services/static@latest',
+    blocking: true,
+    result: true,
+    params,
+  }).then(result => result);
 }
 
 module.exports = { main };
