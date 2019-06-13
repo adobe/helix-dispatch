@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/adobe/helix-experimental-dispatch/compare/v1.1.0...v1.1.1) (2019-06-13)
+
+
+### Bug Fixes
+
+* **index:** delay call of openwhisk constructor, use correct action name ([e4c8e27](https://github.com/adobe/helix-experimental-dispatch/commit/e4c8e27))
+
 # [1.1.0](https://github.com/adobe/helix-experimental-dispatch/compare/v1.0.0...v1.1.0) (2019-06-13)
 
 
