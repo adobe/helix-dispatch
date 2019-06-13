@@ -1,3 +1,15 @@
+# 1.0.0 (2019-06-13)
+
+
+### Bug Fixes
+
+* **build:** add missing build folder ([76ef830](https://github.com/adobe/helix-experimental-dispatch/commit/76ef830))
+
+
+### Features
+
+* **race:** implement a custom `Promise.race` function ([614f467](https://github.com/adobe/helix-experimental-dispatch/commit/614f467))
+
 # [1.1.0](https://github.com/adobe/helix-service/compare/v1.0.1...v1.1.0) (2019-06-12)
 
 
