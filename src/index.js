@@ -14,14 +14,15 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 const openwhisk = require('openwhisk');
 
-const ow = openwhisk();
 /**
  * This is the main function
  * @param {string} name name of the person to greet
  * @returns {object} a greeting
  */
 function main(params) {
-  return ow.actions.invoke('static', params);
+  const ow = openwhisk();
+
+  return ow.actions.invoke('helix-services/static@latest', params);
 }
 
 module.exports = { main };
