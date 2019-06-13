@@ -20,13 +20,13 @@ const index = proxyquire('../src/index.js', {
     return {
       actions: {
         invoke() {
-          return {
+          return Promise.resolve({
             body: `<pingdom_http_custom_check>
     <status>OK</status>
     <version>1.1.0</version>
     <response_time>172</response_time>
 </pingdom_http_custom_check>`,
-          };
+          });
         },
       },
     };
