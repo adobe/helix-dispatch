@@ -29,8 +29,8 @@ const { fetchers } = require('./fetchers');
  * @param {string} params.content.repo the GitHub repo of the content repository
  * @param {string} params.content.ref the GitHub commit sha or branch name of the content repository
  * @param {string} params.content.package the OpenWhisk package name used for rendering actions.
- * @param {string} params.content.index a comma separated list of the directory index files to try when 
- * requesting a directory
+ * @param {string} params.content.index a comma separated list of the directory index files to try
+ * when requesting a directory
  * @param {string} params.static.owner the GitHub owner of the fallback repository
  * @param {string} params.static.repo the GitHub repo of the fallback repository
  * @param {string} params.static.ref the GitHub commit sha or branch name of the fallback repository
