@@ -18,7 +18,7 @@ repository. The preference order is:
 | params.content.repo | <code>string</code> | the GitHub repo of the content repository |
 | params.content.ref | <code>string</code> | the GitHub commit sha or branch name of the content repository |
 | params.content.package | <code>string</code> | the OpenWhisk package name used for rendering actions. |
-| params.content.index | <code>string</code> | a comma separated list of the directory index files to try when requesting a directory |
+| params.content.index | <code>string</code> | a comma separated list of the directory index files to try when  requesting a directory |
 | params.static.owner | <code>string</code> | the GitHub owner of the fallback repository |
 | params.static.repo | <code>string</code> | the GitHub repo of the fallback repository |
 | params.static.ref | <code>string</code> | the GitHub commit sha or branch name of the fallback repository |
