@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/adobe/helix-experimental-dispatch/compare/v1.2.1...v1.2.2) (2019-06-14)
+
+
+### Bug Fixes
+
+* **pipeline:** use md when fetching from pipeline ([7be268f](https://github.com/adobe/helix-experimental-dispatch/commit/7be268f))
+
 ## [1.2.1](https://github.com/adobe/helix-experimental-dispatch/compare/v1.2.0...v1.2.1) (2019-06-14)
 
 
