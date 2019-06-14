@@ -15,7 +15,7 @@ const chaiHttp = require('chai-http');
 
 
 chai.use(chaiHttp);
-const expect = chai.expect;
+const { expect } = chai;
 
 
 describe('Running Post-Deployment Integration Tests', () => {
@@ -23,10 +23,10 @@ describe('Running Post-Deployment Integration Tests', () => {
     await chai
       .request('https://adobeioruntime.net/')
       .get('api/v1/web/helix/helix-services/experimental-dispatch%40v1')
-      .then(response => {
+      .then((response) => {
         expect(response).to.have.status(200);
-    }).catch(e => {
-      throw e;
-    })
-  }); 
+      }).catch((e) => {
+        throw e;
+      });
+  });
 });
