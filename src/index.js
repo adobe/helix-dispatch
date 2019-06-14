@@ -25,7 +25,7 @@ const { fetchers } = require('./fetchers');
  * 4. fetch `/404.html` from the content or fallback repository
  * 
  * @param {object} params the URL parameters
-* @param {string} params.content.owner the GitHub owner of the content (primary) repository
+ * @param {string} params.content.owner the GitHub owner of the content (primary) repository
  * @param {string} params.content.repo the GitHub repo of the content repository
  * @param {string} params.content.ref the GitHub commit sha or branch name of the content repository
  * @param {string} params.content.package the OpenWhisk package name used for rendering actions.
@@ -33,6 +33,7 @@ const { fetchers } = require('./fetchers');
  * @param {string} params.static.owner the GitHub owner of the fallback repository
  * @param {string} params.static.repo the GitHub repo of the fallback repository
  * @param {string} params.static.ref the GitHub commit sha or branch name of the fallback repository
+ * @param {string} params.path the requested URL, without a query string
  * @returns {object} the HTTP response
  */
 function main(params) {

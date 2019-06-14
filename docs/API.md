@@ -22,4 +22,5 @@ repository. The preference order is:
 | params.static.owner | <code>string</code> | the GitHub owner of the fallback repository |
 | params.static.repo | <code>string</code> | the GitHub repo of the fallback repository |
 | params.static.ref | <code>string</code> | the GitHub commit sha or branch name of the fallback repository |
+| params.path | <code>string</code> | the requested URL, without a query string |
 
