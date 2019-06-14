@@ -58,7 +58,6 @@ function fetchers(params = {}) {
     repo: params['content.repo'],
     ref: params['content.ref'],
     package: params['content.package'],
-    esi: false,
   };
 
   const attempts = [];
@@ -73,6 +72,9 @@ function fetchers(params = {}) {
       result: true,
       params: {
         path: name,
+        entry: name,
+        esi: false,
+        plain: true,
         ...contentOpts,
       },
     });
@@ -105,6 +107,9 @@ function fetchers(params = {}) {
       result: true,
       params: {
         path: name,
+        entry: name,
+        esi: false,
+        plain: true,
         ...staticOpts,
       },
     });
@@ -118,6 +123,9 @@ function fetchers(params = {}) {
     result: true,
     params: {
       path: '/404.html',
+      entry: '/404.html',
+      esi: false,
+      plain: true,
       ...contentOpts,
     },
   });
@@ -130,6 +138,9 @@ function fetchers(params = {}) {
     result: true,
     params: {
       path: '/404.html',
+      entry: '/404.html',
+      esi: false,
+      plain: true,
       ...staticOpts,
     },
   });
