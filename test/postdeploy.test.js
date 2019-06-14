@@ -12,17 +12,28 @@
 /* eslint-env mocha */
 const chai = require('chai');
 const chaiHttp = require('chai-http');
+const packjson = require('../package.json');
 
 
 chai.use(chaiHttp);
 const { expect } = chai;
 
+function getbaseurl() {
+  const namespace = 'helix';
+  const package = 'helix-services';
+  const name = packjson.name.replace('@adobe/helix-', '');
+  let version = `v${packjson.version}`;
+  if (process.env.CI && process.env.CIRCLE_BUILD_NUM) {
+    version = `ci${process.env.CIRCLE_BUILD_NUM}`;
+  }
+  return `api/v1/web/${namespace}/${package}/${name}%40${version}`;
+}
 
 describe('Running Post-Deployment Integration Tests', () => {
   it('Service is reachable', async () => {
     await chai
       .request('https://adobeioruntime.net/')
-      .get('api/v1/web/helix/helix-services/experimental-dispatch%40v1')
+      .get(getbaseurl())
       .then((response) => {
         expect(response).to.have.status(200);
       }).catch((e) => {
