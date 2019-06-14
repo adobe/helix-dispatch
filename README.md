@@ -1,6 +1,6 @@
-# Helix Service
+# Helix Experimental Dispatch
 
-> An example service to be used in and with Project Helix
+> An experimental Helix microservice that retrieves content from multiple sources and delivers the best match
 
 ## Status
 [![codecov](https://img.shields.io/codecov/c/github/adobe/helix-experimental-dispatch.svg)](https://codecov.io/gh/adobe/helix-experimental-dispatch)
@@ -12,13 +12,32 @@
 
 ## Installation
 
+Not needed, the service is pre-installed as soon as you run `hlx deploy`.
+
 ## Usage
 
+Invoke the action using `wsk`
+
 ```bash
-curl https://adobeioruntime.net/api/v1/web/helix/helix-services/service@v1
+wsk action invoke helix-services/experimental-dispatch@v1 --result --blocking \
+  -p static.owner trieloff \
+  -p static.repo helix-demo \
+  -p static.ref master \
+  -p static.root htdocs \
+  -p content.owner trieloff \
+  -p content.repo helix-demo \
+  -p content.ref master \
+  -p content.package b7aa8a6351215b7e12b6d3be242c622410c1eb28
+  -p path /index.html
 ```
 
-For more, see the [API documentation](docs/API.md).
+Use the web action (replace `trieloff` with your GitHub user name)
+
+```bash
+curl "https://adobeioruntime.net/api/v1/web/trieloff/helix-services/experimental-dispatch%40v1?static.owner=trieloff&static.repo=trieloff&static.ref=master&static.root=htdocs&content.owner=trieloff&content.repo=helix-demo&content.ref=master&content.package=b7aa8a6351215b7e12b6d3be242c622410c1eb28&path=/index.html"
+```
+
+For a detailed list of all possible request parameters, check out the [reference documentation](docs/API.md).
 
 ## Development
 

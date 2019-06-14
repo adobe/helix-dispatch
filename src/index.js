@@ -17,9 +17,23 @@ const race = require('./race');
 const { fetchers } = require('./fetchers');
 
 /**
- * This is the main function
- * @param {string} name name of the person to greet
- * @returns {object} a greeting
+ * This function dispatches the request to the content repository, the pipeline, and the static
+ * repository. The preference order is:
+ * 1. fetch from the content repository
+ * 2. dynamically render using the content repository
+ * 3. fetch from the fallback (`static`) repository
+ * 4. fetch `/404.html` from the content or fallback repository
+ * 
+ * @param {object} params the URL parameters
+* @param {string} params.content.owner the GitHub owner of the content (primary) repository
+ * @param {string} params.content.repo the GitHub repo of the content repository
+ * @param {string} params.content.ref the GitHub commit sha or branch name of the content repository
+ * @param {string} params.content.package the OpenWhisk package name used for rendering actions.
+ * @param {string} params.content.index a comma separated list of the directory index files to try when requesting a directory
+ * @param {string} params.static.owner the GitHub owner of the fallback repository
+ * @param {string} params.static.repo the GitHub repo of the fallback repository
+ * @param {string} params.static.ref the GitHub commit sha or branch name of the fallback repository
+ * @returns {object} the HTTP response
  */
 function main(params) {
   const ow = openwhisk();
