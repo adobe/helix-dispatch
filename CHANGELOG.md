@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/adobe/helix-experimental-dispatch/compare/v1.2.0...v1.2.1) (2019-06-14)
+
+
+### Bug Fixes
+
+* **static:** use correct parameters for static action ([c2eb2e0](https://github.com/adobe/helix-experimental-dispatch/commit/c2eb2e0))
+
 # [1.2.0](https://github.com/adobe/helix-experimental-dispatch/compare/v1.1.2...v1.2.0) (2019-06-13)
 
 
