@@ -85,6 +85,7 @@ function fetchers(params = {}) {
     const extension = path.extname(name);
     const selector = (path.basename(name, extension).match(/\.(.*)/) || ['', ''])[1];
     const actionname = `${contentOpts.package || 'default'}/${selector ? `${selector}_` : ''}${extension.replace(/^\./, '')}`;
+    const resource = path.resolve(path.dirname(name), `${path.basename(name, extension)}.md`);
 
     attempts.push({
       resolve: strict,
@@ -92,7 +93,7 @@ function fetchers(params = {}) {
       blocking: true,
       result: true,
       params: {
-        path: name,
+        path: resource,
         ...contentOpts,
       },
     });
