@@ -97,6 +97,13 @@ jobs:
         command: npx wsk-builder -v --deploy --test --name helix-services/`node -e "console.log(require('./package.json').name.replace('@adobe/helix-', ''))"`@ci$CIRCLE_BUILD_NUM
 
     - run:
+        name: Post-Deployment Integration Test
+        command: npm run test-postdeploy
+
+    - store_test_results:
+        path: junit
+
+    - run:
         name: Link Sequence (CI)
         command: wsk action update --sequence /helix/helix-services/`node -e "console.log(require('./package.json').name.replace('@adobe/helix-', ''))"`@ci helix-services/`node -e "console.log(require('./package.json').name.replace('@adobe/helix-', ''))"`@ci$CIRCLE_BUILD_NUM --web=true --web-secure=false
 
