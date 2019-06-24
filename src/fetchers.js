@@ -75,6 +75,7 @@ function fetchers(params = {}) {
         entry: name,
         esi: false,
         plain: true,
+        root: params['content.root'],
         ...contentOpts,
       },
     });
@@ -85,7 +86,7 @@ function fetchers(params = {}) {
     const extension = path.extname(name);
     const selector = (path.basename(name, extension).match(/\.(.*)/) || ['', ''])[1];
     const actionname = `${contentOpts.package || 'default'}/${selector ? `${selector}_` : ''}${extension.replace(/^\./, '')}`;
-    const resource = path.resolve(path.dirname(name), `${path.basename(name, extension)}.md`);
+    const resource = path.resolve(params['content.root'], path.dirname(name), `${path.basename(name, extension)}.md`);
 
     attempts.push({
       resolve: strict,
