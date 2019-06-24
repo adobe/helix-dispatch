@@ -1,3 +1,11 @@
+## [1.2.3](https://github.com/adobe/helix-experimental-dispatch/compare/v1.2.2...v1.2.3) (2019-06-24)
+
+
+### Bug Fixes
+
+* **content:** add params support ([5312816](https://github.com/adobe/helix-experimental-dispatch/commit/5312816)), closes [#5](https://github.com/adobe/helix-experimental-dispatch/issues/5)
+* **content:** support `content.root` parameter ([a6565fc](https://github.com/adobe/helix-experimental-dispatch/commit/a6565fc)), closes [#7](https://github.com/adobe/helix-experimental-dispatch/issues/7)
+
 ## [1.2.2](https://github.com/adobe/helix-experimental-dispatch/compare/v1.2.1...v1.2.2) (2019-06-14)
 
 
