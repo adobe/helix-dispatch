@@ -58,6 +58,7 @@ function fetchers(params = {}) {
     repo: params['content.repo'],
     ref: params['content.ref'],
     package: params['content.package'],
+    params: params.params,
   };
 
   const attempts = [];
