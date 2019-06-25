@@ -27,7 +27,9 @@
     "url": "https://github.com/adobe/helix-experimental-dispatch/issues"
   },
   "homepage": "https://github.com/adobe/helix-experimental-dispatch#readme",
-  "dependencies": {},
+  "dependencies": {
+    "epsagon": "^1.27.1"
+  },
   "devDependencies": {
     "@adobe/openwhisk-action-builder": "^1.0.2",
     "@semantic-release/changelog": "^3.0.2",

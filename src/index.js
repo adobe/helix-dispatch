@@ -13,6 +13,7 @@
 // declare or package it.
 // eslint-disable-next-line import/no-extraneous-dependencies
 const openwhisk = require('openwhisk');
+const epsagon = require('epsagon');
 const race = require('./race');
 const { fetchers } = require('./fetchers');
 
@@ -43,4 +44,8 @@ function main(params) {
   return race(fetchers(params).map(fetcher => ow.actions.invoke(fetcher).then(fetcher.resolve)));
 }
 
-module.exports = { main };
+module.exports.main = epsagon.openWhiskWrapper(main, {
+  token_param: 'EPSAGON_TOKEN',
+  appName: 'Helix Services',
+  metadataOnly: false, // Optional, send more trace data
+});
