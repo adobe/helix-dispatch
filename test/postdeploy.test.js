@@ -22,11 +22,11 @@ function getbaseurl() {
   const namespace = 'helix';
   const package = 'helix-services';
   const name = packjson.name.replace('@adobe/helix-', '');
-  let version = `v${packjson.version}`;
+  let version = `${packjson.version}`;
   if (process.env.CI && process.env.CIRCLE_BUILD_NUM) {
     version = `ci${process.env.CIRCLE_BUILD_NUM}`;
   }
-  return `api/v1/web/${namespace}/${package}/${name}%40${version}`;
+  return `api/v1/web/${namespace}/${package}/${name}@${version}`;
 }
 
 describe('Running Post-Deployment Integration Tests', () => {
