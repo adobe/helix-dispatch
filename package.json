@@ -15,7 +15,7 @@
     "snyk-protect": "snyk protect",
     "prepare": "npm run snyk-protect",
     "build": "wsk-builder -v",
-    "deploy": "wsk-builder -v --deploy --test"
+    "deploy": "wsk-builder -v --deploy --test -p EPSAGON_TOKEN $EPSAGON_TOKEN"
   },
   "repository": {
     "type": "git",
