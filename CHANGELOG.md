@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/adobe/helix-experimental-dispatch/compare/v1.2.3...v1.3.0) (2019-06-25)
+
+
+### Features
+
+* **monitoring:** add monitoring with Epsagon ([7e8cabe](https://github.com/adobe/helix-experimental-dispatch/commit/7e8cabe))
+
 ## [1.2.3](https://github.com/adobe/helix-experimental-dispatch/compare/v1.2.2...v1.2.3) (2019-06-24)
 
 
