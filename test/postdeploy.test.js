@@ -26,7 +26,7 @@ function getbaseurl() {
   if (process.env.CI && process.env.CIRCLE_BUILD_NUM && process.env.CIRCLE_BRANCH !== 'master') {
     version = `ci${process.env.CIRCLE_BUILD_NUM}`;
   }
-  return `api/v1/web/${namespace}/${package}/${name}@${version}`;
+  return `api/v1/web/${namespace}/${package}/${name}@${version}?static.owner=trieloff&static.repo=helix-demo&static.ref=master&path=/index.md`;
 }
 
 describe('Running Post-Deployment Integration Tests', () => {
