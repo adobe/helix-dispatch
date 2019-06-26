@@ -44,8 +44,18 @@ function main(params) {
   return race(fetchers(params).map(fetcher => ow.actions.invoke(fetcher).then(fetcher.resolve)));
 }
 
-module.exports.main = epsagon.openWhiskWrapper(main, {
-  token_param: 'EPSAGON_TOKEN',
-  appName: 'Helix Services',
-  metadataOnly: false, // Optional, send more trace data
-});
+module.exports.main = (params) => {
+  try {
+    return epsagon.openWhiskWrapper(main, {
+      token_param: 'EPSAGON_TOKEN',
+      appName: 'Helix Services',
+      metadataOnly: false, // Optional, send more trace data
+    })(params);
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.log(e);
+    return {
+      error: e.toString(),
+    };
+  }
+};
