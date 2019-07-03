@@ -11,21 +11,40 @@
  */
 const path = require('path');
 
-function strict(res) {
+/**
+ * Default resolver that rejects statusCodes >= 400.
+ * @param res action response
+ * @returns {Promise<never>}
+ */
+function defaultResolver(res) {
   if (res && res.statusCode >= 400) {
-    return Promise.reject(new Error(`Error ${res.statusCode}`));
+    const { params } = res.actionOptions;
+    const rp = `${params.owner}/${params.repo}/${params.ref}${params.path}`;
+    return Promise.reject(new Error(`Error invoking ${res.actionOptions.name}(${rp}): ${res.statusCode}`));
   }
   return Promise.resolve(res);
 }
 
-function lenient(res) {
+/**
+ * Resolver used for error pages. Resolves with a 404 if the action responed with a 200.
+ * @param res action response
+ * @returns {Promise<any>}
+ */
+function errorPageResolver(res) {
   if (res && res.statusCode === 200) {
     res.statusCode = 404;
     return Promise.resolve(res);
   }
-  return Promise.reject(new Error('No Error Page Found'));
+  const { params } = res.actionOptions;
+  const rp = `${params.owner}/${params.repo}/${params.ref}${params.path}`;
+  return Promise.reject(new Error(`Error invoking ${res.actionOptions.name}(${rp}): ${res.statusCode}`));
 }
 
+/**
+ * Returns the action options to fetch the contents from.
+ * @param {object} params - action params
+ * @returns {Array} Array of action options to use to ow.action.invoke
+ */
 function fetchers(params = {}) {
   const url = params.path || '/';
   const {
@@ -67,7 +86,7 @@ function fetchers(params = {}) {
   // first, try to get the raw content from the content repo
   names.forEach((name) => {
     attempts.push({
-      resolve: strict,
+      resolve: defaultResolver,
       name: staticaction,
       blocking: true,
       result: true,
@@ -90,7 +109,7 @@ function fetchers(params = {}) {
     const resource = path.resolve(params['content.root'], path.dirname(name), `${path.basename(name, extension)}.md`);
 
     attempts.push({
-      resolve: strict,
+      resolve: defaultResolver,
       name: actionname,
       blocking: true,
       result: true,
@@ -104,7 +123,7 @@ function fetchers(params = {}) {
   // then, try to get the raw content from the static repo
   names.forEach((name) => {
     attempts.push({
-      resolve: strict,
+      resolve: defaultResolver,
       name: staticaction,
       blocking: true,
       result: true,
@@ -120,7 +139,7 @@ function fetchers(params = {}) {
 
   // then get the 404.html from the content repo
   attempts.push({
-    resolve: lenient,
+    resolve: errorPageResolver,
     name: staticaction,
     blocking: true,
     result: true,
@@ -135,7 +154,7 @@ function fetchers(params = {}) {
 
   // if all fails, get the 404.html from the static repo
   attempts.push({
-    resolve: lenient,
+    resolve: errorPageResolver,
     name: staticaction,
     blocking: true,
     result: true,
@@ -151,4 +170,4 @@ function fetchers(params = {}) {
   return attempts;
 }
 
-module.exports = { fetchers, strict, lenient };
+module.exports = { fetchers, defaultResolver, errorPageResolver };

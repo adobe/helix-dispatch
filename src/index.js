@@ -9,13 +9,15 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-// openwhisk is pre-installed on the container, so we don't want to
-// declare or package it.
-// eslint-disable-next-line import/no-extraneous-dependencies
+
 const openwhisk = require('openwhisk');
-const epsagon = require('epsagon');
+const { logger: setupLogger } = require('@adobe/openwhisk-action-builder/src/logging');
+const { wrap } = require('@adobe/helix-pingdom-status');
 const race = require('./race');
 const { fetchers } = require('./fetchers');
+
+// global logger
+let log;
 
 /**
  * This function dispatches the request to the content repository, the pipeline, and the static
@@ -38,14 +40,82 @@ const { fetchers } = require('./fetchers');
  * @param {string} params.path the requested URL, without a query string
  * @returns {object} the HTTP response
  */
-function main(params) {
+async function executeActions(params) {
   const ow = openwhisk();
+  try {
+    // we explicitly (a)wait here, so we can catch a potential exception.
+    return await race(fetchers(params)
+      .map(actionOptions => ow.actions.invoke(actionOptions)
+        .then((res) => {
+          res.actionOptions = actionOptions;
+          return actionOptions.resolve(res);
+        })));
+  } catch (e) {
+    if (Array.isArray(e)) {
+      log.error('no valid response could be fetched');
+      e.forEach((err) => {
+        log.error(err.message);
+      });
+      return {
+        statusCode: 404,
+      };
+    }
 
-  return race(fetchers(params).map(fetcher => ow.actions.invoke(fetcher).then(fetcher.resolve)));
+    log.error('error while invoking fetchers: ', e);
+    return {
+      // a fetchers `resolve` should never throw an exception but report a proper status response.
+      // so we consider any exception thrown as application error and propagate it to openwhisk.
+      error: String(e.stack),
+    };
+  }
 }
 
-module.exports.main = epsagon.openWhiskWrapper(main, {
-  token_param: 'EPSAGON_TOKEN',
-  appName: 'Helix Services',
-  metadataOnly: false, // Optional, send more trace data
-});
+/**
+ * Runs the action by wrapping the `fetch` function with the pingdom-status utility.
+ * Additionally, if a EPSAGON_TOKEN is configured, the epsagon tracers are instrumented.
+ * @param params Action params
+ * @returns {Promise<*>} The response
+ */
+async function run(params) {
+  let action = executeActions;
+  if (params && params.EPSAGON_TOKEN) {
+    // ensure that epsagon is only required, if a token is present. this is to avoid invoking their
+    // patchers otherwise.
+    // eslint-disable-next-line global-require
+    const { openWhiskWrapper } = require('epsagon');
+    log.info('instrumenting epsagon.');
+    action = openWhiskWrapper(action, {
+      token_param: 'EPSAGON_TOKEN',
+      appName: 'Helix Services',
+      metadataOnly: false, // Optional, send more trace data
+    });
+  }
+  // we don't issue any pingdom checks, since those backends are tested by
+  // the respective fetcher-actions
+  return wrap(action)(params);
+}
+
+/**
+ * Main function called by the openwhisk invoker.
+ * @param params Action params
+ * @param logger Existing logger to use (mainly for testing)
+ * @returns {Promise<*>} The response
+ */
+async function main(params, logger = log) {
+  try {
+    log = setupLogger(params, logger);
+    const result = await run(params);
+    if (log.flush) {
+      log.flush(); // don't wait
+    }
+    return result;
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(e);
+    return {
+      statusCode: e.statusCode || 500,
+    };
+  }
+}
+
+module.exports.main = main;
