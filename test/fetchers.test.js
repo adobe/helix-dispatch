@@ -13,7 +13,7 @@
 /* eslint-env mocha */
 const assert = require('assert');
 const { AssertionError } = require('assert');
-const { fetchers, strict, lenient } = require('../src/fetchers');
+const { fetchers, defaultResolver, errorPageResolver } = require('../src/fetchers');
 
 const opts = {
   'static.owner': 'adobe',
@@ -74,49 +74,65 @@ describe('testing fetchers.js', () => {
 });
 
 
-describe('testing strict promise resolver', () => {
-  it('strict promise resolver accepts status 200', async () => {
+describe('testing default promise resolver', () => {
+  it('default promise resolver accepts status 200', async () => {
     const res = await Promise.resolve({
       statusCode: 200,
-    }).then(strict);
+    }).then(defaultResolver);
     assert.ok(res);
   });
 
-  it('strict promise resolver throws on status 400', async () => {
+  it('default promise resolver throws on status 400', async () => {
     try {
       await Promise.resolve({
         statusCode: 400,
-      }).then(strict);
+        actionOptions: {
+          params: {
+            owner: 'adobe',
+            repo: 'helix-statix',
+            ref: 'master',
+            path: '/index.html',
+          },
+        },
+      }).then(defaultResolver);
       assert.fail('this should never happen');
     } catch (e) {
       if (e instanceof AssertionError) {
         throw e;
       }
-      assert.equal(e.message, 'Error 400');
+      assert.equal(e.message, 'Error invoking undefined(adobe/helix-statix/master/index.html): 400');
     }
   });
 });
 
-describe('testing lenient promise resolver', () => {
-  it('lenient promise resolver accepts status 200', async () => {
+describe('testing error page promise resolver', () => {
+  it('error page promise resolver accepts status 200', async () => {
     const res = await Promise.resolve({
       statusCode: 200,
-    }).then(lenient);
+    }).then(errorPageResolver);
     assert.equal(res.statusCode, 404);
     assert.ok(res);
   });
 
-  it('lenient promise resolver throws on status 400', async () => {
+  it('error page promise resolver throws on status 400', async () => {
     try {
       await Promise.resolve({
         statusCode: 400,
-      }).then(lenient);
+        actionOptions: {
+          params: {
+            owner: 'adobe',
+            repo: 'helix-statix',
+            ref: 'master',
+            path: '/index.html',
+          },
+        },
+      }).then(errorPageResolver);
       assert.fail('this should never happen');
     } catch (e) {
       if (e instanceof AssertionError) {
         throw e;
       }
-      assert.equal(e.message, 'No Error Page Found');
+      assert.equal(e.message, 'Error invoking undefined(adobe/helix-statix/master/index.html): 400');
     }
   });
 });

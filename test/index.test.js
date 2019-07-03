@@ -14,41 +14,133 @@
 
 const proxyquire = require('proxyquire');
 const assert = require('assert');
+const { Logger } = require('@adobe/helix-shared');
+
+const OK_RESULT = () => Promise.resolve({
+  statusCode: 200,
+  body: 'Hello, world.',
+});
+
+const ERR_RESULT = () => Promise.resolve({
+  statusCode: 404,
+  body: 'not found',
+});
+
+const FAIL_RESULT = () => {
+  throw new Error('runtime failure.');
+};
+
+// this is a bit a hack, but I don't know how to change it during tests
+let invokeResult = OK_RESULT;
 
 const index = proxyquire('../src/index.js', {
   openwhisk() {
     return {
       actions: {
         invoke() {
-          return Promise.resolve({
-            statusCode: 200,
-            body: `<pingdom_http_custom_check>
-    <status>OK</status>
-    <version>1.1.0</version>
-    <response_time>172</response_time>
-</pingdom_http_custom_check>`,
-          });
+          return invokeResult();
         },
       },
     };
   },
+
+  epsagon: {
+    openWhiskWrapper(action) {
+      return params => action(params);
+    },
+  },
 }).main;
 
+
 describe('Index Tests', () => {
-  it('index function is present', async () => {
+  beforeEach(() => {
+    invokeResult = OK_RESULT;
+  });
+
+  it('index returns pingdom response', async () => {
+    const result = await index({
+      __ow_method: 'get',
+    });
+    delete result.actionOptions;
+    assert.equal(result.statusCode, 200);
+    assert.deepEqual(result.headers, {
+      'Content-Type': 'application/xml',
+    });
+    assert.ok(/<pingdom_http_custom_check>[^]*<\/pingdom_http_custom_check>/.test(result.body));
+  });
+
+  it('index returns action response', async () => {
     const result = await index({});
+    delete result.actionOptions;
     assert.deepEqual(result, {
       statusCode: 200,
-      body: `<pingdom_http_custom_check>
-    <status>OK</status>
-    <version>1.1.0</version>
-    <response_time>172</response_time>
-</pingdom_http_custom_check>`,
+      body: 'Hello, world.',
     });
   });
 
-  it('index function returns an object', async () => {
-    const result = await index({});
-    assert.equal(typeof result, 'object');
+  it('index returns 404 response', async () => {
+    const logger = Logger.getTestLogger({
+      // tune this for debugging
+      level: 'info',
+    });
+    logger.fields = {}; // avoid errors during setup. test logger is winston, but we need bunyan.
+    logger.flush = () => {};
+    invokeResult = ERR_RESULT;
+
+    const result = await index({}, logger);
+    delete result.actionOptions;
+    assert.deepEqual(result, {
+      statusCode: 404,
+    });
+
+    const output = await logger.getOutput();
+    assert.ok(output.indexOf('no valid response could be fetched') >= 0);
+  });
+
+  it('index produces application error when fetcher fails.', async () => {
+    const logger = Logger.getTestLogger({
+      // tune this for debugging
+      level: 'info',
+    });
+    logger.fields = {}; // avoid errors during setup. test logger is winston, but we need bunyan.
+    logger.flush = () => {};
+    invokeResult = FAIL_RESULT;
+
+    const result = await index({}, logger);
+    assert.ok(result.error.indexOf('Error: runtime failure.\n    at FAIL_RESULT') >= 0);
+
+    const output = await logger.getOutput();
+    assert.ok(output.indexOf('error while invoking fetchers: runtime failure.') >= 0);
+  });
+
+  it('index function instruments epsagon', async () => {
+    const logger = Logger.getTestLogger({
+      // tune this for debugging
+      level: 'info',
+    });
+    logger.fields = {}; // avoid errors during setup. test logger is winston, but we need bunyan.
+    logger.flush = () => {};
+    await index({
+      EPSAGON_TOKEN: 'foobar',
+    }, logger);
+
+    const output = await logger.getOutput();
+    assert.ok(output.indexOf('instrumenting epsagon.') >= 0);
+  });
+
+  it('error in main function is caught', async () => {
+    const logger = Logger.getTestLogger({
+      // tune this for debugging
+      level: 'info',
+    });
+    logger.fields = {}; // avoid errors during setup. test logger is winston, but we need bunyan.
+    logger.flush = () => {
+      throw new Error('error during flush.');
+    };
+    const result = await index({}, logger);
+
+    assert.deepEqual(result, {
+      statusCode: 500,
+    });
   });
 });

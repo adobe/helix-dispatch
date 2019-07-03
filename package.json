@@ -15,7 +15,7 @@
     "snyk-protect": "snyk protect",
     "prepare": "npm run snyk-protect",
     "build": "wsk-builder -v",
-    "deploy": "wsk-builder -v --deploy --test -p EPSAGON_TOKEN $EPSAGON_TOKEN"
+    "deploy": "wsk-builder -v --deploy --test -p EPSAGON_TOKEN=$EPSAGON_TOKEN"
   },
   "repository": {
     "type": "git",
@@ -28,10 +28,13 @@
   },
   "homepage": "https://github.com/adobe/helix-experimental-dispatch#readme",
   "dependencies": {
-    "epsagon": "^1.27.1"
+    "@adobe/helix-pingdom-status": "^1.4.0",
+    "@adobe/openwhisk-action-builder": "^1.0.2",
+    "epsagon": "^1.27.1",
+    "openwhisk": "^3.19.0"
   },
   "devDependencies": {
-    "@adobe/openwhisk-action-builder": "^1.0.2",
+    "@adobe/helix-shared": "^1.5.0",
     "@semantic-release/changelog": "^3.0.2",
     "@semantic-release/commit-analyzer": "^6.1.0",
     "@semantic-release/exec": "^3.3.5",
