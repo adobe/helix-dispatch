@@ -27,7 +27,7 @@ wsk action invoke helix-services/experimental-dispatch@v1 --result --blocking \
   -p content.owner trieloff \
   -p content.repo helix-demo \
   -p content.ref master \
-  -p content.package b7aa8a6351215b7e12b6d3be242c622410c1eb28
+  -p content.package b7aa8a6351215b7e12b6d3be242c622410c1eb28 \
   -p path /index.html
 ```
 
