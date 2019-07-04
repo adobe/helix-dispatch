@@ -1,3 +1,10 @@
+## [1.3.3](https://github.com/adobe/helix-experimental-dispatch/compare/v1.3.2...v1.3.3) (2019-07-04)
+
+
+### Bug Fixes
+
+* **fetcher:** only try to fetch 404.html for html requests ([#34](https://github.com/adobe/helix-experimental-dispatch/issues/34)) ([c234252](https://github.com/adobe/helix-experimental-dispatch/commit/c234252)), closes [#30](https://github.com/adobe/helix-experimental-dispatch/issues/30)
+
 ## [1.3.2](https://github.com/adobe/helix-experimental-dispatch/compare/v1.3.1...v1.3.2) (2019-07-04)
 
 
