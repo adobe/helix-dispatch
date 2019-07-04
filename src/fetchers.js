@@ -190,35 +190,37 @@ function fetchers(params = {}) {
     });
   });
 
-  // then get the 404.html from the content repo
-  attempts.push({
-    resolve: errorPageResolver,
-    name: staticaction,
-    blocking: true,
-    result: true,
-    params: {
-      path: '/404.html',
-      entry: '/404.html',
-      esi: false,
-      plain: true,
-      ...contentOpts,
-    },
-  });
+  if (infos[0].ext === 'html') {
+    // then get the 404.html from the content repo, but only for html requests
+    attempts.push({
+      resolve: errorPageResolver,
+      name: staticaction,
+      blocking: true,
+      result: true,
+      params: {
+        path: '/404.html',
+        entry: '/404.html',
+        esi: false,
+        plain: true,
+        ...contentOpts,
+      },
+    });
 
-  // if all fails, get the 404.html from the static repo
-  attempts.push({
-    resolve: errorPageResolver,
-    name: staticaction,
-    blocking: true,
-    result: true,
-    params: {
-      path: '/404.html',
-      entry: '/404.html',
-      esi: false,
-      plain: true,
-      ...staticOpts,
-    },
-  });
+    // if all fails, get the 404.html from the static repo
+    attempts.push({
+      resolve: errorPageResolver,
+      name: staticaction,
+      blocking: true,
+      result: true,
+      params: {
+        path: '/404.html',
+        entry: '/404.html',
+        esi: false,
+        plain: true,
+        ...staticOpts,
+      },
+    });
+  }
 
   return attempts;
 }

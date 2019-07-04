@@ -73,6 +73,16 @@ describe('testing fetchers.js', () => {
     assert.equal(res.length, 8);
     logres(res);
   });
+
+  it('fetch non html', () => {
+    const res = fetchers({
+      ...opts,
+      path: '/style.css',
+    });
+
+    assert.equal(res.length, 3);
+    logres(res);
+  });
 });
 
 
