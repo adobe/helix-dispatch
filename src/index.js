@@ -46,9 +46,10 @@ async function executeActions(params) {
   const invoker = (actionOptions, idx) => {
     log.info(`[${idx}] Action: ${JSON.stringify(actionOptions, null, 2)}`);
     return ow.actions.invoke(actionOptions)
-      .then((res) => {
+      .then((reply) => {
+        const res = reply.response.result;
         res.actionOptions = actionOptions;
-        log.info(`[${idx}] Result: ${res.statusCode}`);
+        log.info(`[${idx}] ${reply.activationId} ${res.statusCode} ${res.errorMessage || ''}`);
         return actionOptions.resolve(res);
       });
   };
@@ -59,11 +60,15 @@ async function executeActions(params) {
   } catch (e) {
     if (Array.isArray(e)) {
       log.error('no valid response could be fetched');
-      e.forEach((err) => {
+      let severe = 0;
+      e.forEach((err, idx) => {
         log.error(err.message);
+        if (err.statusCode === 500) {
+          severe = idx;
+        }
       });
       return {
-        statusCode: 404,
+        statusCode: e[severe].statusCode,
       };
     }
 

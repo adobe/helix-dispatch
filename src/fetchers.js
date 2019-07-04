@@ -20,13 +20,15 @@ function defaultResolver(res) {
   if (res && res.statusCode >= 400) {
     const { params } = res.actionOptions;
     const rp = `${params.owner}/${params.repo}/${params.ref}${params.path}`;
-    return Promise.reject(new Error(`Error invoking ${res.actionOptions.name}(${rp}): ${res.statusCode}`));
+    const error = new Error(`Error invoking ${res.actionOptions.name}(${rp}): ${res.statusCode}`);
+    error.statusCode = res.statusCode;
+    return Promise.reject(error);
   }
   return Promise.resolve(res);
 }
 
 /**
- * Resolver used for error pages. Resolves with a 404 if the action responed with a 200.
+ * Resolver used for error pages. Resolves with a 404 if the action responded with a 200.
  * @param res action response
  * @returns {Promise<any>}
  */
@@ -35,9 +37,7 @@ function errorPageResolver(res) {
     res.statusCode = 404;
     return Promise.resolve(res);
   }
-  const { params } = res.actionOptions;
-  const rp = `${params.owner}/${params.repo}/${params.ref}${params.path}`;
-  return Promise.reject(new Error(`Error invoking ${res.actionOptions.name}(${rp}): ${res.statusCode}`));
+  return defaultResolver(res);
 }
 
 /**
@@ -145,7 +145,6 @@ function fetchers(params = {}) {
       resolve: defaultResolver,
       name: staticaction,
       blocking: true,
-      result: true,
       params: {
         path: info.path,
         entry: info.path,
@@ -165,7 +164,6 @@ function fetchers(params = {}) {
       resolve: defaultResolver,
       name: actionname,
       blocking: true,
-      result: true,
       params: {
         path: `${info.relPath}.md`,
         ...contentOpts,
@@ -179,7 +177,6 @@ function fetchers(params = {}) {
       resolve: defaultResolver,
       name: staticaction,
       blocking: true,
-      result: true,
       params: {
         path: info.path,
         entry: info.path,
@@ -196,7 +193,6 @@ function fetchers(params = {}) {
       resolve: errorPageResolver,
       name: staticaction,
       blocking: true,
-      result: true,
       params: {
         path: '/404.html',
         entry: '/404.html',
@@ -211,7 +207,6 @@ function fetchers(params = {}) {
       resolve: errorPageResolver,
       name: staticaction,
       blocking: true,
-      result: true,
       params: {
         path: '/404.html',
         entry: '/404.html',
