@@ -17,13 +17,33 @@ const assert = require('assert');
 const { Logger } = require('@adobe/helix-shared');
 
 const OK_RESULT = () => Promise.resolve({
-  statusCode: 200,
-  body: 'Hello, world.',
+  activationId: 'abcd-1234',
+  response: {
+    result: {
+      statusCode: 200,
+      body: 'Hello, world.',
+    },
+  },
 });
 
 const ERR_RESULT = () => Promise.resolve({
-  statusCode: 404,
-  body: 'not found',
+  activationId: 'abcd-1234',
+  response: {
+    result: {
+      statusCode: 404,
+      body: 'not found',
+    },
+  },
+});
+
+const SEVERE_RESULT = () => Promise.resolve({
+  activationId: 'abcd-1234',
+  response: {
+    result: {
+      statusCode: 500,
+      body: 'server error',
+    },
+  },
 });
 
 const FAIL_RESULT = () => {
@@ -37,8 +57,8 @@ const index = proxyquire('../src/index.js', {
   openwhisk() {
     return {
       actions: {
-        invoke() {
-          return invokeResult();
+        invoke(...args) {
+          return invokeResult(...args);
         },
       },
     };
@@ -91,6 +111,31 @@ describe('Index Tests', () => {
     delete result.actionOptions;
     assert.deepEqual(result, {
       statusCode: 404,
+    });
+
+    const output = await logger.getOutput();
+    assert.ok(output.indexOf('no valid response could be fetched') >= 0);
+  });
+
+  it('index returns 500 response', async () => {
+    const logger = Logger.getTestLogger({
+      // tune this for debugging
+      level: 'info',
+    });
+    logger.fields = {}; // avoid errors during setup. test logger is winston, but we need bunyan.
+    logger.flush = () => {};
+    invokeResult = (req) => {
+      if (req.params.path === '/404.html') {
+        return ERR_RESULT();
+      } else {
+        return SEVERE_RESULT();
+      }
+    };
+
+    const result = await index({}, logger);
+    delete result.actionOptions;
+    assert.deepEqual(result, {
+      statusCode: 500,
     });
 
     const output = await logger.getOutput();
