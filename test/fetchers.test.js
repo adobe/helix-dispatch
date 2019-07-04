@@ -13,7 +13,9 @@
 /* eslint-env mocha */
 const assert = require('assert');
 const { AssertionError } = require('assert');
-const { fetchers, strict, lenient } = require('../src/fetchers');
+const {
+  fetchers, defaultResolver, errorPageResolver, getPathInfos,
+} = require('../src/fetchers');
 
 const opts = {
   'static.owner': 'adobe',
@@ -74,49 +76,189 @@ describe('testing fetchers.js', () => {
 });
 
 
-describe('testing strict promise resolver', () => {
-  it('strict promise resolver accepts status 200', async () => {
+describe('testing default promise resolver', () => {
+  it('default promise resolver accepts status 200', async () => {
     const res = await Promise.resolve({
       statusCode: 200,
-    }).then(strict);
+    }).then(defaultResolver);
     assert.ok(res);
   });
 
-  it('strict promise resolver throws on status 400', async () => {
+  it('default promise resolver throws on status 400', async () => {
     try {
       await Promise.resolve({
         statusCode: 400,
-      }).then(strict);
+        actionOptions: {
+          params: {
+            owner: 'adobe',
+            repo: 'helix-statix',
+            ref: 'master',
+            path: '/index.html',
+          },
+        },
+      }).then(defaultResolver);
       assert.fail('this should never happen');
     } catch (e) {
       if (e instanceof AssertionError) {
         throw e;
       }
-      assert.equal(e.message, 'Error 400');
+      assert.equal(e.message, 'Error invoking undefined(adobe/helix-statix/master/index.html): 400');
     }
   });
 });
 
-describe('testing lenient promise resolver', () => {
-  it('lenient promise resolver accepts status 200', async () => {
+describe('testing error page promise resolver', () => {
+  it('error page promise resolver accepts status 200', async () => {
     const res = await Promise.resolve({
       statusCode: 200,
-    }).then(lenient);
+    }).then(errorPageResolver);
     assert.equal(res.statusCode, 404);
     assert.ok(res);
   });
 
-  it('lenient promise resolver throws on status 400', async () => {
+  it('error page promise resolver throws on status 400', async () => {
     try {
       await Promise.resolve({
         statusCode: 400,
-      }).then(lenient);
+        actionOptions: {
+          params: {
+            owner: 'adobe',
+            repo: 'helix-statix',
+            ref: 'master',
+            path: '/index.html',
+          },
+        },
+      }).then(errorPageResolver);
       assert.fail('this should never happen');
     } catch (e) {
       if (e instanceof AssertionError) {
         throw e;
       }
-      assert.equal(e.message, 'No Error Page Found');
+      assert.equal(e.message, 'Error invoking undefined(adobe/helix-statix/master/index.html): 400');
+    }
+  });
+});
+
+
+describe('testing path info resolution', () => {
+  const tests = [
+    {
+      url: '/',
+      indices: ['index.html', 'readme.html'],
+      mount: '',
+      expected: [{
+        path: '/index.html',
+        name: 'index',
+        selector: '',
+        ext: 'html',
+        relPath: '/index',
+      }, {
+        path: '/readme.html',
+        name: 'readme',
+        selector: '',
+        ext: 'html',
+        relPath: '/readme',
+      }],
+    },
+    {
+      url: '/foo',
+      indices: ['index.html'],
+      mount: '',
+      expected: [{
+        path: '/foo/index.html',
+        name: 'index',
+        selector: '',
+        ext: 'html',
+        relPath: '/foo/index',
+      }],
+    },
+    {
+      url: '',
+      indices: ['index.html'],
+      mount: '',
+      expected: [{
+        path: '/index.html',
+        name: 'index',
+        selector: '',
+        ext: 'html',
+        relPath: '/index',
+      }],
+    },
+    {
+      url: '/foo/hello.html',
+      indices: ['index.html'],
+      mount: '',
+      expected: [{
+        path: '/foo/hello.html',
+        name: 'hello',
+        selector: '',
+        ext: 'html',
+        relPath: '/foo/hello',
+      }],
+    },
+    {
+      url: '/foo/hello.info.html',
+      indices: ['index.html'],
+      mount: '',
+      expected: [{
+        path: '/foo/hello.info.html',
+        name: 'hello',
+        selector: 'info',
+        ext: 'html',
+        relPath: '/foo/hello',
+      }],
+    },
+    {
+      url: '/foo/hello.info.html',
+      indices: ['index.html'],
+      mount: '/foo',
+      expected: [{
+        path: '/hello.info.html',
+        name: 'hello',
+        selector: 'info',
+        ext: 'html',
+        relPath: '/hello',
+      }],
+    },
+    {
+      url: '/foo/hello.info.html',
+      indices: ['index.html'],
+      mount: '/foot',
+      expected: [{
+        path: '/foo/hello.info.html',
+        name: 'hello',
+        selector: 'info',
+        ext: 'html',
+        relPath: '/foo/hello',
+      }],
+    },
+    {
+      url: '/foo/hello.test.info.html',
+      indices: ['index.html'],
+      mount: '/foo',
+      expected: [{
+        path: '/hello.test.info.html',
+        name: 'hello.test',
+        selector: 'info',
+        ext: 'html',
+        relPath: '/hello.test',
+      }],
+    },
+  ];
+
+  tests.forEach((test, idx) => {
+    it(`[${idx}] resolver works correctly for ${test.url}`, () => {
+      const result = getPathInfos(test.url, test.mount, test.indices);
+      assert.deepEqual(result, test.expected);
+    });
+  });
+
+  it('fails to resolve a path info, if the index has no extension', () => {
+    try {
+      getPathInfos('/foo', '', ['invalid']);
+      assert.fail('should fail');
+    } catch (e) {
+      assert.equal(e.message, 'directory index must have an extension.');
     }
   });
 });

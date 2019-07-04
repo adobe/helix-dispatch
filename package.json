@@ -1,6 +1,6 @@
 {
   "name": "@adobe/helix-experimental-dispatch",
-  "version": "1.3.0",
+  "version": "1.3.2",
   "description": "Example Package",
   "main": "src/index.js",
   "scripts": {
@@ -15,7 +15,7 @@
     "snyk-protect": "snyk protect",
     "prepare": "npm run snyk-protect",
     "build": "wsk-builder -v",
-    "deploy": "wsk-builder -v --deploy --test -p EPSAGON_TOKEN $EPSAGON_TOKEN"
+    "deploy": "wsk-builder -v --deploy --test -p EPSAGON_TOKEN=$EPSAGON_TOKEN"
   },
   "repository": {
     "type": "git",
@@ -28,10 +28,14 @@
   },
   "homepage": "https://github.com/adobe/helix-experimental-dispatch#readme",
   "dependencies": {
-    "epsagon": "^1.27.1"
+    "@adobe/helix-pingdom-status": "^1.4.0",
+    "@adobe/openwhisk-action-builder": "^1.0.2",
+    "epsagon": "^1.27.1",
+    "openwhisk": "^3.19.0",
+    "snyk": "^1.189.0"
   },
   "devDependencies": {
-    "@adobe/openwhisk-action-builder": "^1.0.2",
+    "@adobe/helix-shared": "^1.5.0",
     "@semantic-release/changelog": "^3.0.2",
     "@semantic-release/commit-analyzer": "^6.1.0",
     "@semantic-release/exec": "^3.3.5",
@@ -54,12 +58,11 @@
     "istanbul": "^1.1.0-alpha.1",
     "jsdoc-to-markdown": "^5.0.0",
     "junit-report-builder": "^1.3.2",
-    "lint-staged": "^8.1.5",
+    "lint-staged": "^9.0.0",
     "mocha": "^6.1.4",
     "nyc": "^14.0.0",
     "proxyquire": "^2.1.0",
-    "semantic-release": "^15.13.18",
-    "snyk": "^1.185.1"
+    "semantic-release": "^15.13.18"
   },
   "snyk": true,
   "lint-staged": {
@@ -74,7 +77,7 @@
     }
   },
   "wsk": {
-    "name": "helix-services/experimental-dispatch@1.3.0",
+    "name": "helix-services/experimental-dispatch@1.3.2",
     "static": []
   }
 }

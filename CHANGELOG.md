@@ -1,3 +1,17 @@
+## [1.3.2](https://github.com/adobe/helix-experimental-dispatch/compare/v1.3.1...v1.3.2) (2019-07-04)
+
+
+### Bug Fixes
+
+* **dynamic:** handle selector properly when invoking action ([#33](https://github.com/adobe/helix-experimental-dispatch/issues/33)) ([f5c29b8](https://github.com/adobe/helix-experimental-dispatch/commit/f5c29b8)), closes [#31](https://github.com/adobe/helix-experimental-dispatch/issues/31)
+
+## [1.3.1](https://github.com/adobe/helix-experimental-dispatch/compare/v1.3.0...v1.3.1) (2019-07-03)
+
+
+### Bug Fixes
+
+* **index:** improve error handling ([#27](https://github.com/adobe/helix-experimental-dispatch/issues/27)) ([6f0f949](https://github.com/adobe/helix-experimental-dispatch/commit/6f0f949)), closes [#25](https://github.com/adobe/helix-experimental-dispatch/issues/25)
+
 # [1.3.0](https://github.com/adobe/helix-experimental-dispatch/compare/v1.2.3...v1.3.0) (2019-06-25)
 
 
