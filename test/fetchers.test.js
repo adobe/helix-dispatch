@@ -13,7 +13,9 @@
 /* eslint-env mocha */
 const assert = require('assert');
 const { AssertionError } = require('assert');
-const { fetchers, defaultResolver, errorPageResolver } = require('../src/fetchers');
+const {
+  fetchers, defaultResolver, errorPageResolver, getPathInfos,
+} = require('../src/fetchers');
 
 const opts = {
   'static.owner': 'adobe',
@@ -133,6 +135,130 @@ describe('testing error page promise resolver', () => {
         throw e;
       }
       assert.equal(e.message, 'Error invoking undefined(adobe/helix-statix/master/index.html): 400');
+    }
+  });
+});
+
+
+describe('testing path info resolution', () => {
+  const tests = [
+    {
+      url: '/',
+      indices: ['index.html', 'readme.html'],
+      mount: '',
+      expected: [{
+        path: '/index.html',
+        name: 'index',
+        selector: '',
+        ext: 'html',
+        relPath: '/index',
+      }, {
+        path: '/readme.html',
+        name: 'readme',
+        selector: '',
+        ext: 'html',
+        relPath: '/readme',
+      }],
+    },
+    {
+      url: '/foo',
+      indices: ['index.html'],
+      mount: '',
+      expected: [{
+        path: '/foo/index.html',
+        name: 'index',
+        selector: '',
+        ext: 'html',
+        relPath: '/foo/index',
+      }],
+    },
+    {
+      url: '',
+      indices: ['index.html'],
+      mount: '',
+      expected: [{
+        path: '/index.html',
+        name: 'index',
+        selector: '',
+        ext: 'html',
+        relPath: '/index',
+      }],
+    },
+    {
+      url: '/foo/hello.html',
+      indices: ['index.html'],
+      mount: '',
+      expected: [{
+        path: '/foo/hello.html',
+        name: 'hello',
+        selector: '',
+        ext: 'html',
+        relPath: '/foo/hello',
+      }],
+    },
+    {
+      url: '/foo/hello.info.html',
+      indices: ['index.html'],
+      mount: '',
+      expected: [{
+        path: '/foo/hello.info.html',
+        name: 'hello',
+        selector: 'info',
+        ext: 'html',
+        relPath: '/foo/hello',
+      }],
+    },
+    {
+      url: '/foo/hello.info.html',
+      indices: ['index.html'],
+      mount: '/foo',
+      expected: [{
+        path: '/hello.info.html',
+        name: 'hello',
+        selector: 'info',
+        ext: 'html',
+        relPath: '/hello',
+      }],
+    },
+    {
+      url: '/foo/hello.info.html',
+      indices: ['index.html'],
+      mount: '/foot',
+      expected: [{
+        path: '/foo/hello.info.html',
+        name: 'hello',
+        selector: 'info',
+        ext: 'html',
+        relPath: '/foo/hello',
+      }],
+    },
+    {
+      url: '/foo/hello.test.info.html',
+      indices: ['index.html'],
+      mount: '/foo',
+      expected: [{
+        path: '/hello.test.info.html',
+        name: 'hello.test',
+        selector: 'info',
+        ext: 'html',
+        relPath: '/hello.test',
+      }],
+    },
+  ];
+
+  tests.forEach((test, idx) => {
+    it(`[${idx}] resolver works correctly for ${test.url}`, () => {
+      const result = getPathInfos(test.url, test.mount, test.indices);
+      assert.deepEqual(result, test.expected);
+    });
+  });
+
+  it('fails to resolve a path info, if the index has no extension', () => {
+    try {
+      getPathInfos('/foo', '', ['invalid']);
+      assert.fail('should fail');
+    } catch (e) {
+      assert.equal(e.message, 'directory index must have an extension.');
     }
   });
 });

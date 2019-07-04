@@ -42,14 +42,20 @@ let log;
  */
 async function executeActions(params) {
   const ow = openwhisk();
+
+  const invoker = (actionOptions, idx) => {
+    log.info(`[${idx}] Action: ${JSON.stringify(actionOptions, null, 2)}`);
+    return ow.actions.invoke(actionOptions)
+      .then((res) => {
+        res.actionOptions = actionOptions;
+        log.info(`[${idx}] Result: ${res.statusCode}`);
+        return actionOptions.resolve(res);
+      });
+  };
+
   try {
     // we explicitly (a)wait here, so we can catch a potential exception.
-    return await race(fetchers(params)
-      .map(actionOptions => ow.actions.invoke(actionOptions)
-        .then((res) => {
-          res.actionOptions = actionOptions;
-          return actionOptions.resolve(res);
-        })));
+    return await race(fetchers(params).map(invoker));
   } catch (e) {
     if (Array.isArray(e)) {
       log.error('no valid response could be fetched');
