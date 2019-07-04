@@ -1,3 +1,10 @@
+## [1.3.4](https://github.com/adobe/helix-experimental-dispatch/compare/v1.3.3...v1.3.4) (2019-07-04)
+
+
+### Bug Fixes
+
+* **error:** ensure that 500 is returned when present ([#36](https://github.com/adobe/helix-experimental-dispatch/issues/36)) ([99998b2](https://github.com/adobe/helix-experimental-dispatch/commit/99998b2))
+
 ## [1.3.3](https://github.com/adobe/helix-experimental-dispatch/compare/v1.3.2...v1.3.3) (2019-07-04)
 
 
