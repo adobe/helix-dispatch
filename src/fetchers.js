@@ -9,7 +9,7 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-const path = require('path');
+const path = require('path').posix;
 
 /**
  * Default resolver that rejects statusCodes >= 400.
@@ -41,28 +41,84 @@ function errorPageResolver(res) {
 }
 
 /**
+ * Path info structure.
+ *
+ * @typedef {object} PathInfo
+ * @property {string} path - The path of the requested resource. eg '/foo/index.info.html'.
+ * @property {string} name - The name part of the resolved resource. eg 'index'.
+ * @property {string} selector - The selector of the resolved resource. eg 'info'.
+ * @property {string} ext - The extension of the resolved resource. eg 'html'.
+ * @property {string} relPath - The relative path ot the resolved resource. eg '/foo/index'.
+ */
+
+/**
+ * Resolves the given url in respect to the mount point and potential fallback directory indices.
+ * @param {string} urlPath - The requested path.
+ * @param {string} mount - The mount path of a strain.
+ * @param {string[]} indices - array of indices.
+ * @returns {PathInfo[]} An array of path info structures.
+ */
+function getPathInfos(urlPath, mount, indices) {
+  // check if url has extension, and if not create array of directory indices.
+  const urls = [];
+  if (urlPath.lastIndexOf('.') <= urlPath.lastIndexOf('/')) {
+    // no extension, get the directory index
+    indices.forEach((index) => {
+      urls.push(path.resolve(urlPath || '/', index));
+    });
+  } else {
+    urls.push(urlPath);
+  }
+
+  // calculate the path infos for each url
+  return urls.map((url) => {
+    const lastSlash = url.lastIndexOf('/');
+    const lastDot = url.lastIndexOf('.');
+    if (lastDot <= lastSlash) {
+      // this should not happen, as the directory index should always have an extension.
+      throw new Error('directory index must have an extension.');
+    }
+    const ext = url.substring(lastDot + 1);
+    let name = url.substring(lastSlash + 1, lastDot);
+    let relPath = url.substring(0, lastDot);
+
+    // check for selector
+    let selector = '';
+    const selDot = relPath.lastIndexOf('.');
+    if (selDot > lastSlash) {
+      name = url.substring(lastSlash + 1, selDot);
+      selector = relPath.substring(selDot + 1);
+      relPath = relPath.substring(0, selDot);
+    }
+
+    // remove mount root if needed
+    let pth = url;
+    if (mount && mount !== '/') {
+      // strain selection should only select strains that match the url. but better check again
+      if (`${relPath}/`.startsWith(`${mount}/`)) {
+        relPath = relPath.substring(mount.length);
+        pth = url.substring(mount.length);
+      }
+    }
+
+    return {
+      path: pth,
+      name,
+      selector,
+      ext,
+      relPath,
+    };
+  });
+}
+
+/**
  * Returns the action options to fetch the contents from.
  * @param {object} params - action params
  * @returns {Array} Array of action options to use to ow.action.invoke
  */
 function fetchers(params = {}) {
-  const url = params.path || '/';
-  const {
-    dir, ext, base,
-  } = path.parse(url);
-
-  const names = [];
-  // no extension, get the directory index
-  if (!ext) {
-    const dirindex = (params['content.index'] || 'index.html,README.html').split(',');
-    // and build a new path with the directory index
-    dirindex.reduce((allnames, index) => {
-      allnames.push(path.resolve(dir, base, index));
-      return allnames;
-    }, names);
-  } else {
-    names.push(path.resolve(dir, base));
-  }
+  const dirindex = (params['content.index'] || 'index.html,README.html').split(',');
+  const infos = getPathInfos(params.path || '/', params.mount || '', dirindex);
 
   const staticOpts = {
     owner: params['static.owner'],
@@ -84,15 +140,15 @@ function fetchers(params = {}) {
   const staticaction = contentOpts.package ? `${contentOpts.package}/hlx--static` : 'helix-services/static@v1';
 
   // first, try to get the raw content from the content repo
-  names.forEach((name) => {
+  infos.forEach((info) => {
     attempts.push({
       resolve: defaultResolver,
       name: staticaction,
       blocking: true,
       result: true,
       params: {
-        path: name,
-        entry: name,
+        path: info.path,
+        entry: info.path,
         esi: false,
         plain: true,
         root: params['content.root'],
@@ -102,11 +158,8 @@ function fetchers(params = {}) {
   });
 
   // then, try to call the action
-  names.forEach((name) => {
-    const extension = path.extname(name);
-    const selector = (path.basename(name, extension).match(/\.(.*)/) || ['', ''])[1];
-    const actionname = `${contentOpts.package || 'default'}/${selector ? `${selector}_` : ''}${extension.replace(/^\./, '')}`;
-    const resource = path.resolve(params['content.root'], path.dirname(name), `${path.basename(name, extension)}.md`);
+  infos.forEach((info) => {
+    const actionname = `${contentOpts.package || 'default'}/${info.selector ? `${info.selector}_` : ''}${info.ext}`;
 
     attempts.push({
       resolve: defaultResolver,
@@ -114,22 +167,22 @@ function fetchers(params = {}) {
       blocking: true,
       result: true,
       params: {
-        path: resource,
+        path: `${info.relPath}.md`,
         ...contentOpts,
       },
     });
   });
 
   // then, try to get the raw content from the static repo
-  names.forEach((name) => {
+  infos.forEach((info) => {
     attempts.push({
       resolve: defaultResolver,
       name: staticaction,
       blocking: true,
       result: true,
       params: {
-        path: name,
-        entry: name,
+        path: info.path,
+        entry: info.path,
         esi: false,
         plain: true,
         ...staticOpts,
@@ -170,4 +223,9 @@ function fetchers(params = {}) {
   return attempts;
 }
 
-module.exports = { fetchers, defaultResolver, errorPageResolver };
+module.exports = {
+  fetchers,
+  defaultResolver,
+  errorPageResolver,
+  getPathInfos,
+};
