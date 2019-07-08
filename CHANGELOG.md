@@ -1,3 +1,10 @@
+## [1.3.5](https://github.com/adobe/helix-experimental-dispatch/compare/v1.3.4...v1.3.5) (2019-07-08)
+
+
+### Bug Fixes
+
+* **package:** update epsagon to version 1.29.0 ([8c867f2](https://github.com/adobe/helix-experimental-dispatch/commit/8c867f2))
+
 ## [1.3.4](https://github.com/adobe/helix-experimental-dispatch/compare/v1.3.3...v1.3.4) (2019-07-04)
 
 
