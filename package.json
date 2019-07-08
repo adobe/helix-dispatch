@@ -30,7 +30,7 @@
   "dependencies": {
     "@adobe/helix-pingdom-status": "^1.4.0",
     "@adobe/openwhisk-action-builder": "^1.0.2",
-    "epsagon": "^1.27.1",
+    "epsagon": "^1.29.0",
     "openwhisk": "^3.19.0",
     "snyk": "^1.192.3"
   },
