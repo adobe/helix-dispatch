@@ -41,7 +41,7 @@ describe('Test custom Promise.race', () => {
     try {
       await race([timeout(0, false)]);
     } catch (e) {
-      assert.equal(e.message, 'fail');
+      assert.equal(e[0].message, 'fail');
     }
   });
 

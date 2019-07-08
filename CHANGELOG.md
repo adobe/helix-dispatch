@@ -1,3 +1,38 @@
+## [1.3.4](https://github.com/adobe/helix-experimental-dispatch/compare/v1.3.3...v1.3.4) (2019-07-04)
+
+
+### Bug Fixes
+
+* **error:** ensure that 500 is returned when present ([#36](https://github.com/adobe/helix-experimental-dispatch/issues/36)) ([99998b2](https://github.com/adobe/helix-experimental-dispatch/commit/99998b2))
+
+## [1.3.3](https://github.com/adobe/helix-experimental-dispatch/compare/v1.3.2...v1.3.3) (2019-07-04)
+
+
+### Bug Fixes
+
+* **fetcher:** only try to fetch 404.html for html requests ([#34](https://github.com/adobe/helix-experimental-dispatch/issues/34)) ([c234252](https://github.com/adobe/helix-experimental-dispatch/commit/c234252)), closes [#30](https://github.com/adobe/helix-experimental-dispatch/issues/30)
+
+## [1.3.2](https://github.com/adobe/helix-experimental-dispatch/compare/v1.3.1...v1.3.2) (2019-07-04)
+
+
+### Bug Fixes
+
+* **dynamic:** handle selector properly when invoking action ([#33](https://github.com/adobe/helix-experimental-dispatch/issues/33)) ([f5c29b8](https://github.com/adobe/helix-experimental-dispatch/commit/f5c29b8)), closes [#31](https://github.com/adobe/helix-experimental-dispatch/issues/31)
+
+## [1.3.1](https://github.com/adobe/helix-experimental-dispatch/compare/v1.3.0...v1.3.1) (2019-07-03)
+
+
+### Bug Fixes
+
+* **index:** improve error handling ([#27](https://github.com/adobe/helix-experimental-dispatch/issues/27)) ([6f0f949](https://github.com/adobe/helix-experimental-dispatch/commit/6f0f949)), closes [#25](https://github.com/adobe/helix-experimental-dispatch/issues/25)
+
+# [1.3.0](https://github.com/adobe/helix-experimental-dispatch/compare/v1.2.3...v1.3.0) (2019-06-25)
+
+
+### Features
+
+* **monitoring:** add monitoring with Epsagon ([7e8cabe](https://github.com/adobe/helix-experimental-dispatch/commit/7e8cabe))
+
 ## [1.2.3](https://github.com/adobe/helix-experimental-dispatch/compare/v1.2.2...v1.2.3) (2019-06-24)
 
 
