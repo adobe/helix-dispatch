@@ -32,7 +32,7 @@
     "@adobe/openwhisk-action-builder": "^1.0.2",
     "epsagon": "^1.29.0",
     "openwhisk": "^3.19.0",
-    "snyk": "^1.192.3"
+    "snyk": "^1.192.4"
   },
   "devDependencies": {
     "@adobe/helix-shared": "^1.5.0",
