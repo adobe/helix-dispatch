@@ -254,6 +254,18 @@ describe('testing path info resolution', () => {
         relPath: '/hello.test',
       }],
     },
+    {
+      url: '//index.html',
+      indices: ['index.html'],
+      mount: '',
+      expected: [{
+        path: '/index.html',
+        name: 'index',
+        selector: '',
+        ext: 'html',
+        relPath: '/index',
+      }],
+    },
   ];
 
   tests.forEach((test, idx) => {

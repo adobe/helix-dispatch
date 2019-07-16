@@ -59,6 +59,8 @@ function errorPageResolver(res) {
  * @returns {PathInfo[]} An array of path info structures.
  */
 function getPathInfos(urlPath, mount, indices) {
+  // eslint-disable-next-line no-param-reassign
+  urlPath = urlPath.replace(/\/+/, '/');
   // check if url has extension, and if not create array of directory indices.
   const urls = [];
   if (urlPath.lastIndexOf('.') <= urlPath.lastIndexOf('/')) {
@@ -118,7 +120,7 @@ function getPathInfos(urlPath, mount, indices) {
  */
 function fetchers(params = {}) {
   const dirindex = (params['content.index'] || 'index.html,README.html').split(',');
-  const infos = getPathInfos(params.path || '/', params.mount || '', dirindex);
+  const infos = getPathInfos(params.path || '/', params.rootPath || '', dirindex);
 
   const staticOpts = {
     owner: params['static.owner'],
@@ -138,6 +140,13 @@ function fetchers(params = {}) {
 
   const attempts = [];
   const staticaction = contentOpts.package ? `${contentOpts.package}/hlx--static` : 'helix-services/static@v1';
+
+  const wskOpts = {
+    // eslint-disable-next-line no-underscore-dangle
+    __ow_headers: params.__ow_headers,
+    // eslint-disable-next-line no-underscore-dangle
+    __ow_method: params.__ow_method,
+  };
 
   // first, try to get the raw content from the content repo
   infos.forEach((info) => {
@@ -166,6 +175,8 @@ function fetchers(params = {}) {
       blocking: true,
       params: {
         path: `${info.relPath}.md`,
+        rootPath: params.rootPath || '',
+        ...wskOpts,
         ...contentOpts,
       },
     });
@@ -182,6 +193,7 @@ function fetchers(params = {}) {
         entry: info.path,
         esi: false,
         plain: true,
+        ...wskOpts,
         ...staticOpts,
       },
     });
