@@ -82,6 +82,7 @@ describe('Index Tests', () => {
       __ow_method: 'get',
     });
     delete result.actionOptions;
+    delete result.headers['X-Version'];
     assert.equal(result.statusCode, 200);
     assert.deepEqual(result.headers, {
       'Content-Type': 'application/xml',
