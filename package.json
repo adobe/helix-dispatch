@@ -34,7 +34,7 @@
     "snyk": "^1.193.2"
   },
   "devDependencies": {
-    "@adobe/helix-shared": "^1.5.1",
+    "@adobe/helix-shared": "^2.0.0",
     "@semantic-release/changelog": "^3.0.2",
     "@semantic-release/commit-analyzer": "^6.1.0",
     "@semantic-release/exec": "^3.3.5",
