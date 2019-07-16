@@ -189,4 +189,20 @@ describe('Index Tests', () => {
       statusCode: 500,
     });
   });
+
+  it.only('X-CACHECONTROL header set the Cache-Control response header', async () => {
+    const result = await index({
+      __ow_headers: {
+        'X-CACHECONTROL': 'custom-cache-value',
+      },
+    });
+    delete result.actionOptions;
+    assert.deepEqual(result, {
+      statusCode: 200,
+      body: 'Hello, world.',
+      headers: {
+        'Cache-Control': 'custom-cache-value',
+      },
+    });
+  });
 });
