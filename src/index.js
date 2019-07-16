@@ -56,7 +56,19 @@ async function executeActions(params) {
 
   try {
     // we explicitly (a)wait here, so we can catch a potential exception.
-    return await race(fetchers(params).map(invoker));
+    const resp = await race(fetchers(params).map(invoker));
+
+    // check if X-CACHECONTROL header is in the request,
+    // this will override the Cache-Control response header
+
+    // eslint-disable-next-line no-underscore-dangle
+    if (resp && params.__ow_headers && params.__ow_headers['X-CACHECONTROL']) {
+      resp.headers = resp.headers || {};
+      // eslint-disable-next-line no-underscore-dangle
+      resp.headers['Cache-Control'] = params.__ow_headers['X-CACHECONTROL'];
+    }
+
+    return resp;
   } catch (e) {
     if (Array.isArray(e)) {
       log.error('no valid response could be fetched');
