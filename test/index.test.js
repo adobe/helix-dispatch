@@ -190,7 +190,7 @@ describe('Index Tests', () => {
     });
   });
 
-  it.only('X-CACHECONTROL header set the Cache-Control response header', async () => {
+  it('X-CACHECONTROL header set the Cache-Control response header', async () => {
     const result = await index({
       __ow_headers: {
         'X-CACHECONTROL': 'custom-cache-value',
