@@ -99,6 +99,22 @@ describe('Index Tests', () => {
     });
   });
 
+  it('X-CACHECONTROL header set the Cache-Control response header', async () => {
+    const result = await index({
+      __ow_headers: {
+        'X-CACHECONTROL': 'custom-cache-value',
+      },
+    });
+    delete result.actionOptions;
+    assert.deepEqual(result, {
+      statusCode: 200,
+      body: 'Hello, world.',
+      headers: {
+        'Cache-Control': 'custom-cache-value',
+      },
+    });
+  });
+
   it('index returns 404 response', async () => {
     const logger = Logger.getTestLogger({
       // tune this for debugging
@@ -187,22 +203,6 @@ describe('Index Tests', () => {
 
     assert.deepEqual(result, {
       statusCode: 500,
-    });
-  });
-
-  it('X-CACHECONTROL header set the Cache-Control response header', async () => {
-    const result = await index({
-      __ow_headers: {
-        'X-CACHECONTROL': 'custom-cache-value',
-      },
-    });
-    delete result.actionOptions;
-    assert.deepEqual(result, {
-      statusCode: 200,
-      body: 'Hello, world.',
-      headers: {
-        'Cache-Control': 'custom-cache-value',
-      },
     });
   });
 });
