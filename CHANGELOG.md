@@ -1,3 +1,10 @@
+## [1.3.6](https://github.com/adobe/helix-experimental-dispatch/compare/v1.3.5...v1.3.6) (2019-07-16)
+
+
+### Bug Fixes
+
+* **test:** adjust to new outpu from pingdom-status ([ee5937f](https://github.com/adobe/helix-experimental-dispatch/commit/ee5937f))
+
 ## [1.3.5](https://github.com/adobe/helix-experimental-dispatch/compare/v1.3.4...v1.3.5) (2019-07-08)
 
 
