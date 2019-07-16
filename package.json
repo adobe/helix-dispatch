@@ -1,6 +1,6 @@
 {
   "name": "@adobe/helix-experimental-dispatch",
-  "version": "1.3.6",
+  "version": "1.3.7",
   "description": "Example Package",
   "main": "src/index.js",
   "scripts": {
@@ -71,7 +71,7 @@
     }
   },
   "wsk": {
-    "name": "helix-services/experimental-dispatch@1.3.6",
+    "name": "helix-services/experimental-dispatch@1.3.7",
     "static": []
   }
 }

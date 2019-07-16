@@ -1,3 +1,10 @@
+## [1.3.7](https://github.com/adobe/helix-experimental-dispatch/compare/v1.3.6...v1.3.7) (2019-07-16)
+
+
+### Bug Fixes
+
+* **fetcher:** ensure __ow_headers are send to action and path is sanitized ([#48](https://github.com/adobe/helix-experimental-dispatch/issues/48)) ([8ff7bad](https://github.com/adobe/helix-experimental-dispatch/commit/8ff7bad)), closes [#46](https://github.com/adobe/helix-experimental-dispatch/issues/46) [#45](https://github.com/adobe/helix-experimental-dispatch/issues/45)
+
 ## [1.3.6](https://github.com/adobe/helix-experimental-dispatch/compare/v1.3.5...v1.3.6) (2019-07-16)
 
 
