@@ -99,7 +99,7 @@ describe('Index Tests', () => {
     });
   });
 
-  it('X-CACHECONTROL header set the Cache-Control response header', async () => {
+  it('X-Dispatch-NoCache header is set, Cache-Control and Surrogate-Control response header are set', async () => {
     const result = await index({
       __ow_headers: {
         'X-Dispatch-NoCache': 'true',
