@@ -62,6 +62,8 @@ async function executeActions(params) {
     // check if X-CACHECONTROL header is in the request,
     // this will override the Cache-Control response header
 
+    log.info('received params', JSON.stringify(params));
+
     // eslint-disable-next-line no-underscore-dangle
     if (resp && params.__ow_headers && params.__ow_headers['x-cachecontrol']) {
       resp.headers = resp.headers || {};
