@@ -110,7 +110,8 @@ describe('Index Tests', () => {
       statusCode: 200,
       body: 'Hello, world.',
       headers: {
-        'Surrogate-Control': 'custom-cache-value',
+        'Surrogate-Control': 'no-store',
+        'Cache-Control': 'maxage=604800',
       },
     });
   });
