@@ -68,7 +68,7 @@ async function executeActions(params) {
     if (resp && params.__ow_headers && params.__ow_headers['x-cachecontrol']) {
       resp.headers = resp.headers || {};
       // eslint-disable-next-line no-underscore-dangle
-      resp.headers['Cache-Control'] = params.__ow_headers['x-cachecontrol'];
+      resp.headers['Surrogate-Control'] = params.__ow_headers['x-cachecontrol'];
     }
 
     return resp;
