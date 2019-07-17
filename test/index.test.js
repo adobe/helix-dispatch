@@ -98,6 +98,7 @@ describe('Index Tests', () => {
       body: 'Hello, world.',
       headers: {
         'Cache-Control': 'no-cache',
+        'Surrogate-Control': 'max-age=0',
       },
     });
   });
@@ -114,6 +115,7 @@ describe('Index Tests', () => {
       body: 'Hello, world.',
       headers: {
         'Cache-Control': 'no-cache',
+        'Surrogate-Control': 'max-age=0',
       },
     });
   });

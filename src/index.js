@@ -69,6 +69,7 @@ async function executeActions(params) {
     resp.headers = resp.headers || {};
     // eslint-disable-next-line no-underscore-dangle
     resp.headers['Cache-Control'] = 'no-cache';
+    resp.headers['Surrogate-Control'] = 'max-age=0';
     // }
 
     return resp;
