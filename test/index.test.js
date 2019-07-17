@@ -111,7 +111,7 @@ describe('Index Tests', () => {
       body: 'Hello, world.',
       headers: {
         'Surrogate-Control': 'no-store',
-        'Cache-Control': 'maxage=604800',
+        'Cache-Control': 'max-age=604800',
       },
     });
   });
