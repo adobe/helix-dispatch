@@ -68,7 +68,7 @@ async function executeActions(params) {
     // if (resp && params.__ow_headers && params.__ow_headers['x-cachecontrol']) {
     resp.headers = resp.headers || {};
     // eslint-disable-next-line no-underscore-dangle
-    resp.headers['Cache-Control'] = 'no-cache';
+    resp.headers['Cache-Control'] = 'max-age=604800, private';
     resp.headers['Surrogate-Control'] = 'max-age=0';
     // }
 

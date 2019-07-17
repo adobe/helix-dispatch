@@ -97,7 +97,7 @@ describe('Index Tests', () => {
       statusCode: 200,
       body: 'Hello, world.',
       headers: {
-        'Cache-Control': 'no-cache',
+        'Cache-Control': 'max-age=604800, private',
         'Surrogate-Control': 'max-age=0',
       },
     });
@@ -114,7 +114,7 @@ describe('Index Tests', () => {
       statusCode: 200,
       body: 'Hello, world.',
       headers: {
-        'Cache-Control': 'no-cache',
+        'Cache-Control': 'max-age=604800, private',
         'Surrogate-Control': 'max-age=0',
       },
     });
