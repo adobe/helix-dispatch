@@ -62,15 +62,13 @@ async function executeActions(params) {
     // check if X-CACHECONTROL header is in the request,
     // this will override the Cache-Control response header
 
-    log.info('received params', JSON.stringify(params));
-
     // eslint-disable-next-line no-underscore-dangle
-    // if (resp && params.__ow_headers && params.__ow_headers['x-cachecontrol']) {
-    resp.headers = resp.headers || {};
-    // eslint-disable-next-line no-underscore-dangle
-    resp.headers['Cache-Control'] = 'max-age=604800, private';
-    resp.headers['Surrogate-Control'] = 'max-age=0';
-    // }
+    if (resp && params.__ow_headers && params.__ow_headers['X-Dispatch-NoCache']) {
+      log.info('received no cachce instruction via X-Dispatch-NoCache header');
+      resp.headers = resp.headers || {};
+      resp.headers['Cache-Control'] = 'max-age=604800, private';
+      resp.headers['Surrogate-Control'] = 'max-age=0';
+    }
 
     return resp;
   } catch (e) {

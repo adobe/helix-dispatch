@@ -96,17 +96,13 @@ describe('Index Tests', () => {
     assert.deepEqual(result, {
       statusCode: 200,
       body: 'Hello, world.',
-      headers: {
-        'Cache-Control': 'max-age=604800, private',
-        'Surrogate-Control': 'max-age=0',
-      },
     });
   });
 
   it('X-CACHECONTROL header set the Cache-Control response header', async () => {
     const result = await index({
       __ow_headers: {
-        'x-cachecontrol': 'custom-cache-value',
+        'X-Dispatch-NoCache': 'true',
       },
     });
     delete result.actionOptions;
