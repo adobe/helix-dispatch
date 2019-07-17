@@ -96,6 +96,9 @@ describe('Index Tests', () => {
     assert.deepEqual(result, {
       statusCode: 200,
       body: 'Hello, world.',
+      headers: {
+        'Cache-Control': 'no-cache',
+      },
     });
   });
 
