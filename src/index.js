@@ -65,11 +65,11 @@ async function executeActions(params) {
     log.info('received params', JSON.stringify(params));
 
     // eslint-disable-next-line no-underscore-dangle
-    if (resp && params.__ow_headers && params.__ow_headers['x-cachecontrol']) {
-      resp.headers = resp.headers || {};
-      // eslint-disable-next-line no-underscore-dangle
-      resp.headers['Cache-Control'] = 'no-cache';
-    }
+    // if (resp && params.__ow_headers && params.__ow_headers['x-cachecontrol']) {
+    resp.headers = resp.headers || {};
+    // eslint-disable-next-line no-underscore-dangle
+    resp.headers['Cache-Control'] = 'no-cache';
+    // }
 
     return resp;
   } catch (e) {
