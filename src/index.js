@@ -59,12 +59,13 @@ async function executeActions(params) {
     // we explicitly (a)wait here, so we can catch a potential exception.
     const resp = await race(fetchers(params).map(invoker));
 
-    // check if X-CACHECONTROL header is in the request,
-    // this will override the Cache-Control response header
+    // check if X-Dispatch-NoCache header is in the request,
+    // this will override the Cache-Control and Surrogate-Control
+    // response headers to ensure no caching
 
     // eslint-disable-next-line no-underscore-dangle
     if (resp && params.__ow_headers && params.__ow_headers['X-Dispatch-NoCache']) {
-      log.info('received no cachce instruction via X-Dispatch-NoCache header');
+      log.info('received no cache instruction via X-Dispatch-NoCache header');
       resp.headers = resp.headers || {};
       resp.headers['Cache-Control'] = 'max-age=604800, private';
       resp.headers['Surrogate-Control'] = 'max-age=0';
