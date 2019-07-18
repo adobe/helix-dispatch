@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/adobe/helix-experimental-dispatch/compare/v1.3.7...v1.4.0) (2019-07-18)
+
+
+### Features
+
+* **cache:** add request header to disable the cache in response ([4373d67](https://github.com/adobe/helix-experimental-dispatch/commit/4373d67))
+
 ## [1.3.7](https://github.com/adobe/helix-experimental-dispatch/compare/v1.3.6...v1.3.7) (2019-07-16)
 
 
