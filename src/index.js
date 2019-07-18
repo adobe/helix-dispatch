@@ -134,6 +134,7 @@ async function main(params, logger = log) {
   try {
     log = setupLogger(params, logger);
     const result = await run(params);
+    log.info(`Final result is ${JSON.stringify(result, null, 2)}`);
     if (log.flush) {
       log.flush(); // don't wait
     }
