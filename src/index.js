@@ -48,6 +48,7 @@ async function executeActions(params) {
     log.info(`[${idx}] Action: ${JSON.stringify(actionOptions, null, 2)}`);
     return ow.actions.invoke(actionOptions)
       .then((reply) => {
+        log.info(`[${idx}] Action reply: ${JSON.stringify(reply, null, 2)}`);
         const res = reply.response.result;
         res.actionOptions = actionOptions;
         log.info(`[${idx}] ${reply.activationId} ${res.statusCode} ${res.errorMessage || ''}`);
