@@ -67,7 +67,7 @@ async function executeActions(params) {
     if (resp && params.__ow_headers && params.__ow_headers['X-Dispatch-NoCache']) {
       log.info('received no cache instruction via X-Dispatch-NoCache header');
       resp.headers = resp.headers || {};
-      resp.headers['Cache-Control'] = 'max-age=604800, private';
+      resp.headers['Cache-Control'] = 'max-age=604800, must-revalidate, private';
       resp.headers['Surrogate-Control'] = 'max-age=0';
     }
 

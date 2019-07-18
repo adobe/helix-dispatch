@@ -110,7 +110,7 @@ describe('Index Tests', () => {
       statusCode: 200,
       body: 'Hello, world.',
       headers: {
-        'Cache-Control': 'max-age=604800, private',
+        'Cache-Control': 'max-age=604800, must-revalidate, private',
         'Surrogate-Control': 'max-age=0',
       },
     });
