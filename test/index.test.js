@@ -99,6 +99,23 @@ describe('Index Tests', () => {
     });
   });
 
+  it('X-Dispatch-NoCache header is set, Cache-Control and Surrogate-Control response header are set', async () => {
+    const result = await index({
+      __ow_headers: {
+        'x-dispatch-nocache': 'true',
+      },
+    });
+    delete result.actionOptions;
+    assert.deepEqual(result, {
+      statusCode: 200,
+      body: 'Hello, world.',
+      headers: {
+        'Cache-Control': 'max-age=604800, must-revalidate, private',
+        'Surrogate-Control': 'max-age=0',
+      },
+    });
+  });
+
   it('index returns 404 response', async () => {
     const logger = Logger.getTestLogger({
       // tune this for debugging

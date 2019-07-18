@@ -57,7 +57,23 @@ async function executeActions(params) {
 
   try {
     // we explicitly (a)wait here, so we can catch a potential exception.
-    return await race(fetchers(params).map(invoker));
+    const resp = await race(fetchers(params).map(invoker));
+
+    // check if X-Dispatch-NoCache header is in the request,
+    // this will override the Cache-Control and Surrogate-Control
+    // response headers to ensure no caching
+
+    log.debug(`received params ${JSON.stringify(params, null, 2)}`);
+
+    // eslint-disable-next-line no-underscore-dangle
+    if (resp && params.__ow_headers && params.__ow_headers['x-dispatch-nocache']) {
+      log.info('received no cache instruction via X-Dispatch-NoCache header');
+      resp.headers = resp.headers || {};
+      resp.headers['Cache-Control'] = 'max-age=604800, must-revalidate, private';
+      resp.headers['Surrogate-Control'] = 'max-age=0';
+    }
+
+    return resp;
   } catch (e) {
     if (Array.isArray(e)) {
       log.error('no valid response could be fetched');
