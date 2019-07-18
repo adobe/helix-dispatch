@@ -63,6 +63,13 @@ async function executeActions(params) {
     // this will override the Cache-Control and Surrogate-Control
     // response headers to ensure no caching
 
+    log.info(`resp ${JSON.stringify(resp, null, 2)}`);
+    log.info('');
+    log.info('');
+    log.info(`received params ${JSON.stringify(params, null, 2)}`);
+    log.info('');
+    log.info('');
+
     // eslint-disable-next-line no-underscore-dangle
     if (resp && params.__ow_headers && params.__ow_headers['X-Dispatch-NoCache']) {
       log.info('received no cache instruction via X-Dispatch-NoCache header');
