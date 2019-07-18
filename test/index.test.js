@@ -102,7 +102,7 @@ describe('Index Tests', () => {
   it('X-Dispatch-NoCache header is set, Cache-Control and Surrogate-Control response header are set', async () => {
     const result = await index({
       __ow_headers: {
-        'X-Dispatch-NoCache': 'true',
+        'x-dispatch-nocache': 'true',
       },
     });
     delete result.actionOptions;
