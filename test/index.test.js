@@ -80,6 +80,7 @@ describe('Index Tests', () => {
   it('index returns pingdom response', async () => {
     const result = await index({
       __ow_method: 'get',
+      __ow_path: '/_status_check/pingdom.xml',
     });
     delete result.actionOptions;
     delete result.headers['X-Version'];
