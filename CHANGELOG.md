@@ -1,3 +1,10 @@
+## [1.4.2](https://github.com/adobe/helix-experimental-dispatch/compare/v1.4.1...v1.4.2) (2019-07-26)
+
+
+### Bug Fixes
+
+* **package:** update @adobe/helix-pingdom-status to version 3.0.0 ([d8e5fe2](https://github.com/adobe/helix-experimental-dispatch/commit/d8e5fe2))
+
 ## [1.4.1](https://github.com/adobe/helix-experimental-dispatch/compare/v1.4.0...v1.4.1) (2019-07-24)
 
 
