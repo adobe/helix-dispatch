@@ -23,13 +23,14 @@ const opts = {
   'content.package': '60ef2a011a6a91647eba00f798e9c16faa9f78ce',
 };
 
-function logres(res) {
+function logres(r) {
   // eslint-disable-next-line no-console
+  Promise.all(r).then(res => {
   console.table(res.map(r => ({
     name: r.name,
     owner: r.params.owner,
     path: r.params.path,
-  })));
+  })))});
 }
 
 describe('testing fetchers.js', () => {
@@ -40,18 +41,19 @@ describe('testing fetchers.js', () => {
     logres(res);
   });
 
-  it('fetch basic HTML', () => {
-    const res = fetchers({
+  it('fetch basic HTML', async () => {
+    const res = await Promise.all(fetchers({
       ...opts,
       path: '/dir/example.html',
-    });
+    }));
 
+    logres(res);
     assert.equal(res.length, 5);
     assert.equal(res[0].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/hlx--static');
     assert.equal(res[0].params.path, '/dir/example.html');
     assert.equal(res[1].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html');
     assert.equal(res[1].params.path, '/dir/example.md');
-    logres(res);
+    
   });
 
   it('fetch HTML with selector', () => {

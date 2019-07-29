@@ -114,13 +114,15 @@ function getPathInfos(urlPath, mount, indices) {
 }
 
 
-function fetch404(infos, staticaction, contentOpts, staticOpts) {
+function fetch404(infos, contentPromise, staticPromise) {
   const attempts = [];
   if (infos[0].ext === 'html') {
     // then get the 404.html from the content repo, but only for html requests
-    attempts.push({
+    attempts.push(contentPromise.then(contentOpts => {
+
+      return {
       resolve: errorPageResolver,
-      name: staticaction,
+      name: staticaction(contentOpts),
       blocking: true,
       params: {
         path: '/404.html',
@@ -129,11 +131,11 @@ function fetch404(infos, staticaction, contentOpts, staticOpts) {
         plain: true,
         ...contentOpts,
       },
-    });
+    }}));
     // if all fails, get the 404.html from the static repo
-    attempts.push({
+    attempts.push(staticPromise.then(staticOpts => contentPromise.then(contentOpts => ({
       resolve: errorPageResolver,
-      name: staticaction,
+      name: staticaction(contentOpts),
       blocking: true,
       params: {
         path: '/404.html',
@@ -142,15 +144,15 @@ function fetch404(infos, staticaction, contentOpts, staticOpts) {
         plain: true,
         ...staticOpts,
       },
-    });
+    }))));
   }
   return attempts;
 }
 
-function fetchfallback(infos, staticaction, wskOpts, staticOpts) {
-  return infos.map(info => ({
+function fetchfallback(infos, wskOpts, contentPromise, staticPromise) {
+  return infos.map(info => staticPromise.then(staticOpts => contentPromise.then(contentOpts => ({
     resolve: defaultResolver,
-    name: staticaction,
+    name: staticaction(contentOpts),
     blocking: true,
     params: {
       path: info.path,
@@ -160,11 +162,11 @@ function fetchfallback(infos, staticaction, wskOpts, staticOpts) {
       ...wskOpts,
       ...staticOpts,
     },
-  }));
+  }))));
 }
 
-function fetchaction(infos, contentOpts, params, wskOpts) {
-  return infos.map((info) => {
+function fetchaction(infos, contentPromise, params, wskOpts) {
+  return infos.map(info => contentPromise.then(contentOpts => {
     const actionname = `${contentOpts.package || 'default'}/${info.selector ? `${info.selector}_` : ''}${info.ext}`;
     return {
       resolve: defaultResolver,
@@ -177,13 +179,13 @@ function fetchaction(infos, contentOpts, params, wskOpts) {
         ...contentOpts,
       },
     };
-  });
+  }));
 }
 
-function fetchraw(infos, staticaction, params, contentOpts) {
-  return infos.map(info => ({
+function fetchraw(infos, params, contentPromise) {
+  return infos.map(info => contentPromise.then(contentOpts => ({
     resolve: defaultResolver,
-    name: staticaction,
+    name: staticaction(contentOpts),
     blocking: true,
     params: {
       path: info.path,
@@ -193,7 +195,19 @@ function fetchraw(infos, staticaction, params, contentOpts) {
       root: params['content.root'],
       ...contentOpts,
     },
-  }));
+  })));
+}
+
+function resolveOpts(opts) {
+  const { ref } = opts;
+  if (ref && ref.match(/^[a-f0-9]{40}$/i)) {
+    return Promise.resolve(opts);
+  }
+  return Promise.resolve(opts);
+}
+
+function staticaction(contentOpts) {
+  return contentOpts.package ? `${contentOpts.package}/hlx--static` : 'helix-services/static@v1';
 }
 
 
@@ -206,23 +220,21 @@ function fetchers(params = {}) {
   const dirindex = (params['content.index'] || 'index.html,README.html').split(',');
   const infos = getPathInfos(params.path || '/', params.rootPath || '', dirindex);
 
-  const staticOpts = {
+  const staticOpts = resolveOpts({
     owner: params['static.owner'],
     repo: params['static.repo'],
     ref: params['static.ref'],
     esi: params['static.esi'],
     root: params['static.root'],
-  };
+  });
 
-  const contentOpts = {
+  const contentOpts = resolveOpts({
     owner: params['content.owner'],
     repo: params['content.repo'],
     ref: params['content.ref'],
     package: params['content.package'],
     params: params.params,
-  };
-
-  const staticaction = contentOpts.package ? `${contentOpts.package}/hlx--static` : 'helix-services/static@v1';
+  });
 
   const wskOpts = {
     // eslint-disable-next-line no-underscore-dangle
@@ -233,13 +245,13 @@ function fetchers(params = {}) {
 
   return [
     // try to get the raw content from the content repo
-    ...fetchraw(infos, staticaction, params, contentOpts),
+    ...fetchraw(infos, params, contentOpts),
     // then, try to call the action
     ...fetchaction(infos, contentOpts, params, wskOpts),
     // try to get the raw content from the static repo
-    ...fetchfallback(infos, staticaction, wskOpts, staticOpts),
+    ...fetchfallback(infos, wskOpts, contentOpts, staticOpts),
     // finally, fetch the 404 pages
-    ...fetch404(infos, staticaction, contentOpts, staticOpts),
+    ...fetch404(infos, contentOpts, staticOpts),
   ];
 }
 
