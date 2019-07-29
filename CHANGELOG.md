@@ -1,3 +1,10 @@
+## [1.4.3](https://github.com/adobe/helix-experimental-dispatch/compare/v1.4.2...v1.4.3) (2019-07-29)
+
+
+### Bug Fixes
+
+* **package:** update snyk to version 2.0.0 ([370d899](https://github.com/adobe/helix-experimental-dispatch/commit/370d899))
+
 ## [1.4.2](https://github.com/adobe/helix-experimental-dispatch/compare/v1.4.1...v1.4.2) (2019-07-26)
 
 
