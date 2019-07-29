@@ -56,6 +56,21 @@ describe('testing fetchers.js', () => {
     assert.equal(res[1].params.path, '/dir/example.md');
   });
 
+  it('fetch basic HTML from sha', async () => {
+    const res = await Promise.all(fetchers({
+      ...opts,
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      path: '/dir/example.html',
+    }));
+
+    logres(res);
+    assert.equal(res.length, 5);
+    assert.equal(res[0].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/hlx--static');
+    assert.equal(res[0].params.path, '/dir/example.html');
+    assert.equal(res[1].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html');
+    assert.equal(res[1].params.path, '/dir/example.md');
+  });
+
   it('fetch HTML with selector', () => {
     const res = fetchers({
       ...opts,
