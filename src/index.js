@@ -13,7 +13,7 @@
 const openwhisk = require('openwhisk');
 const { logger: setupLogger } = require('@adobe/openwhisk-action-builder/src/logging');
 const { wrap } = require('@adobe/helix-pingdom-status');
-const race = require('./race');
+const resolvePreferred = require('./resolve-preferred');
 const { fetchers } = require('./fetchers');
 
 // global logger
@@ -57,7 +57,7 @@ async function executeActions(params) {
 
   try {
     // we explicitly (a)wait here, so we can catch a potential exception.
-    const resp = await race(fetchers(params).map(invoker));
+    const resp = await resolvePreferred(fetchers(params).map(invoker));
 
     // check if X-Dispatch-NoCache header is in the request,
     // this will override the Cache-Control and Surrogate-Control

@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-const race = promises => new Promise((resolve, reject) => {
+const resolvePreferred = promises => new Promise((resolve, reject) => {
   const results = new Array(promises.length);
   let resolved = false;
   const unihandler = (idx, val, err) => {
@@ -45,4 +45,4 @@ const race = promises => new Promise((resolve, reject) => {
   });
 });
 
-module.exports = race;
+module.exports = resolvePreferred;
