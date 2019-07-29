@@ -11,11 +11,36 @@
  */
 
 /* eslint-env mocha */
+const proxyquire = require('proxyquire');
 const assert = require('assert');
 const { AssertionError } = require('assert');
 const {
-  fetchers, defaultResolver, errorPageResolver, getPathInfos,
+  defaultResolver, errorPageResolver, getPathInfos,
 } = require('../src/fetchers');
+
+const { fetchers } = proxyquire('../src/fetchers', {
+  openwhisk() {
+    return {
+      actions: {
+        invoke({ params: { ref } }) {
+          if (ref === 'branch') {
+            return Promise.reject(new Error('unknown'));
+          }
+          return Promise.resolve({
+            body: {
+              fqRef: 'refs/heads/master',
+              sha: '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+            },
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            statusCode: 200,
+          });
+        },
+      },
+    };
+  },
+});
 
 const opts = {
   'static.owner': 'adobe',
@@ -60,6 +85,21 @@ describe('testing fetchers.js', () => {
     const res = await Promise.all(fetchers({
       ...opts,
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      path: '/dir/example.html',
+    }));
+
+    logres(res);
+    assert.equal(res.length, 5);
+    assert.equal(res[0].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/hlx--static');
+    assert.equal(res[0].params.path, '/dir/example.html');
+    assert.equal(res[1].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html');
+    assert.equal(res[1].params.path, '/dir/example.md');
+  });
+
+  it('fetch basic HTML from branch while resolver fails', async () => {
+    const res = await Promise.all(fetchers({
+      ...opts,
+      'static.ref': 'branch',
       path: '/dir/example.html',
     }));
 
