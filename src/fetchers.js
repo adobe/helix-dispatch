@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 const path = require('path').posix;
+const openwhisk = require('openwhisk');
 
 /**
  * Default resolver that rejects statusCodes >= 400.
@@ -205,6 +206,17 @@ function resolveOpts(opts) {
   if (ref && ref.match(/^[a-f0-9]{40}$/i)) {
     return Promise.resolve(opts);
   }
+  const ow = openwhisk();
+  ow.actions.invoke({
+    name: 'helix-services/resolve-git-ref@v1',
+    blocking: true,
+    result: true,
+    params: opts,
+  }).then(res => ({
+    // use the resolved ref
+    ref: res.body.sha,
+    ...opts,
+  })).catch(() => opts); // if the resolver fails, just use the unresolved ref
   return Promise.resolve(opts);
 }
 
