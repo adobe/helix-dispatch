@@ -113,6 +113,90 @@ function getPathInfos(urlPath, mount, indices) {
   });
 }
 
+
+function fetch404(infos, staticaction, contentOpts, staticOpts) {
+  const attempts = [];
+  if (infos[0].ext === 'html') {
+    // then get the 404.html from the content repo, but only for html requests
+    attempts.push({
+      resolve: errorPageResolver,
+      name: staticaction,
+      blocking: true,
+      params: {
+        path: '/404.html',
+        entry: '/404.html',
+        esi: false,
+        plain: true,
+        ...contentOpts,
+      },
+    });
+    // if all fails, get the 404.html from the static repo
+    attempts.push({
+      resolve: errorPageResolver,
+      name: staticaction,
+      blocking: true,
+      params: {
+        path: '/404.html',
+        entry: '/404.html',
+        esi: false,
+        plain: true,
+        ...staticOpts,
+      },
+    });
+  }
+  return attempts;
+}
+
+function fetchfallback(infos, staticaction, wskOpts, staticOpts) {
+  return infos.map(info => ({
+    resolve: defaultResolver,
+    name: staticaction,
+    blocking: true,
+    params: {
+      path: info.path,
+      entry: info.path,
+      esi: false,
+      plain: true,
+      ...wskOpts,
+      ...staticOpts,
+    },
+  }));
+}
+
+function fetchaction(infos, contentOpts, params, wskOpts) {
+  return infos.map((info) => {
+    const actionname = `${contentOpts.package || 'default'}/${info.selector ? `${info.selector}_` : ''}${info.ext}`;
+    return {
+      resolve: defaultResolver,
+      name: actionname,
+      blocking: true,
+      params: {
+        path: `${info.relPath}.md`,
+        rootPath: params.rootPath || '',
+        ...wskOpts,
+        ...contentOpts,
+      },
+    };
+  });
+}
+
+function fetchraw(infos, staticaction, params, contentOpts) {
+  return infos.map(info => ({
+    resolve: defaultResolver,
+    name: staticaction,
+    blocking: true,
+    params: {
+      path: info.path,
+      entry: info.path,
+      esi: false,
+      plain: true,
+      root: params['content.root'],
+      ...contentOpts,
+    },
+  }));
+}
+
+
 /**
  * Returns the action options to fetch the contents from.
  * @param {object} params - action params
@@ -138,7 +222,6 @@ function fetchers(params = {}) {
     params: params.params,
   };
 
-  const attempts = [];
   const staticaction = contentOpts.package ? `${contentOpts.package}/hlx--static` : 'helix-services/static@v1';
 
   const wskOpts = {
@@ -148,88 +231,16 @@ function fetchers(params = {}) {
     __ow_method: params.__ow_method,
   };
 
-  // first, try to get the raw content from the content repo
-  infos.forEach((info) => {
-    attempts.push({
-      resolve: defaultResolver,
-      name: staticaction,
-      blocking: true,
-      params: {
-        path: info.path,
-        entry: info.path,
-        esi: false,
-        plain: true,
-        root: params['content.root'],
-        ...contentOpts,
-      },
-    });
-  });
-
-  // then, try to call the action
-  infos.forEach((info) => {
-    const actionname = `${contentOpts.package || 'default'}/${info.selector ? `${info.selector}_` : ''}${info.ext}`;
-
-    attempts.push({
-      resolve: defaultResolver,
-      name: actionname,
-      blocking: true,
-      params: {
-        path: `${info.relPath}.md`,
-        rootPath: params.rootPath || '',
-        ...wskOpts,
-        ...contentOpts,
-      },
-    });
-  });
-
-  // then, try to get the raw content from the static repo
-  infos.forEach((info) => {
-    attempts.push({
-      resolve: defaultResolver,
-      name: staticaction,
-      blocking: true,
-      params: {
-        path: info.path,
-        entry: info.path,
-        esi: false,
-        plain: true,
-        ...wskOpts,
-        ...staticOpts,
-      },
-    });
-  });
-
-  if (infos[0].ext === 'html') {
-    // then get the 404.html from the content repo, but only for html requests
-    attempts.push({
-      resolve: errorPageResolver,
-      name: staticaction,
-      blocking: true,
-      params: {
-        path: '/404.html',
-        entry: '/404.html',
-        esi: false,
-        plain: true,
-        ...contentOpts,
-      },
-    });
-
-    // if all fails, get the 404.html from the static repo
-    attempts.push({
-      resolve: errorPageResolver,
-      name: staticaction,
-      blocking: true,
-      params: {
-        path: '/404.html',
-        entry: '/404.html',
-        esi: false,
-        plain: true,
-        ...staticOpts,
-      },
-    });
-  }
-
-  return attempts;
+  return [
+    // try to get the raw content from the content repo
+    ...fetchraw(infos, staticaction, params, contentOpts),
+    // then, try to call the action
+    ...fetchaction(infos, contentOpts, params, wskOpts),
+    // try to get the raw content from the static repo
+    ...fetchfallback(infos, staticaction, wskOpts, staticOpts),
+    // finally, fetch the 404 pages
+    ...fetch404(infos, staticaction, contentOpts, staticOpts),
+  ];
 }
 
 module.exports = {
