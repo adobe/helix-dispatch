@@ -40,6 +40,10 @@ function errorPageResolver(res) {
   return defaultResolver(res);
 }
 
+function staticaction(contentOpts) {
+  return contentOpts.package ? `${contentOpts.package}/hlx--static` : 'helix-services/static@v1';
+}
+
 /**
  * Path info structure.
  *
@@ -118,9 +122,7 @@ function fetch404(infos, contentPromise, staticPromise) {
   const attempts = [];
   if (infos[0].ext === 'html') {
     // then get the 404.html from the content repo, but only for html requests
-    attempts.push(contentPromise.then(contentOpts => {
-
-      return {
+    attempts.push(contentPromise.then(contentOpts => ({
       resolve: errorPageResolver,
       name: staticaction(contentOpts),
       blocking: true,
@@ -131,7 +133,7 @@ function fetch404(infos, contentPromise, staticPromise) {
         plain: true,
         ...contentOpts,
       },
-    }}));
+    })));
     // if all fails, get the 404.html from the static repo
     attempts.push(staticPromise.then(staticOpts => contentPromise.then(contentOpts => ({
       resolve: errorPageResolver,
@@ -166,7 +168,7 @@ function fetchfallback(infos, wskOpts, contentPromise, staticPromise) {
 }
 
 function fetchaction(infos, contentPromise, params, wskOpts) {
-  return infos.map(info => contentPromise.then(contentOpts => {
+  return infos.map(info => contentPromise.then((contentOpts) => {
     const actionname = `${contentOpts.package || 'default'}/${info.selector ? `${info.selector}_` : ''}${info.ext}`;
     return {
       resolve: defaultResolver,
@@ -204,10 +206,6 @@ function resolveOpts(opts) {
     return Promise.resolve(opts);
   }
   return Promise.resolve(opts);
-}
-
-function staticaction(contentOpts) {
-  return contentOpts.package ? `${contentOpts.package}/hlx--static` : 'helix-services/static@v1';
 }
 
 

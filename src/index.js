@@ -43,7 +43,7 @@ let log;
 async function executeActions(params) {
   const ow = openwhisk();
 
-  const invoker = (actionOptions, idx) => {
+  const invoker = (actionPromise, idx) => Promise.resolve(actionPromise).then((actionOptions) => {
     log.info(`[${idx}] Action: ${actionOptions.name}`);
     log.debug(`[${idx}] Action: ${JSON.stringify(actionOptions, null, 2)}`);
     return ow.actions.invoke(actionOptions)
@@ -53,7 +53,7 @@ async function executeActions(params) {
         log.info(`[${idx}] ${reply.activationId} ${res.statusCode} ${res.errorMessage || ''}`);
         return actionOptions.resolve(res);
       });
-  };
+  });
 
   try {
     // we explicitly (a)wait here, so we can catch a potential exception.
@@ -75,25 +75,28 @@ async function executeActions(params) {
 
     return resp;
   } catch (e) {
+    let severe = 0;
+
     if (Array.isArray(e)) {
       log.error('no valid response could be fetched');
-      let severe = 0;
       e.forEach((err, idx) => {
         log.error(err.message);
         if (err.statusCode === 500) {
           severe = idx;
         }
       });
-      return {
-        statusCode: e[severe].statusCode,
-      };
+      if (e[severe].statusCode) {
+        return {
+          statusCode: e[severe].statusCode,
+        };
+      }
     }
 
-    log.error('error while invoking fetchers: ', e);
+    log.error('error while invoking fetchers: ', Array.isArray(e) ? e[severe] : e);
     return {
       // a fetchers `resolve` should never throw an exception but report a proper status response.
       // so we consider any exception thrown as application error and propagate it to openwhisk.
-      error: String(e.stack),
+      error: `foo${String(e.stack || e[severe].stack)}`,
     };
   }
 }

@@ -24,13 +24,14 @@ const opts = {
 };
 
 function logres(r) {
-  // eslint-disable-next-line no-console
-  Promise.all(r).then(res => {
-  console.table(res.map(r => ({
-    name: r.name,
-    owner: r.params.owner,
-    path: r.params.path,
-  })))});
+  Promise.all(r).then((res) => {
+    // eslint-disable-next-line no-console
+    console.table(res.map(s => ({
+      name: s.name,
+      owner: s.params.owner,
+      path: s.params.path,
+    })));
+  });
 }
 
 describe('testing fetchers.js', () => {
@@ -53,7 +54,6 @@ describe('testing fetchers.js', () => {
     assert.equal(res[0].params.path, '/dir/example.html');
     assert.equal(res[1].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html');
     assert.equal(res[1].params.path, '/dir/example.md');
-    
   });
 
   it('fetch HTML with selector', () => {
