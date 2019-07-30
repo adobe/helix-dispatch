@@ -10,6 +10,8 @@
  * governing permissions and limitations under the License.
  */
 const path = require('path').posix;
+const openwhisk = require('openwhisk');
+const { logger } = require('@adobe/openwhisk-action-builder/src/logging');
 
 /**
  * Default resolver that rejects statusCodes >= 400.
@@ -40,6 +42,10 @@ function errorPageResolver(res) {
   return defaultResolver(res);
 }
 
+function staticaction(contentOpts) {
+  return contentOpts.package ? `${contentOpts.package}/hlx--static` : 'helix-services/static@v1';
+}
+
 /**
  * Path info structure.
  *
@@ -49,6 +55,17 @@ function errorPageResolver(res) {
  * @property {string} selector - The selector of the resolved resource. eg 'info'.
  * @property {string} ext - The extension of the resolved resource. eg 'html'.
  * @property {string} relPath - The relative path ot the resolved resource. eg '/foo/index'.
+ */
+
+
+/**
+ * Standard Parameters for Pipeline and Static Invocations
+ *
+ * @typedef ActionOptions
+ * @property {string} owner GitHub user or organization name
+ * @property {string} repo Repository name
+ * @property {string} ref branch or tag name, or sha of a commit
+ * @property {string} branch optional, the branch or tag name
  */
 
 /**
@@ -114,11 +131,154 @@ function getPathInfos(urlPath, mount, indices) {
 }
 
 /**
+ * Gets the tasks to fetch the 404 files, one from the content repo, one
+ * from the fallback repo
+ * @param {PathInfo[]} infos the paths to fetch from
+ * @param {Promise<ActionOptions>} contentPromise coordinates for the content repo
+ * @param {Promise<ActionOptions>} staticPromise coordinates for the fallback repo
+ * @returns {object[]} list of actions that should get invoked
+ */
+function fetch404tasks(infos, contentPromise, staticPromise) {
+  const attempts = [];
+  if (infos[0].ext === 'html') {
+    // then get the 404.html from the content repo, but only for html requests
+    attempts.push(contentPromise.then(contentOpts => ({
+      resolve: errorPageResolver,
+      name: staticaction(contentOpts),
+      blocking: true,
+      params: {
+        path: '/404.html',
+        entry: '/404.html',
+        esi: false,
+        plain: true,
+        ...contentOpts,
+      },
+    })));
+    // if all fails, get the 404.html from the static repo
+    attempts.push(staticPromise.then(staticOpts => contentPromise.then(contentOpts => ({
+      resolve: errorPageResolver,
+      name: staticaction(contentOpts),
+      blocking: true,
+      params: {
+        path: '/404.html',
+        entry: '/404.html',
+        esi: false,
+        plain: true,
+        ...staticOpts,
+      },
+    }))));
+  }
+  return attempts;
+}
+/**
+ * Gets the tasks to fetch raw content from the fallback repo
+ * @param {PathInfo[]} infos the paths to fetch from
+ * @param {object} wskOpts additional options for the OpenWhisk invocation
+ * @param {Promise<ActionOptions>} contentPromise coordinates for the content repo
+ * @param {Promise<ActionOptions>} staticPromise coordinates for the fallback repo
+ * @returns {object[]} list of actions that should get invoked
+ */
+function fetchfallbacktasks(infos, wskOpts, contentPromise, staticPromise) {
+  return infos.map(info => staticPromise.then(staticOpts => contentPromise.then(contentOpts => ({
+    resolve: defaultResolver,
+    name: staticaction(contentOpts),
+    blocking: true,
+    params: {
+      path: info.path,
+      entry: info.path,
+      esi: false,
+      plain: true,
+      ...wskOpts,
+      ...staticOpts,
+    },
+  }))));
+}
+/**
+ * Gets the tasks to invoke the pipeline action
+ * @param {PathInfo[]} infos the paths to fetch from
+ * @param {object} wskOpts additional options for the OpenWhisk invocation
+ * @param {Promise<ActionOptions>} contentPromise coordinates for the content repo
+ * @returns {object[]} list of actions that should get invoked
+ */
+function fetchactiontasks(infos, contentPromise, params, wskOpts) {
+  return infos.map(info => contentPromise.then((contentOpts) => {
+    const actionname = `${contentOpts.package || 'default'}/${info.selector ? `${info.selector}_` : ''}${info.ext}`;
+    return {
+      resolve: defaultResolver,
+      name: actionname,
+      blocking: true,
+      params: {
+        path: `${info.relPath}.md`,
+        rootPath: params.rootPath || '',
+        ...wskOpts,
+        ...contentOpts,
+      },
+    };
+  }));
+}
+/**
+ * Gets the tasks to fetch raw content from the content repo
+ * @param {PathInfo[]} infos the paths to fetch from
+ * @param {Promise<ActionOptions>} contentPromise coordinates for the content repo
+ * @returns {object[]} list of actions that should get invoked
+ */
+function fetchrawtasks(infos, params, contentPromise) {
+  return infos.map(info => contentPromise.then(contentOpts => ({
+    resolve: defaultResolver,
+    name: staticaction(contentOpts),
+    blocking: true,
+    params: {
+      path: info.path,
+      entry: info.path,
+      esi: false,
+      plain: true,
+      root: params['content.root'],
+      ...contentOpts,
+    },
+  })));
+}
+
+/**
+ * Resolves the branch or tag name into a sha.
+ * @param {ActionOptions} opts action options
+ * @returns {Promise<ActionOptions>} returns a promise of the resolve action
+ * options, with a sha instead of a branch name
+ */
+function resolveOpts(opts, log) {
+  const { ref } = opts;
+  if (ref && ref.match(/^[a-f0-9]{40}$/i)) {
+    return Promise.resolve(opts);
+  }
+  const ow = openwhisk();
+  ow.actions.invoke({
+    name: 'helix-services/resolve-git-ref@v1',
+    blocking: true,
+    result: true,
+    params: opts,
+  }).then(res => ({
+    // use the resolved ref
+    ref: res.body.sha,
+    branch: ref,
+    ...opts,
+  })).catch((e) => {
+    log.error(`Unable to resolve branch name ${e}`);
+    return opts;
+  }); // if the resolver fails, just use the unresolved ref
+  return Promise.resolve(opts);
+}
+
+function equalOpts(o1, o2) {
+  return (o1.owner === o2.owner
+    && o1.repo === o2.repo
+    && o1.ref === o2.ref);
+}
+
+/**
  * Returns the action options to fetch the contents from.
  * @param {object} params - action params
  * @returns {Array} Array of action options to use to ow.action.invoke
  */
-function fetchers(params = {}) {
+function fetchers(params = {}, log = logger()) {
   const dirindex = (params['content.index'] || 'index.html,README.html').split(',');
   const infos = getPathInfos(params.path || '/', params.rootPath || '', dirindex);
 
@@ -138,8 +298,10 @@ function fetchers(params = {}) {
     params: params.params,
   };
 
-  const attempts = [];
-  const staticaction = contentOpts.package ? `${contentOpts.package}/hlx--static` : 'helix-services/static@v1';
+  const staticPromise = resolveOpts(staticOpts, log);
+  const contentPromise = equalOpts(staticOpts, contentOpts)
+    ? staticPromise
+    : resolveOpts(contentOpts, log);
 
   const wskOpts = {
     // eslint-disable-next-line no-underscore-dangle
@@ -148,88 +310,16 @@ function fetchers(params = {}) {
     __ow_method: params.__ow_method,
   };
 
-  // first, try to get the raw content from the content repo
-  infos.forEach((info) => {
-    attempts.push({
-      resolve: defaultResolver,
-      name: staticaction,
-      blocking: true,
-      params: {
-        path: info.path,
-        entry: info.path,
-        esi: false,
-        plain: true,
-        root: params['content.root'],
-        ...contentOpts,
-      },
-    });
-  });
-
-  // then, try to call the action
-  infos.forEach((info) => {
-    const actionname = `${contentOpts.package || 'default'}/${info.selector ? `${info.selector}_` : ''}${info.ext}`;
-
-    attempts.push({
-      resolve: defaultResolver,
-      name: actionname,
-      blocking: true,
-      params: {
-        path: `${info.relPath}.md`,
-        rootPath: params.rootPath || '',
-        ...wskOpts,
-        ...contentOpts,
-      },
-    });
-  });
-
-  // then, try to get the raw content from the static repo
-  infos.forEach((info) => {
-    attempts.push({
-      resolve: defaultResolver,
-      name: staticaction,
-      blocking: true,
-      params: {
-        path: info.path,
-        entry: info.path,
-        esi: false,
-        plain: true,
-        ...wskOpts,
-        ...staticOpts,
-      },
-    });
-  });
-
-  if (infos[0].ext === 'html') {
-    // then get the 404.html from the content repo, but only for html requests
-    attempts.push({
-      resolve: errorPageResolver,
-      name: staticaction,
-      blocking: true,
-      params: {
-        path: '/404.html',
-        entry: '/404.html',
-        esi: false,
-        plain: true,
-        ...contentOpts,
-      },
-    });
-
-    // if all fails, get the 404.html from the static repo
-    attempts.push({
-      resolve: errorPageResolver,
-      name: staticaction,
-      blocking: true,
-      params: {
-        path: '/404.html',
-        entry: '/404.html',
-        esi: false,
-        plain: true,
-        ...staticOpts,
-      },
-    });
-  }
-
-  return attempts;
+  return [
+    // try to get the raw content from the content repo
+    ...fetchrawtasks(infos, params, contentPromise),
+    // then, try to call the action
+    ...fetchactiontasks(infos, contentPromise, params, wskOpts),
+    // try to get the raw content from the static repo
+    ...fetchfallbacktasks(infos, wskOpts, contentPromise, staticPromise),
+    // finally, fetch the 404 pages
+    ...fetch404tasks(infos, contentPromise, staticPromise),
+  ];
 }
 
 module.exports = {

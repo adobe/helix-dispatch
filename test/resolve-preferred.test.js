@@ -11,7 +11,7 @@
  */
 /* eslint-env mocha */
 const assert = require('assert');
-const race = require('../src/race');
+const resolvePreferred = require('../src/resolve-preferred');
 
 function timeout(duration, succeed, value) {
   return new Promise((resolve, reject) => {
@@ -27,26 +27,26 @@ function timeout(duration, succeed, value) {
 
 describe('Test custom Promise.race', () => {
   it('race returns a promise', () => {
-    const p = race([]);
+    const p = resolvePreferred([]);
     assert.ok(p.then);
     assert.ok(p.catch);
   });
 
   it('race resolves if only one promise succeeds', async () => {
-    const p = await race([timeout(0, true)]);
+    const p = await resolvePreferred([timeout(0, true)]);
     assert.equal(p, 'ok');
   });
 
   it('race throws if the only promise fails', async () => {
     try {
-      await race([timeout(0, false)]);
+      await resolvePreferred([timeout(0, false)]);
     } catch (e) {
       assert.equal(e[0].message, 'fail');
     }
   });
 
   it('race returns the first, not the fastest successful promise', async () => {
-    const p = await race([
+    const p = await resolvePreferred([
       timeout(100, true, 'first'),
       timeout(10, true, 'second'),
       timeout(1, true, 'third'),
@@ -55,7 +55,7 @@ describe('Test custom Promise.race', () => {
   });
 
   it('race does not wait for slow promises', async () => {
-    const p = await race([
+    const p = await resolvePreferred([
       timeout(1, true, 'first'),
       timeout(10, true, 'second'),
       timeout(100, true, 'third'),
@@ -64,7 +64,7 @@ describe('Test custom Promise.race', () => {
   }).timeout(5);
 
   it('race does not wait for failures promises', async () => {
-    const p = await race([
+    const p = await resolvePreferred([
       timeout(1, false, 'first'),
       timeout(10, true, 'second'),
       timeout(100, false, 'third'),

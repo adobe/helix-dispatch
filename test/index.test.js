@@ -92,7 +92,10 @@ describe('Index Tests', () => {
   });
 
   it('index returns action response', async () => {
-    const result = await index({});
+    const result = await index({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+    });
     delete result.actionOptions;
     assert.deepEqual(result, {
       statusCode: 200,
@@ -105,6 +108,8 @@ describe('Index Tests', () => {
       __ow_headers: {
         'x-dispatch-nocache': 'true',
       },
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
     });
     delete result.actionOptions;
     assert.deepEqual(result, {
@@ -126,7 +131,10 @@ describe('Index Tests', () => {
     logger.flush = () => {};
     invokeResult = ERR_RESULT;
 
-    const result = await index({}, logger);
+    const result = await index({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+    }, logger);
     delete result.actionOptions;
     assert.deepEqual(result, {
       statusCode: 404,
@@ -151,7 +159,10 @@ describe('Index Tests', () => {
       }
     };
 
-    const result = await index({}, logger);
+    const result = await index({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+    }, logger);
     delete result.actionOptions;
     assert.deepEqual(result, {
       statusCode: 500,
@@ -170,7 +181,10 @@ describe('Index Tests', () => {
     logger.flush = () => {};
     invokeResult = FAIL_RESULT;
 
-    const result = await index({}, logger);
+    const result = await index({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+    }, logger);
     assert.ok(result.error.indexOf('Error: runtime failure.\n    at FAIL_RESULT') >= 0);
 
     const output = await logger.getOutput();
