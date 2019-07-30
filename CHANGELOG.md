@@ -1,3 +1,16 @@
+# [1.5.0](https://github.com/adobe/helix-experimental-dispatch/compare/v1.4.3...v1.5.0) (2019-07-30)
+
+
+### Bug Fixes
+
+* **index:** enable invoker to handle promises ([2b4be48](https://github.com/adobe/helix-experimental-dispatch/commit/2b4be48))
+
+
+### Features
+
+* **fetchers:** add branch parameter for resolved git refs to enable accurate surrogate-key calculation ([5961332](https://github.com/adobe/helix-experimental-dispatch/commit/5961332))
+* **fetchers:** try to resolve git ref prior to fetching ([4711f87](https://github.com/adobe/helix-experimental-dispatch/commit/4711f87)), closes [#3](https://github.com/adobe/helix-experimental-dispatch/issues/3)
+
 ## [1.4.3](https://github.com/adobe/helix-experimental-dispatch/compare/v1.4.2...v1.4.3) (2019-07-29)
 
 
