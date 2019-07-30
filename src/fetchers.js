@@ -265,6 +265,11 @@ function resolveOpts(opts, log) {
   return Promise.resolve(opts);
 }
 
+function equalOpts(o1, o2) {
+  return (o1.owner === o2.owner
+    && o1.repo === o2.repo
+    && o1.ref === o2.ref);
+}
 
 /**
  * Returns the action options to fetch the contents from.
@@ -275,21 +280,26 @@ function fetchers(params = {}, log = logger()) {
   const dirindex = (params['content.index'] || 'index.html,README.html').split(',');
   const infos = getPathInfos(params.path || '/', params.rootPath || '', dirindex);
 
-  const staticPromise = resolveOpts({
+  const staticOpts = {
     owner: params['static.owner'],
     repo: params['static.repo'],
     ref: params['static.ref'],
     esi: params['static.esi'],
     root: params['static.root'],
-  }, log);
+  };
 
-  const contentPromise = resolveOpts({
+  const contentOpts = {
     owner: params['content.owner'],
     repo: params['content.repo'],
     ref: params['content.ref'],
     package: params['content.package'],
     params: params.params,
-  }, log);
+  };
+
+  const staticPromise = resolveOpts(staticOpts, log);
+  const contentPromise = equalOpts(staticOpts, contentOpts)
+    ? staticPromise
+    : resolveOpts(contentOpts, log);
 
   const wskOpts = {
     // eslint-disable-next-line no-underscore-dangle
