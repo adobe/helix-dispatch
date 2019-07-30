@@ -65,6 +65,7 @@ function staticaction(contentOpts) {
  * @property {string} owner GitHub user or organization name
  * @property {string} repo Repository name
  * @property {string} ref branch or tag name, or sha of a commit
+ * @property {string} branch optional, the branch or tag name
  */
 
 /**
@@ -257,6 +258,7 @@ function resolveOpts(opts, log) {
   }).then(res => ({
     // use the resolved ref
     ref: res.body.sha,
+    branch: ref,
     ...opts,
   })).catch((e) => {
     log.error(`Unable to resolve branch name ${e}`);
