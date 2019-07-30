@@ -11,6 +11,7 @@
  */
 const path = require('path').posix;
 const openwhisk = require('openwhisk');
+const { logger } = require('@adobe/openwhisk-action-builder/src/logging');
 
 /**
  * Default resolver that rejects statusCodes >= 400.
@@ -54,6 +55,16 @@ function staticaction(contentOpts) {
  * @property {string} selector - The selector of the resolved resource. eg 'info'.
  * @property {string} ext - The extension of the resolved resource. eg 'html'.
  * @property {string} relPath - The relative path ot the resolved resource. eg '/foo/index'.
+ */
+
+
+/**
+ * Standard Parameters for Pipeline and Static Invocations
+ *
+ * @typedef ActionOptions
+ * @property {string} owner GitHub user or organization name
+ * @property {string} repo Repository name
+ * @property {string} ref branch or tag name, or sha of a commit
  */
 
 /**
@@ -118,8 +129,15 @@ function getPathInfos(urlPath, mount, indices) {
   });
 }
 
-
-function fetch404(infos, contentPromise, staticPromise) {
+/**
+ * Gets the tasks to fetch the 404 files, one from the content repo, one
+ * from the fallback repo
+ * @param {PathInfo[]} infos the paths to fetch from
+ * @param {Promise<ActionOptions>} contentPromise coordinates for the content repo
+ * @param {Promise<ActionOptions>} staticPromise coordinates for the fallback repo
+ * @returns {object[]} list of actions that should get invoked
+ */
+function fetch404tasks(infos, contentPromise, staticPromise) {
   const attempts = [];
   if (infos[0].ext === 'html') {
     // then get the 404.html from the content repo, but only for html requests
@@ -151,8 +169,15 @@ function fetch404(infos, contentPromise, staticPromise) {
   }
   return attempts;
 }
-
-function fetchfallback(infos, wskOpts, contentPromise, staticPromise) {
+/**
+ * Gets the tasks to fetch raw content from the fallback repo
+ * @param {PathInfo[]} infos the paths to fetch from
+ * @param {object} wskOpts additional options for the OpenWhisk invocation
+ * @param {Promise<ActionOptions>} contentPromise coordinates for the content repo
+ * @param {Promise<ActionOptions>} staticPromise coordinates for the fallback repo
+ * @returns {object[]} list of actions that should get invoked
+ */
+function fetchfallbacktasks(infos, wskOpts, contentPromise, staticPromise) {
   return infos.map(info => staticPromise.then(staticOpts => contentPromise.then(contentOpts => ({
     resolve: defaultResolver,
     name: staticaction(contentOpts),
@@ -167,8 +192,14 @@ function fetchfallback(infos, wskOpts, contentPromise, staticPromise) {
     },
   }))));
 }
-
-function fetchaction(infos, contentPromise, params, wskOpts) {
+/**
+ * Gets the tasks to invoke the pipeline action
+ * @param {PathInfo[]} infos the paths to fetch from
+ * @param {object} wskOpts additional options for the OpenWhisk invocation
+ * @param {Promise<ActionOptions>} contentPromise coordinates for the content repo
+ * @returns {object[]} list of actions that should get invoked
+ */
+function fetchactiontasks(infos, contentPromise, params, wskOpts) {
   return infos.map(info => contentPromise.then((contentOpts) => {
     const actionname = `${contentOpts.package || 'default'}/${info.selector ? `${info.selector}_` : ''}${info.ext}`;
     return {
@@ -184,8 +215,13 @@ function fetchaction(infos, contentPromise, params, wskOpts) {
     };
   }));
 }
-
-function fetchraw(infos, params, contentPromise) {
+/**
+ * Gets the tasks to fetch raw content from the content repo
+ * @param {PathInfo[]} infos the paths to fetch from
+ * @param {Promise<ActionOptions>} contentPromise coordinates for the content repo
+ * @returns {object[]} list of actions that should get invoked
+ */
+function fetchrawtasks(infos, params, contentPromise) {
   return infos.map(info => contentPromise.then(contentOpts => ({
     resolve: defaultResolver,
     name: staticaction(contentOpts),
@@ -201,7 +237,13 @@ function fetchraw(infos, params, contentPromise) {
   })));
 }
 
-function resolveOpts(opts) {
+/**
+ * Resolves the branch or tag name into a sha.
+ * @param {ActionOptions} opts action options
+ * @returns {Promise<ActionOptions>} returns a promise of the resolve action
+ * options, with a sha instead of a branch name
+ */
+function resolveOpts(opts, log) {
   const { ref } = opts;
   if (ref && ref.match(/^[a-f0-9]{40}$/i)) {
     return Promise.resolve(opts);
@@ -216,7 +258,10 @@ function resolveOpts(opts) {
     // use the resolved ref
     ref: res.body.sha,
     ...opts,
-  })).catch(() => opts); // if the resolver fails, just use the unresolved ref
+  })).catch((e) => {
+    log.error(`Unable to resolve branch name ${e}`);
+    return opts;
+  }); // if the resolver fails, just use the unresolved ref
   return Promise.resolve(opts);
 }
 
@@ -226,25 +271,25 @@ function resolveOpts(opts) {
  * @param {object} params - action params
  * @returns {Array} Array of action options to use to ow.action.invoke
  */
-function fetchers(params = {}) {
+function fetchers(params = {}, log = logger()) {
   const dirindex = (params['content.index'] || 'index.html,README.html').split(',');
   const infos = getPathInfos(params.path || '/', params.rootPath || '', dirindex);
 
-  const staticOpts = resolveOpts({
+  const staticPromise = resolveOpts({
     owner: params['static.owner'],
     repo: params['static.repo'],
     ref: params['static.ref'],
     esi: params['static.esi'],
     root: params['static.root'],
-  });
+  }, log);
 
-  const contentOpts = resolveOpts({
+  const contentPromise = resolveOpts({
     owner: params['content.owner'],
     repo: params['content.repo'],
     ref: params['content.ref'],
     package: params['content.package'],
     params: params.params,
-  });
+  }, log);
 
   const wskOpts = {
     // eslint-disable-next-line no-underscore-dangle
@@ -255,13 +300,13 @@ function fetchers(params = {}) {
 
   return [
     // try to get the raw content from the content repo
-    ...fetchraw(infos, params, contentOpts),
+    ...fetchrawtasks(infos, params, contentPromise),
     // then, try to call the action
-    ...fetchaction(infos, contentOpts, params, wskOpts),
+    ...fetchactiontasks(infos, contentPromise, params, wskOpts),
     // try to get the raw content from the static repo
-    ...fetchfallback(infos, wskOpts, contentOpts, staticOpts),
+    ...fetchfallbacktasks(infos, wskOpts, contentPromise, staticPromise),
     // finally, fetch the 404 pages
-    ...fetch404(infos, contentOpts, staticOpts),
+    ...fetch404tasks(infos, contentPromise, staticPromise),
   ];
 }
 

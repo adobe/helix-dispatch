@@ -57,7 +57,7 @@ async function executeActions(params) {
 
   try {
     // we explicitly (a)wait here, so we can catch a potential exception.
-    const resp = await resolvePreferred(fetchers(params).map(invoker));
+    const resp = await resolvePreferred(fetchers(params, log).map(invoker));
 
     // check if X-Dispatch-NoCache header is in the request,
     // this will override the Cache-Control and Surrogate-Control
@@ -79,6 +79,7 @@ async function executeActions(params) {
 
     if (Array.isArray(e)) {
       log.error('no valid response could be fetched');
+
       e.forEach((err, idx) => {
         log.error(err.message);
         if (err.statusCode === 500) {
