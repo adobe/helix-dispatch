@@ -3,18 +3,23 @@
   "version": "1.5.0",
   "description": "Example Package",
   "main": "src/index.js",
+  "private": true,
   "scripts": {
     "test": "nyc --reporter=text --reporter=lcov --check-coverage --branches 97 --statements 100 --lines 100 mocha -i -g 'Post-Deploy'",
     "test-ci": "nyc --reporter=text --reporter=lcov --check-coverage --branches 97 --statements 100 --lines 100 mocha --reporter xunit --reporter-options output=./junit/test-results.xml -i -g 'Post-Deploy' && codecov",
     "test-postdeploy": "mocha --reporter xunit --reporter-options output=./junit/test-results.xml -g 'Post-Deploy'",
     "lint": "./node_modules/.bin/eslint .",
     "semantic-release": "semantic-release",
-    "semantic-prepare": "node ./build/prepare.js",
     "docs": "npx jsdoc2md -c .jsdoc.json --files 'src/*.js'  > docs/API.md",
-    "snyk-protect": "snyk protect",
-    "prepare": "npm run snyk-protect",
     "build": "wsk-builder -v",
-    "deploy": "wsk-builder -v --deploy --test -p EPSAGON_TOKEN=$EPSAGON_TOKEN"
+    "deploy": "wsk-builder -v --deploy --test",
+    "deploy-sequences": "wsk-builder --no-build -no-hints -l latest -l major -l minor",
+    "deploy-ci": "wsk-builder -v --deploy --test=/ping --pkgVersion=ci$CIRCLE_BUILD_NUM",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
+  },
+  "wsk": {
+    "name": "helix-services/experimental-dispatch@${version}"
   },
   "repository": {
     "type": "git",
@@ -28,38 +33,35 @@
   "homepage": "https://github.com/adobe/helix-experimental-dispatch#readme",
   "dependencies": {
     "@adobe/helix-pingdom-status": "^3.0.0",
-    "@adobe/openwhisk-action-builder": "^1.1.1",
-    "epsagon": "^1.31.0",
+    "@adobe/openwhisk-action-builder": "^1.2.0",
+    "epsagon": "^1.31.6",
     "openwhisk": "^3.19.0",
-    "snyk": "^2.0.0"
+    "snyk": "^1.205.0"
   },
   "devDependencies": {
     "@adobe/helix-shared": "^2.1.1",
-    "@semantic-release/changelog": "^3.0.2",
-    "@semantic-release/commit-analyzer": "^6.1.0",
+    "@semantic-release/changelog": "^3.0.4",
     "@semantic-release/exec": "^3.3.5",
     "@semantic-release/git": "^7.0.14",
     "@semantic-release/github": "^5.4.2",
-    "@semantic-release/npm": "^5.1.13",
-    "@semantic-release/release-notes-generator": "^7.1.4",
     "ajv": "^6.10.2",
     "chai": "^4.2.0",
     "chai-http": "^4.3.0",
     "codecov": "^3.3.0",
-    "eslint": "^6.0.1",
+    "eslint": "^6.1.0",
     "eslint-config-airbnb": "^17.1.0",
     "eslint-plugin-header": "^3.0.0",
-    "eslint-plugin-import": "^2.17.2",
+    "eslint-plugin-import": "^2.18.2",
     "eslint-plugin-jsx-a11y": "^6.2.1",
-    "eslint-plugin-react": "^7.12.4",
+    "eslint-plugin-react": "^7.14.3",
     "istanbul": "^1.1.0-alpha.1",
     "jsdoc-to-markdown": "^5.0.0",
     "junit-report-builder": "^1.3.2",
-    "lint-staged": "^9.2.0",
-    "mocha": "^6.1.4",
+    "lint-staged": "^9.2.1",
+    "mocha": "^6.2.0",
     "nyc": "^14.1.1",
     "proxyquire": "^2.1.1",
-    "semantic-release": "^15.13.18"
+    "semantic-release": "^15.13.19"
   },
   "snyk": true,
   "lint-staged": {
@@ -69,9 +71,5 @@
     "ghooks": {
       "pre-commit": "npx lint-staged"
     }
-  },
-  "wsk": {
-    "name": "helix-services/experimental-dispatch@1.5.0",
-    "static": []
   }
 }
