@@ -65,7 +65,7 @@ function staticaction(contentOpts) {
  * @property {string} owner GitHub user or organization name
  * @property {string} repo Repository name
  * @property {string} ref branch or tag name, or sha of a commit
- * @property {string} branch optional, the branch or tag name
+ * @property {string} [branch] the optional branch or tag name
  */
 
 /**
@@ -219,6 +219,7 @@ function fetchactiontasks(infos, contentPromise, params, wskOpts) {
 /**
  * Gets the tasks to fetch raw content from the content repo
  * @param {PathInfo[]} infos the paths to fetch from
+ * @param {*} params - the openwhisk action params
  * @param {Promise<ActionOptions>} contentPromise coordinates for the content repo
  * @returns {object[]} list of actions that should get invoked
  */
@@ -241,16 +242,16 @@ function fetchrawtasks(infos, params, contentPromise) {
 /**
  * Resolves the branch or tag name into a sha.
  * @param {ActionOptions} opts action options
- * @returns {Promise<ActionOptions>} returns a promise of the resolve action
+ * @returns {Promise<*>} returns a promise of the resolved ref.
  * options, with a sha instead of a branch name
  */
-function resolveOpts(opts, log) {
+function resolveRef(opts, log) {
   const { ref } = opts;
   if (ref && ref.match(/^[a-f0-9]{40}$/i)) {
-    return Promise.resolve(opts);
+    return Promise.resolve({ ref });
   }
   const ow = openwhisk();
-  ow.actions.invoke({
+  return ow.actions.invoke({
     name: 'helix-services/resolve-git-ref@v1',
     blocking: true,
     result: true,
@@ -259,15 +260,30 @@ function resolveOpts(opts, log) {
     // use the resolved ref
     ref: res.body.sha,
     branch: ref,
-    ...opts,
   })).catch((e) => {
+    // if the resolver fails, just use the unresolved ref
     log.error(`Unable to resolve branch name ${e}`);
-    return opts;
-  }); // if the resolver fails, just use the unresolved ref
-  return Promise.resolve(opts);
+    return { ref };
+  });
 }
 
-function equalOpts(o1, o2) {
+/**
+ * updates the options with the result of the resolver promise.
+ * @param {ActionOptions} opts action options
+ * @param {Promise<*>} resolverPromise The promise of the resolver.
+ * @returns {Promise<ActionOptions>} returns a promise of the resolve action options
+ */
+function updateOpts(opts, resolverPromise) {
+  return resolverPromise.then(ref => (Object.assign({}, opts, ref)));
+}
+
+/**
+ * Checks if the options have same repository coordinates
+ * @param {ActionOptions} o1 - first options
+ * @param {ActionOptions} o2 - second options
+ * @returns {boolean} {@code true} if the two options have same repository coordinates.
+ */
+function equalRepository(o1, o2) {
   return (o1.owner === o2.owner
     && o1.repo === o2.repo
     && o1.ref === o2.ref);
@@ -298,10 +314,13 @@ function fetchers(params = {}, log = logger()) {
     params: params.params,
   };
 
-  const staticPromise = resolveOpts(staticOpts, log);
-  const contentPromise = equalOpts(staticOpts, contentOpts)
-    ? staticPromise
-    : resolveOpts(contentOpts, log);
+  const staticResolver = resolveRef(staticOpts, log);
+  const contentResolver = equalRepository(staticOpts, contentOpts)
+    ? staticResolver
+    : resolveRef(contentOpts, log);
+
+  const staticPromise = updateOpts(staticOpts, staticResolver);
+  const contentPromise = updateOpts(contentOpts, contentResolver);
 
   const wskOpts = {
     // eslint-disable-next-line no-underscore-dangle

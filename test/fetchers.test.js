@@ -18,18 +18,26 @@ const {
   defaultResolver, errorPageResolver, getPathInfos,
 } = require('../src/fetchers');
 
+const SHAS = {
+  adobe: '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+  trieloff: '4e8dec3886cb75bcea6970b4b00783f69cbf487a',
+};
+
+let resolverInvocationCount = 0;
+
 const { fetchers } = proxyquire('../src/fetchers', {
   openwhisk() {
     return {
       actions: {
-        invoke({ params: { ref } }) {
+        invoke({ params: { ref, owner } }) {
+          resolverInvocationCount += 1;
           if (ref === 'branch') {
             return Promise.reject(new Error('unknown'));
           }
           return Promise.resolve({
             body: {
               fqRef: 'refs/heads/master',
-              sha: '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+              sha: SHAS[owner],
             },
             headers: {
               'Content-Type': 'application/json',
@@ -44,8 +52,10 @@ const { fetchers } = proxyquire('../src/fetchers', {
 
 const opts = {
   'static.owner': 'adobe',
+  'static.ref': 'master',
   'content.owner': 'trieloff',
   'content.package': '60ef2a011a6a91647eba00f798e9c16faa9f78ce',
+  'content.ref': 'master',
 };
 
 function logres(r) {
@@ -55,6 +65,7 @@ function logres(r) {
       name: s.name,
       owner: s.params.owner,
       path: s.params.path,
+      ref: s.params.ref,
     })));
   });
 }
@@ -68,6 +79,7 @@ describe('testing fetchers.js', () => {
   });
 
   it('fetch basic HTML', async () => {
+    const ric = resolverInvocationCount;
     const res = await Promise.all(fetchers({
       ...opts,
       path: '/dir/example.html',
@@ -76,9 +88,36 @@ describe('testing fetchers.js', () => {
     logres(res);
     assert.equal(res.length, 5);
     assert.equal(res[0].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/hlx--static');
+    assert.equal(res[0].params.ref, SHAS.trieloff);
+    assert.equal(res[0].params.branch, 'master');
     assert.equal(res[0].params.path, '/dir/example.html');
     assert.equal(res[1].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html');
     assert.equal(res[1].params.path, '/dir/example.md');
+    assert.equal(res[1].params.ref, SHAS.trieloff);
+    assert.equal(res[2].params.ref, SHAS.adobe);
+    assert.equal(res[2].params.branch, 'master');
+    assert.equal(resolverInvocationCount - ric, 2);
+  });
+
+  it('fetch basic HTML invokes resolver only once if same repo', async () => {
+    const ric = resolverInvocationCount;
+    const res = await Promise.all(fetchers({
+      ...opts,
+      'content.owner': 'adobe',
+      path: '/dir/example.html',
+    }));
+
+    logres(res);
+    assert.equal(res.length, 5);
+    assert.equal(res[0].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/hlx--static');
+    assert.equal(res[0].params.ref, SHAS.adobe);
+    assert.equal(res[0].params.branch, 'master');
+    assert.equal(res[0].params.path, '/dir/example.html');
+    assert.equal(res[1].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html');
+    assert.equal(res[1].params.path, '/dir/example.md');
+    assert.equal(res[1].params.ref, SHAS.adobe);
+    assert.equal(res[2].params.ref, SHAS.adobe);
+    assert.equal(resolverInvocationCount - ric, 1);
   });
 
   it('fetch basic HTML from sha', async () => {
