@@ -1,3 +1,10 @@
+## [1.5.1](https://github.com/adobe/helix-experimental-dispatch/compare/v1.5.0...v1.5.1) (2019-07-31)
+
+
+### Bug Fixes
+
+* **fetcher:** ensure proper content options for same repository coordinates ([#63](https://github.com/adobe/helix-experimental-dispatch/issues/63)) ([99fa91d](https://github.com/adobe/helix-experimental-dispatch/commit/99fa91d)), closes [#60](https://github.com/adobe/helix-experimental-dispatch/issues/60)
+
 # [1.5.0](https://github.com/adobe/helix-experimental-dispatch/compare/v1.4.3...v1.5.0) (2019-07-30)
 
 
