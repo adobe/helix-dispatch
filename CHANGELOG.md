@@ -1,3 +1,10 @@
+## [1.5.2](https://github.com/adobe/helix-experimental-dispatch/compare/v1.5.1...v1.5.2) (2019-07-31)
+
+
+### Bug Fixes
+
+* **monitoring:** hide Epsagon token from Epsagon ([1c629f0](https://github.com/adobe/helix-experimental-dispatch/commit/1c629f0))
+
 ## [1.5.1](https://github.com/adobe/helix-experimental-dispatch/compare/v1.5.0...v1.5.1) (2019-07-31)
 
 
