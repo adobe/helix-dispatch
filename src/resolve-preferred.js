@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-const resolvePreferred = promises => new Promise((resolve, reject) => {
+const resolvePreferred = (promises) => new Promise((resolve, reject) => {
   const results = new Array(promises.length);
   let resolved = false;
   const unihandler = (idx, val, err) => {
@@ -37,11 +37,11 @@ const resolvePreferred = promises => new Promise((resolve, reject) => {
     }
 
     // if all promises were rejected, reject with an array of errors.
-    reject(results.map(r => r.payload));
+    reject(results.map((r) => r.payload));
   };
 
   promises.forEach((p, idx) => {
-    p.then(v => unihandler(idx, v, null)).catch(er => unihandler(idx, null, er));
+    p.then((v) => unihandler(idx, v, null)).catch((er) => unihandler(idx, null, er));
   });
 });
 

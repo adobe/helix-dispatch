@@ -142,7 +142,7 @@ function fetch404tasks(infos, contentPromise, staticPromise) {
   const attempts = [];
   if (infos[0].ext === 'html') {
     // then get the 404.html from the content repo, but only for html requests
-    attempts.push(contentPromise.then(contentOpts => ({
+    attempts.push(contentPromise.then((contentOpts) => ({
       resolve: errorPageResolver,
       name: staticaction(contentOpts),
       blocking: true,
@@ -155,7 +155,7 @@ function fetch404tasks(infos, contentPromise, staticPromise) {
       },
     })));
     // if all fails, get the 404.html from the static repo
-    attempts.push(staticPromise.then(staticOpts => contentPromise.then(contentOpts => ({
+    attempts.push(staticPromise.then((staticOpts) => contentPromise.then((contentOpts) => ({
       resolve: errorPageResolver,
       name: staticaction(contentOpts),
       blocking: true,
@@ -179,19 +179,21 @@ function fetch404tasks(infos, contentPromise, staticPromise) {
  * @returns {object[]} list of actions that should get invoked
  */
 function fetchfallbacktasks(infos, wskOpts, contentPromise, staticPromise) {
-  return infos.map(info => staticPromise.then(staticOpts => contentPromise.then(contentOpts => ({
-    resolve: defaultResolver,
-    name: staticaction(contentOpts),
-    blocking: true,
-    params: {
-      path: info.path,
-      entry: info.path,
-      esi: false,
-      plain: true,
-      ...wskOpts,
-      ...staticOpts,
-    },
-  }))));
+  return infos.map((info) => staticPromise
+    .then((staticOpts) => contentPromise
+      .then((contentOpts) => ({
+        resolve: defaultResolver,
+        name: staticaction(contentOpts),
+        blocking: true,
+        params: {
+          path: info.path,
+          entry: info.path,
+          esi: false,
+          plain: true,
+          ...wskOpts,
+          ...staticOpts,
+        },
+      }))));
 }
 /**
  * Gets the tasks to invoke the pipeline action
@@ -201,7 +203,7 @@ function fetchfallbacktasks(infos, wskOpts, contentPromise, staticPromise) {
  * @returns {object[]} list of actions that should get invoked
  */
 function fetchactiontasks(infos, contentPromise, params, wskOpts) {
-  return infos.map(info => contentPromise.then((contentOpts) => {
+  return infos.map((info) => contentPromise.then((contentOpts) => {
     const actionname = `${contentOpts.package || 'default'}/${info.selector ? `${info.selector}_` : ''}${info.ext}`;
     return {
       resolve: defaultResolver,
@@ -224,7 +226,7 @@ function fetchactiontasks(infos, contentPromise, params, wskOpts) {
  * @returns {object[]} list of actions that should get invoked
  */
 function fetchrawtasks(infos, params, contentPromise) {
-  return infos.map(info => contentPromise.then(contentOpts => ({
+  return infos.map((info) => contentPromise.then((contentOpts) => ({
     resolve: defaultResolver,
     name: staticaction(contentOpts),
     blocking: true,
@@ -256,7 +258,7 @@ function resolveRef(opts, log) {
     blocking: true,
     result: true,
     params: opts,
-  }).then(res => ({
+  }).then((res) => ({
     // use the resolved ref
     ref: res.body.sha,
     branch: ref,
@@ -274,7 +276,7 @@ function resolveRef(opts, log) {
  * @returns {Promise<ActionOptions>} returns a promise of the resolve action options
  */
 function updateOpts(opts, resolverPromise) {
-  return resolverPromise.then(ref => (Object.assign({}, opts, ref)));
+  return resolverPromise.then((ref) => ({ ...opts, ...ref }));
 }
 
 /**

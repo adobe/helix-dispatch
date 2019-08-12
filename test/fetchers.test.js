@@ -61,7 +61,7 @@ const opts = {
 function logres(r) {
   Promise.all(r).then((res) => {
     // eslint-disable-next-line no-console
-    console.table(res.map(s => ({
+    console.table(res.map((s) => ({
       name: s.name,
       owner: s.params.owner,
       path: s.params.path,
