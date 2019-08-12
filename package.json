@@ -39,7 +39,7 @@
     "snyk": "^1.205.0"
   },
   "devDependencies": {
-    "@adobe/eslint-config-helix": "^0.0.1",
+    "@adobe/eslint-config-helix": "^1.0.0",
     "@adobe/helix-shared": "^2.1.1",
     "@semantic-release/changelog": "^3.0.4",
     "@semantic-release/exec": "^3.3.5",
