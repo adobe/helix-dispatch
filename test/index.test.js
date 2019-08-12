@@ -66,7 +66,7 @@ const index = proxyquire('../src/index.js', {
 
   epsagon: {
     openWhiskWrapper(action) {
-      return params => action(params);
+      return (params) => action(params);
     },
   },
 }).main;
