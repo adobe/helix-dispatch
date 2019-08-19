@@ -11,7 +11,7 @@
  */
 const path = require('path').posix;
 const openwhisk = require('openwhisk');
-const { logger } = require('@adobe/openwhisk-action-builder/src/logging');
+const { logger } = require('@adobe/openwhisk-action-utils');
 
 /**
  * Default resolver that rejects statusCodes >= 400.

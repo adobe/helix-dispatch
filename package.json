@@ -33,7 +33,7 @@
   "homepage": "https://github.com/adobe/helix-experimental-dispatch#readme",
   "dependencies": {
     "@adobe/helix-pingdom-status": "^3.0.0",
-    "@adobe/openwhisk-action-builder": "^2.0.0",
+    "@adobe/openwhisk-action-utils": "^1.0.2",
     "epsagon": "^1.31.6",
     "openwhisk": "^3.19.0",
     "snyk": "^1.205.0"
@@ -41,6 +41,7 @@
   "devDependencies": {
     "@adobe/eslint-config-helix": "^1.0.0",
     "@adobe/helix-shared": "^2.1.1",
+    "@adobe/openwhisk-action-builder": "^2.0.0",
     "@semantic-release/changelog": "^3.0.4",
     "@semantic-release/exec": "^3.3.5",
     "@semantic-release/git": "^7.0.14",
