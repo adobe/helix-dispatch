@@ -1,3 +1,10 @@
+## [1.5.3](https://github.com/adobe/helix-experimental-dispatch/compare/v1.5.2...v1.5.3) (2019-08-19)
+
+
+### Bug Fixes
+
+* **package:** update @adobe/openwhisk-action-builder to version 2.0.0 ([c014e86](https://github.com/adobe/helix-experimental-dispatch/commit/c014e86))
+
 ## [1.5.2](https://github.com/adobe/helix-experimental-dispatch/compare/v1.5.1...v1.5.2) (2019-07-31)
 
 
