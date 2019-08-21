@@ -32,7 +32,7 @@
   },
   "homepage": "https://github.com/adobe/helix-experimental-dispatch#readme",
   "dependencies": {
-    "@adobe/helix-pingdom-status": "^3.0.0",
+    "@adobe/helix-status": "4.2.0",
     "@adobe/openwhisk-action-utils": "^1.0.2",
     "epsagon": "^1.31.6",
     "openwhisk": "^3.19.0",

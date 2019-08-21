@@ -12,7 +12,7 @@
 
 const openwhisk = require('openwhisk');
 const { logger: setupLogger } = require('@adobe/openwhisk-action-utils');
-const { wrap } = require('@adobe/helix-pingdom-status');
+const { wrap } = require('@adobe/helix-status');
 const resolvePreferred = require('./resolve-preferred');
 const { fetchers } = require('./fetchers');
 
