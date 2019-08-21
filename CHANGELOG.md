@@ -1,3 +1,10 @@
+## [2.0.1](https://github.com/adobe/helix-dispatch/compare/v2.0.0...v2.0.1) (2019-08-21)
+
+
+### Bug Fixes
+
+* **ci:** re-trigger aborted release build ([da33145](https://github.com/adobe/helix-dispatch/commit/da33145))
+
 # [2.0.0](https://github.com/adobe/helix-dispatch/compare/v1.5.3...v2.0.0) (2019-08-21)
 
 
