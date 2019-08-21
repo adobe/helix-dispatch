@@ -1,4 +1,4 @@
-# Helix Experimental Dispatch
+# Helix Dispatch
 
 > A Helix microservice that retrieves content from multiple sources and delivers the best match
 
