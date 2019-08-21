@@ -1,6 +1,6 @@
 # Helix Experimental Dispatch
 
-> An experimental Helix microservice that retrieves content from multiple sources and delivers the best match
+> A Helix microservice that retrieves content from multiple sources and delivers the best match
 
 ## Status
 [![codecov](https://img.shields.io/codecov/c/github/adobe/helix-dispatch.svg)](https://codecov.io/gh/adobe/helix-dispatch)
