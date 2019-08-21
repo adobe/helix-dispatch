@@ -19,7 +19,7 @@ Not needed, the service is pre-installed as soon as you run `hlx deploy`.
 Invoke the action using `wsk`
 
 ```bash
-wsk action invoke helix-services/dispatch@v1 --result --blocking \
+wsk action invoke helix-services/dispatch@v2 --result --blocking \
   -p static.owner trieloff \
   -p static.repo helix-demo \
   -p static.ref master \
@@ -34,7 +34,7 @@ wsk action invoke helix-services/dispatch@v1 --result --blocking \
 Use the web action (replace `trieloff` with your GitHub user name)
 
 ```bash
-curl "https://adobeioruntime.net/api/v1/web/trieloff/helix-services/dispatch%40v1?static.owner=trieloff&static.repo=trieloff&static.ref=master&static.root=htdocs&content.owner=trieloff&content.repo=helix-demo&content.ref=master&content.package=b7aa8a6351215b7e12b6d3be242c622410c1eb28&path=/index.html"
+curl "https://adobeioruntime.net/api/v1/web/trieloff/helix-services/dispatch%40v2?static.owner=trieloff&static.repo=trieloff&static.ref=master&static.root=htdocs&content.owner=trieloff&content.repo=helix-demo&content.ref=master&content.package=b7aa8a6351215b7e12b6d3be242c622410c1eb28&path=/index.html"
 ```
 
 For a detailed list of all possible request parameters, check out the [reference documentation](docs/API.md).
