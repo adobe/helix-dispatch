@@ -1,5 +1,5 @@
 {
-  "name": "@adobe/helix-experimental-dispatch",
+  "name": "@adobe/helix-dispatch",
   "version": "1.5.3",
   "description": "Example Package",
   "main": "src/index.js",
@@ -14,29 +14,26 @@
     "build": "wsk-builder -v",
     "deploy": "wsk-builder -v --deploy --test",
     "deploy-sequences": "wsk-builder --no-build -no-hints -l latest -l major -l minor",
-    "deploy-ci": "wsk-builder -v --deploy --test=/ping --pkgVersion=ci$CIRCLE_BUILD_NUM -l ci",
-    "snyk-protect": "snyk protect",
-    "prepare": "npm run snyk-protect"
+    "deploy-ci": "wsk-builder -v --deploy --test=/ping --pkgVersion=ci$CIRCLE_BUILD_NUM -l ci"
   },
   "wsk": {
-    "name": "helix-services/experimental-dispatch@${version}"
+    "name": "helix-services/dispatch@${version}"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/adobe/helix-experimental-dispatch"
+    "url": "https://github.com/adobe/helix-dispatch"
   },
   "author": "",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/adobe/helix-experimental-dispatch/issues"
+    "url": "https://github.com/adobe/helix-dispatch/issues"
   },
-  "homepage": "https://github.com/adobe/helix-experimental-dispatch#readme",
+  "homepage": "https://github.com/adobe/helix-dispatch#readme",
   "dependencies": {
-    "@adobe/helix-pingdom-status": "^3.0.0",
+    "@adobe/helix-status": "4.2.0",
     "@adobe/openwhisk-action-utils": "^1.0.2",
     "epsagon": "^1.31.6",
-    "openwhisk": "^3.19.0",
-    "snyk": "^1.205.0"
+    "openwhisk": "^3.19.0"
   },
   "devDependencies": {
     "@adobe/eslint-config-helix": "^1.0.0",
@@ -63,7 +60,6 @@
     "proxyquire": "^2.1.1",
     "semantic-release": "^15.13.19"
   },
-  "snyk": true,
   "lint-staged": {
     "*.js": "eslint"
   },
