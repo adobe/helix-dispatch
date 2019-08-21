@@ -1,3 +1,15 @@
+# [2.0.0](https://github.com/adobe/helix-dispatch/compare/v1.5.3...v2.0.0) (2019-08-21)
+
+
+### Code Refactoring
+
+* **package:** rename package to helix-dispatch ([fd41410](https://github.com/adobe/helix-dispatch/commit/fd41410))
+
+
+### BREAKING CHANGES
+
+* **package:** Package is no longer experimental, URL changes
+
 ## [1.5.3](https://github.com/adobe/helix-experimental-dispatch/compare/v1.5.2...v1.5.3) (2019-08-19)
 
 
