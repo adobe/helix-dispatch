@@ -1,5 +1,5 @@
 {
-  "name": "@adobe/helix-experimental-dispatch",
+  "name": "@adobe/helix-dispatch",
   "version": "1.5.3",
   "description": "Example Package",
   "main": "src/index.js",
@@ -19,18 +19,18 @@
     "prepare": "npm run snyk-protect"
   },
   "wsk": {
-    "name": "helix-services/experimental-dispatch@${version}"
+    "name": "helix-services/dispatch@${version}"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/adobe/helix-experimental-dispatch"
+    "url": "https://github.com/adobe/helix-dispatch"
   },
   "author": "",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/adobe/helix-experimental-dispatch/issues"
+    "url": "https://github.com/adobe/helix-dispatch/issues"
   },
-  "homepage": "https://github.com/adobe/helix-experimental-dispatch#readme",
+  "homepage": "https://github.com/adobe/helix-dispatch#readme",
   "dependencies": {
     "@adobe/helix-status": "4.2.0",
     "@adobe/openwhisk-action-utils": "^1.0.2",
