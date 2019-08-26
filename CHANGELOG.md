@@ -1,3 +1,10 @@
+## [2.0.2](https://github.com/adobe/helix-dispatch/compare/v2.0.1...v2.0.2) (2019-08-26)
+
+
+### Bug Fixes
+
+* **monitoring:** upgrade epsagon and hide more params ([a827c24](https://github.com/adobe/helix-dispatch/commit/a827c24))
+
 ## [2.0.1](https://github.com/adobe/helix-dispatch/compare/v2.0.0...v2.0.1) (2019-08-21)
 
 
