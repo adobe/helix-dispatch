@@ -120,7 +120,7 @@ async function run(params) {
       token_param: 'EPSAGON_TOKEN',
       appName: 'Helix Services',
       metadataOnly: false, // Optional, send more trace data
-      ignoredKeys: ['EPSAGON_TOKEN', /[A-Z0-0_]+/],
+      ignoredKeys: [/[A-Z0-0_]+/],
     });
   }
   // we don't issue any pingdom checks, since those backends are tested by
