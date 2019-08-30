@@ -23,6 +23,8 @@ const SHAS = {
   trieloff: '4e8dec3886cb75bcea6970b4b00783f69cbf487a',
 };
 
+const SAMPLE_GITHUB_TOKEN = 'some-github-token-value';
+
 let resolverInvocationCount = 0;
 
 const { fetchers } = proxyquire('../src/fetchers', {
@@ -179,8 +181,35 @@ describe('testing fetchers.js', () => {
     assert.equal(res.length, 3);
     logres(res);
   });
-});
 
+  it('Github token provided via parameter is passed to fetchers', async () => {
+    const res = await Promise.all(fetchers({
+      ...opts,
+      GITHUB_TOKEN: SAMPLE_GITHUB_TOKEN,
+      path: '/style.css',
+    }));
+
+    assert.equal(res.length, 3);
+    assert.equal(res[0].params.GITHUB_TOKEN, SAMPLE_GITHUB_TOKEN);
+    assert.equal(res[1].params.GITHUB_TOKEN, SAMPLE_GITHUB_TOKEN);
+    assert.equal(res[2].params.GITHUB_TOKEN, SAMPLE_GITHUB_TOKEN);
+    logres(res);
+  });
+
+  it('Github token provided via header is passed to fetchers', async () => {
+    const res = await Promise.all(fetchers({
+      ...opts,
+      __ow_headers: { 'x-github-token': SAMPLE_GITHUB_TOKEN },
+      path: '/style.css',
+    }));
+
+    assert.equal(res.length, 3);
+    assert.equal(res[0].params.GITHUB_TOKEN, SAMPLE_GITHUB_TOKEN);
+    assert.equal(res[1].params.GITHUB_TOKEN, SAMPLE_GITHUB_TOKEN);
+    assert.equal(res[2].params.GITHUB_TOKEN, SAMPLE_GITHUB_TOKEN);
+    logres(res);
+  });
+});
 
 describe('testing default promise resolver', () => {
   it('default promise resolver accepts status 200', async () => {
