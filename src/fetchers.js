@@ -292,6 +292,17 @@ function equalRepository(o1, o2) {
 }
 
 /**
+ * Extracts the Github token from the action params. The Github token can be provided either
+ * via `GITHUB_TOKEN` action parameter or via `x-github-token` header.
+ * @param {object} params - action params
+ * @returns {string} the Github token extracted from `params` or `undefined` if none was found
+ */
+function extractGithubToken(params = {}) {
+  // eslint-disable-next-line dot-notation
+  return params.GITHUB_TOKEN || (params['__ow_headers'] && params['__ow_headers']['x-github-token']);
+}
+
+/**
  * Returns the action options to fetch the contents from.
  * @param {object} params - action params
  * @returns {Array} Array of action options to use to ow.action.invoke
@@ -299,6 +310,7 @@ function equalRepository(o1, o2) {
 function fetchers(params = {}, log = logger()) {
   const dirindex = (params['content.index'] || 'index.html,README.html').split(',');
   const infos = getPathInfos(params.path || '/', params.rootPath || '', dirindex);
+  const githubToken = extractGithubToken(params);
 
   const staticOpts = {
     owner: params['static.owner'],
@@ -315,6 +327,11 @@ function fetchers(params = {}, log = logger()) {
     package: params['content.package'],
     params: params.params,
   };
+
+  if (githubToken) {
+    staticOpts.GITHUB_TOKEN = githubToken;
+    contentOpts.GITHUB_TOKEN = githubToken;
+  }
 
   const staticResolver = resolveRef(staticOpts, log);
   const contentResolver = equalRepository(staticOpts, contentOpts)
