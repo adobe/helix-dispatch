@@ -1,3 +1,10 @@
+## [2.1.1](https://github.com/adobe/helix-dispatch/compare/v2.1.0...v2.1.1) (2019-09-03)
+
+
+### Bug Fixes
+
+* **package:** update @adobe/helix-status to version 4.2.1 ([6021f25](https://github.com/adobe/helix-dispatch/commit/6021f25))
+
 # [2.1.0](https://github.com/adobe/helix-dispatch/compare/v2.0.2...v2.1.0) (2019-09-02)
 
 
