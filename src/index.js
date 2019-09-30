@@ -11,13 +11,10 @@
  */
 
 const openwhisk = require('openwhisk');
-const { logger: setupLogger } = require('@adobe/openwhisk-action-utils');
+const { logger } = require('@adobe/openwhisk-action-utils');
 const { wrap } = require('@adobe/helix-status');
 const resolvePreferred = require('./resolve-preferred');
 const { fetchers } = require('./fetchers');
-
-// global logger
-let log;
 
 /**
  * This function dispatches the request to the content repository, the pipeline, and the static
@@ -41,6 +38,7 @@ let log;
  * @returns {object} the HTTP response
  */
 async function executeActions(params) {
+  const { __ow_logger: log } = params;
   const ow = openwhisk();
 
   const invoker = (actionPromise, idx) => Promise.resolve(actionPromise).then((actionOptions) => {
@@ -109,6 +107,7 @@ async function executeActions(params) {
  * @returns {Promise<*>} The response
  */
 async function run(params) {
+  const { __ow_logger: log } = params;
   let action = executeActions;
   if (params && params.EPSAGON_TOKEN) {
     // ensure that epsagon is only required, if a token is present. this is to avoid invoking their
@@ -131,24 +130,10 @@ async function run(params) {
 /**
  * Main function called by the openwhisk invoker.
  * @param params Action params
- * @param logger Existing logger to use (mainly for testing)
  * @returns {Promise<*>} The response
  */
-async function main(params, logger = log) {
-  try {
-    log = setupLogger(params, logger);
-    const result = await run(params);
-    if (log.flush) {
-      log.flush(); // don't wait
-    }
-    return result;
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.error(e);
-    return {
-      statusCode: e.statusCode || 500,
-    };
-  }
+async function main(params) {
+  return logger.wrap(run, params);
 }
 
 module.exports.main = main;
