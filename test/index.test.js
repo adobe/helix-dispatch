@@ -14,7 +14,7 @@
 
 const proxyquire = require('proxyquire');
 const assert = require('assert');
-const { Logger } = require('@adobe/helix-shared');
+const bunyan = require('bunyan');
 
 const OK_RESULT = () => Promise.resolve({
   activationId: 'abcd-1234',
@@ -123,9 +123,13 @@ describe('Index Tests', () => {
   });
 
   it('index returns 404 response', async () => {
-    const logger = Logger.getTestLogger({
-      // tune this for debugging
-      level: 'info',
+    const logger = bunyan.createLogger({
+      name: 'test-logger',
+      streams: [{
+        level: 'info',
+        type: 'stream',
+        stream: new bunyan.RingBuffer({ limit: 100 }),
+      }],
     });
     logger.fields = {}; // avoid errors during setup. test logger is winston, but we need bunyan.
     logger.flush = () => {};
@@ -134,23 +138,26 @@ describe('Index Tests', () => {
     const result = await index({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      __ow_logger: logger,
     }, logger);
     delete result.actionOptions;
     assert.deepEqual(result, {
       statusCode: 404,
     });
 
-    const output = await logger.getOutput();
+    const output = logger.streams[0].stream.records.join('\n');
     assert.ok(output.indexOf('no valid response could be fetched') >= 0);
   });
 
   it('index returns 500 response', async () => {
-    const logger = Logger.getTestLogger({
-      // tune this for debugging
-      level: 'info',
+    const logger = bunyan.createLogger({
+      name: 'test-logger',
+      streams: [{
+        level: 'info',
+        type: 'stream',
+        stream: new bunyan.RingBuffer({ limit: 100 }),
+      }],
     });
-    logger.fields = {}; // avoid errors during setup. test logger is winston, but we need bunyan.
-    logger.flush = () => {};
     invokeResult = (req) => {
       if (req.params.path === '/404.html') {
         return ERR_RESULT();
@@ -162,63 +169,53 @@ describe('Index Tests', () => {
     const result = await index({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      __ow_logger: logger,
     }, logger);
     delete result.actionOptions;
     assert.deepEqual(result, {
       statusCode: 500,
     });
 
-    const output = await logger.getOutput();
+    const output = logger.streams[0].stream.records.join('\n');
     assert.ok(output.indexOf('no valid response could be fetched') >= 0);
   });
 
   it('index produces application error when fetcher fails.', async () => {
-    const logger = Logger.getTestLogger({
-      // tune this for debugging
-      level: 'info',
+    const logger = bunyan.createLogger({
+      name: 'test-logger',
+      streams: [{
+        level: 'info',
+        type: 'stream',
+        stream: new bunyan.RingBuffer({ limit: 100 }),
+      }],
     });
-    logger.fields = {}; // avoid errors during setup. test logger is winston, but we need bunyan.
-    logger.flush = () => {};
+
     invokeResult = FAIL_RESULT;
 
     const result = await index({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-    }, logger);
+      __ow_logger: logger,
+    });
     assert.ok(result.error.indexOf('Error: runtime failure.\n    at FAIL_RESULT') >= 0);
 
-    const output = await logger.getOutput();
-    assert.ok(output.indexOf('error while invoking fetchers: runtime failure.') >= 0);
+    const output = logger.streams[0].stream.records.join('\n');
+    assert.ok(output.indexOf('error while invoking fetchers:  Error: runtime failure.') >= 0);
   });
 
   it('index function instruments epsagon', async () => {
-    const logger = Logger.getTestLogger({
-      // tune this for debugging
-      level: 'info',
+    const logger = bunyan.createLogger({
+      name: 'test-logger',
+      streams: [{
+        level: 'info',
+        type: 'raw',
+        stream: new bunyan.RingBuffer({ limit: 100 }),
+      }],
     });
-    logger.fields = {}; // avoid errors during setup. test logger is winston, but we need bunyan.
-    logger.flush = () => {};
     await index({
       EPSAGON_TOKEN: 'foobar',
-    }, logger);
-
-    const output = await logger.getOutput();
-    assert.ok(output.indexOf('instrumenting epsagon.') >= 0);
-  });
-
-  it('error in main function is caught', async () => {
-    const logger = Logger.getTestLogger({
-      // tune this for debugging
-      level: 'info',
+      __ow_logger: logger,
     });
-    logger.fields = {}; // avoid errors during setup. test logger is winston, but we need bunyan.
-    logger.flush = () => {
-      throw new Error('error during flush.');
-    };
-    const result = await index({}, logger);
-
-    assert.deepEqual(result, {
-      statusCode: 500,
-    });
+    assert.strictEqual(logger.streams[0].stream.records[0].msg, 'instrumenting epsagon.');
   });
 });
