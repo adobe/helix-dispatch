@@ -1,3 +1,10 @@
+## [2.1.4](https://github.com/adobe/helix-dispatch/compare/v2.1.3...v2.1.4) (2019-09-30)
+
+
+### Bug Fixes
+
+* **package:** update @adobe/helix-status to version 5.0.0 ([74cac5d](https://github.com/adobe/helix-dispatch/commit/74cac5d))
+
 ## [2.1.3](https://github.com/adobe/helix-dispatch/compare/v2.1.2...v2.1.3) (2019-09-30)
 
 
