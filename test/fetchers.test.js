@@ -142,6 +142,7 @@ describe('testing fetchers.js', () => {
       ...opts,
       'static.ref': 'branch',
       path: '/dir/example.html',
+      __ow_logger: console,
     }));
 
     logres(res);

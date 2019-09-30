@@ -11,7 +11,6 @@
  */
 const path = require('path').posix;
 const openwhisk = require('openwhisk');
-const { logger } = require('@adobe/openwhisk-action-utils');
 
 /**
  * Default resolver that rejects statusCodes >= 400.
@@ -307,7 +306,8 @@ function extractGithubToken(params = {}) {
  * @param {object} params - action params
  * @returns {Array} Array of action options to use to ow.action.invoke
  */
-function fetchers(params = {}, log = logger()) {
+function fetchers(params = {}) {
+  const { __ow_logger: log } = params;
   const dirindex = (params['content.index'] || 'index.html,README.html').split(',');
   const infos = getPathInfos(params.path || '/', params.rootPath || '', dirindex);
   const githubToken = extractGithubToken(params);
