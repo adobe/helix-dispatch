@@ -1,3 +1,10 @@
+## [2.1.3](https://github.com/adobe/helix-dispatch/compare/v2.1.2...v2.1.3) (2019-09-30)
+
+
+### Bug Fixes
+
+* **deps:** update deps ([b7a669f](https://github.com/adobe/helix-dispatch/commit/b7a669f))
+
 ## [2.1.2](https://github.com/adobe/helix-dispatch/compare/v2.1.1...v2.1.2) (2019-09-04)
 
 
