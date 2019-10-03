@@ -16,6 +16,16 @@ const proxyquire = require('proxyquire');
 const assert = require('assert');
 const bunyan = require('bunyan');
 
+function createLogger(level = 'info') {
+  return bunyan.createLogger({
+    name: 'test-logger',
+    streams: [{
+      level,
+      stream: new bunyan.RingBuffer({ limit: 100 }),
+    }],
+  });
+}
+
 const OK_RESULT = () => Promise.resolve({
   activationId: 'abcd-1234',
   response: {
@@ -103,6 +113,22 @@ describe('Index Tests', () => {
     });
   });
 
+  it('action does not reveal secrets', async () => {
+    const logger = createLogger('debug');
+    await index({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      GITHUB_TOKEN: 'super-secret-token',
+      __ow_logger: logger,
+      __ow_headers: {
+        authorization: 'super-secret-authorization',
+      },
+    });
+    const output = logger.streams[0].stream.records.join('\n');
+    assert.ok(output.indexOf('super-secret-token') < 0, 'log should not contain GITHUB_TOKEN');
+    assert.ok(output.indexOf('super-secret-authorization') < 0, 'log should not contain authorization header');
+  });
+
   it('X-Dispatch-NoCache header is set, Cache-Control and Surrogate-Control response header are set', async () => {
     const result = await index({
       __ow_headers: {
@@ -150,14 +176,7 @@ describe('Index Tests', () => {
   });
 
   it('index returns 500 response', async () => {
-    const logger = bunyan.createLogger({
-      name: 'test-logger',
-      streams: [{
-        level: 'info',
-        type: 'stream',
-        stream: new bunyan.RingBuffer({ limit: 100 }),
-      }],
-    });
+    const logger = createLogger();
     invokeResult = (req) => {
       if (req.params.path === '/404.html') {
         return ERR_RESULT();
@@ -181,15 +200,7 @@ describe('Index Tests', () => {
   });
 
   it('index produces application error when fetcher fails.', async () => {
-    const logger = bunyan.createLogger({
-      name: 'test-logger',
-      streams: [{
-        level: 'info',
-        type: 'stream',
-        stream: new bunyan.RingBuffer({ limit: 100 }),
-      }],
-    });
-
+    const logger = createLogger();
     invokeResult = FAIL_RESULT;
 
     const result = await index({
@@ -204,18 +215,12 @@ describe('Index Tests', () => {
   });
 
   it('index function instruments epsagon', async () => {
-    const logger = bunyan.createLogger({
-      name: 'test-logger',
-      streams: [{
-        level: 'info',
-        type: 'raw',
-        stream: new bunyan.RingBuffer({ limit: 100 }),
-      }],
-    });
+    const logger = createLogger();
     await index({
       EPSAGON_TOKEN: 'foobar',
       __ow_logger: logger,
     });
-    assert.strictEqual(logger.streams[0].stream.records[0].msg, 'instrumenting epsagon.');
+    const output = logger.streams[0].stream.records.join('\n');
+    assert.ok(output.indexOf('instrumenting epsagon.') >= 0);
   });
 });
