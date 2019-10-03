@@ -83,6 +83,7 @@ async function executeActions(params) {
   } catch (e) {
     let severe = 0;
 
+    /* istanbul ignore next */
     if (Array.isArray(e)) {
       log.error('no valid response could be fetched');
 
@@ -99,6 +100,7 @@ async function executeActions(params) {
       }
     }
 
+    /* istanbul ignore next */
     log.error('error while invoking fetchers: ', Array.isArray(e) ? e[severe] : e);
     return {
       // a fetchers `resolve` should never throw an exception but report a proper status response.

@@ -246,26 +246,31 @@ function fetchrawtasks(infos, params, contentPromise) {
  * @returns {Promise<*>} returns a promise of the resolved ref.
  * options, with a sha instead of a branch name
  */
-function resolveRef(opts, log) {
+async function resolveRef(opts, log) {
   const { ref } = opts;
   if (ref && ref.match(/^[a-f0-9]{40}$/i)) {
-    return Promise.resolve({ ref });
-  }
-  const ow = openwhisk();
-  return ow.actions.invoke({
-    name: 'helix-services/resolve-git-ref@v1',
-    blocking: true,
-    result: true,
-    params: opts,
-  }).then((res) => ({
-    // use the resolved ref
-    ref: res.body.sha,
-    branch: ref,
-  })).catch((e) => {
-    // if the resolver fails, just use the unresolved ref
-    log.error(`Unable to resolve branch name ${e}`);
     return { ref };
-  });
+  }
+  try {
+    const ow = openwhisk();
+    const res = await ow.actions.invoke({
+      name: 'helix-services/resolve-git-ref@v1',
+      blocking: true,
+      result: true,
+      params: opts,
+    });
+    if (res.body && res.body.sha) {
+      return {
+        // use the resolved ref
+        ref: res.body.sha,
+        branch: ref,
+      };
+    }
+    log.error(`Unable to resolve branch name ${res.statusCode} ${res.body}`);
+  } catch (e) {
+    log.error(`Unable to resolve branch name ${e}`);
+  }
+  return { ref };
 }
 
 /**
@@ -296,6 +301,7 @@ function equalRepository(o1, o2) {
  * @param {object} params - action params
  * @returns {string} the Github token extracted from `params` or `undefined` if none was found
  */
+/* istanbul ignore next */
 function extractGithubToken(params = {}) {
   // eslint-disable-next-line dot-notation
   return params.GITHUB_TOKEN || (params['__ow_headers'] && params['__ow_headers']['x-github-token']);
