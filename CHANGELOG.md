@@ -1,3 +1,11 @@
+## [2.1.6](https://github.com/adobe/helix-dispatch/compare/v2.1.5...v2.1.6) (2019-10-03)
+
+
+### Bug Fixes
+
+* **dispatch:** handle failing gitresolve-ref properly ([0c05828](https://github.com/adobe/helix-dispatch/commit/0c05828)), closes [#86](https://github.com/adobe/helix-dispatch/issues/86)
+* **logging:** hide GITHUB_TOKEN from action params ([6b88916](https://github.com/adobe/helix-dispatch/commit/6b88916)), closes [#87](https://github.com/adobe/helix-dispatch/issues/87)
+
 ## [2.1.5](https://github.com/adobe/helix-dispatch/compare/v2.1.4...v2.1.5) (2019-10-01)
 
 
