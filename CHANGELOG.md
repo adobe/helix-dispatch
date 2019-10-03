@@ -1,3 +1,10 @@
+## [2.1.7](https://github.com/adobe/helix-dispatch/compare/v2.1.6...v2.1.7) (2019-10-03)
+
+
+### Bug Fixes
+
+* **logging:** data fields are not properly serialized for coralogix logger ([6a6216b](https://github.com/adobe/helix-dispatch/commit/6a6216b))
+
 ## [2.1.6](https://github.com/adobe/helix-dispatch/compare/v2.1.5...v2.1.6) (2019-10-03)
 
 
