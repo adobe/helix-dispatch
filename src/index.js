@@ -42,9 +42,12 @@ async function executeActions(params) {
   const ow = openwhisk();
 
   const invoker = (actionPromise, idx) => Promise.resolve(actionPromise).then((actionOptions) => {
-    // todo: sanitizing the secrets should be better handled in the logging framrwork.
+    // todo: sanitizing the secrets should be better handled in the logging framework.
     // maybe with https://github.com/adobe/helix-log/issues/44
-    const opts = deepclone(actionOptions);
+    const opts = {
+      name: actionOptions.name,
+      params: deepclone(actionOptions.params),
+    };
     Object.keys(opts.params).forEach((key) => {
       if (key.match(/^[A-Z0-9_]+$/)) {
         opts.params[key] = '[undisclosed secret]';
@@ -54,7 +57,7 @@ async function executeActions(params) {
       opts.params.__ow_headers.authorization = '[undisclosed secret]';
     }
 
-    log.info({ opts }, `[${idx}] Action: ${actionOptions.name}`);
+    log.info({ actionOptions: opts }, `[${idx}] Action: ${actionOptions.name}`);
     return ow.actions.invoke(actionOptions)
       .then((reply) => {
         const res = reply.response.result;
