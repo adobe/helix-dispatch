@@ -13,9 +13,9 @@
 const openwhisk = require('openwhisk');
 const { logger } = require('@adobe/openwhisk-action-utils');
 const { wrap } = require('@adobe/helix-status');
+const { deepclone } = require('ferrum');
 const resolvePreferred = require('./resolve-preferred');
 const { fetchers } = require('./fetchers');
-
 /**
  * This function dispatches the request to the content repository, the pipeline, and the static
  * repository. The preference order is:
@@ -42,8 +42,19 @@ async function executeActions(params) {
   const ow = openwhisk();
 
   const invoker = (actionPromise, idx) => Promise.resolve(actionPromise).then((actionOptions) => {
-    log.info(`[${idx}] Action: ${actionOptions.name}`);
-    log.debug(`[${idx}] Action: ${JSON.stringify(actionOptions, null, 2)}`);
+    // todo: sanitizing the secrets should be better handled in the logging framrwork.
+    // maybe with https://github.com/adobe/helix-log/issues/44
+    const opts = deepclone(actionOptions);
+    Object.keys(opts.params).forEach((key) => {
+      if (key.match(/^[A-Z0-9_]+$/)) {
+        opts.params[key] = '[undisclosed secret]';
+      }
+    });
+    if (opts.params.__ow_headers && opts.params.__ow_headers.authorization) {
+      opts.params.__ow_headers.authorization = '[undisclosed secret]';
+    }
+
+    log.info({ opts }, `[${idx}] Action: ${actionOptions.name}`);
     return ow.actions.invoke(actionOptions)
       .then((reply) => {
         const res = reply.response.result;
@@ -60,9 +71,6 @@ async function executeActions(params) {
     // check if X-Dispatch-NoCache header is in the request,
     // this will override the Cache-Control and Surrogate-Control
     // response headers to ensure no caching
-
-    log.debug(`received params ${JSON.stringify(params, null, 2)}`);
-
     // eslint-disable-next-line no-underscore-dangle
     if (resp && params.__ow_headers && params.__ow_headers['x-dispatch-nocache']) {
       log.info('received no cache instruction via X-Dispatch-NoCache header');
@@ -95,7 +103,7 @@ async function executeActions(params) {
     return {
       // a fetchers `resolve` should never throw an exception but report a proper status response.
       // so we consider any exception thrown as application error and propagate it to openwhisk.
-      error: `foo${String(e.stack || e[severe].stack)}`,
+      error: `${String(e.stack || e[severe].stack)}`,
     };
   }
 }
