@@ -36,6 +36,12 @@ const { fetchers } = proxyquire('../src/fetchers', {
           if (ref === 'branch') {
             return Promise.reject(new Error('unknown'));
           }
+          if (ref === 'fail') {
+            return Promise.resolve({
+              statusCode: 503, // service unavailable
+              body: 'failed to fetch git repo info.',
+            });
+          }
           return Promise.resolve({
             body: {
               fqRef: 'refs/heads/master',
@@ -137,7 +143,7 @@ describe('testing fetchers.js', () => {
     assert.equal(res[1].params.path, '/dir/example.md');
   });
 
-  it('fetch basic HTML from branch while resolver fails', async () => {
+  it('fetch basic HTML from branch while resolver rejects', async () => {
     const res = await Promise.all(fetchers({
       ...opts,
       'static.ref': 'branch',
@@ -151,6 +157,25 @@ describe('testing fetchers.js', () => {
     assert.equal(res[0].params.path, '/dir/example.html');
     assert.equal(res[1].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html');
     assert.equal(res[1].params.path, '/dir/example.md');
+    assert.equal(res[2].params.ref, 'branch');
+  });
+
+  it('fetch basic HTML from branch while resolver fails', async () => {
+    const res = await Promise.all(fetchers({
+      ...opts,
+      'static.ref': 'fail',
+      'content.ref': 'fail',
+      path: '/dir/example.html',
+      __ow_logger: console,
+    }));
+
+    logres(res);
+    assert.equal(res.length, 5);
+    assert.equal(res[0].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/hlx--static');
+    assert.equal(res[0].params.path, '/dir/example.html');
+    assert.equal(res[1].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html');
+    assert.equal(res[1].params.path, '/dir/example.md');
+    assert.equal(res[2].params.ref, 'fail');
   });
 
   it('fetch HTML with selector', () => {
