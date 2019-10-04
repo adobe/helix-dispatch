@@ -84,31 +84,36 @@ async function executeActions(params) {
 
     return resp;
   } catch (e) {
-    let severe = 0;
+    let severe = e;
 
     /* istanbul ignore next */
     if (Array.isArray(e)) {
-      log.error('no valid response could be fetched');
-
+      let worst = 0;
       e.forEach((err, idx) => {
-        log.error(err.message);
-        if (err.statusCode === 500) {
-          severe = idx;
+        if (!err.statusCode || err.statusCode >= 500) {
+          log.error(err.message);
+          worst = idx;
         }
       });
-      if (e[severe].statusCode) {
-        return {
-          statusCode: e[severe].statusCode,
-        };
-      }
+      severe = e[worst];
     }
 
-    /* istanbul ignore next */
-    log.error('error while invoking fetchers: ', Array.isArray(e) ? e[severe] : e);
+    if (severe.statusCode) {
+      if (severe.statusCode >= 500) {
+        log.error('no valid response could be fetched', severe);
+      } else {
+        log.info('no valid response could be fetched', severe);
+      }
+      return {
+        statusCode: severe.statusCode,
+      };
+    }
+
+    // a fetchers `resolve` should never throw an exception but report a proper status response.
+    // so we consider any exception thrown as application error and propagate it to openwhisk.
+    log.error('error while invoking fetchers: ', severe);
     return {
-      // a fetchers `resolve` should never throw an exception but report a proper status response.
-      // so we consider any exception thrown as application error and propagate it to openwhisk.
-      error: `${String(e.stack || e[severe].stack)}`,
+      error: `${String(severe.stack)}`,
     };
   }
 }
