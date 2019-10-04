@@ -1,3 +1,10 @@
+## [2.1.8](https://github.com/adobe/helix-dispatch/compare/v2.1.7...v2.1.8) (2019-10-04)
+
+
+### Bug Fixes
+
+* **logging:** ensure proper logging for 503 errors ([#91](https://github.com/adobe/helix-dispatch/issues/91)) ([880906f](https://github.com/adobe/helix-dispatch/commit/880906f)), closes [#28](https://github.com/adobe/helix-dispatch/issues/28) [#90](https://github.com/adobe/helix-dispatch/issues/90)
+
 ## [2.1.7](https://github.com/adobe/helix-dispatch/compare/v2.1.6...v2.1.7) (2019-10-03)
 
 
