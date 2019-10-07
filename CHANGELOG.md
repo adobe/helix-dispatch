@@ -1,3 +1,10 @@
+## [2.1.10](https://github.com/adobe/helix-dispatch/compare/v2.1.9...v2.1.10) (2019-10-07)
+
+
+### Bug Fixes
+
+* **deps:** pin dependency ferrum to 1.2.0 ([#95](https://github.com/adobe/helix-dispatch/issues/95)) ([d03e64e](https://github.com/adobe/helix-dispatch/commit/d03e64e))
+
 ## [2.1.9](https://github.com/adobe/helix-dispatch/compare/v2.1.8...v2.1.9) (2019-10-05)
 
 
