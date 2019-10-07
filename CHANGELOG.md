@@ -1,3 +1,10 @@
+## [2.1.11](https://github.com/adobe/helix-dispatch/compare/v2.1.10...v2.1.11) (2019-10-07)
+
+
+### Bug Fixes
+
+* **response:** ensure sanitized action options in response ([#97](https://github.com/adobe/helix-dispatch/issues/97)) ([06c0f85](https://github.com/adobe/helix-dispatch/commit/06c0f85))
+
 ## [2.1.10](https://github.com/adobe/helix-dispatch/compare/v2.1.9...v2.1.10) (2019-10-07)
 
 
