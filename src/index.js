@@ -61,7 +61,7 @@ async function executeActions(params) {
     return ow.actions.invoke(actionOptions)
       .then((reply) => {
         const res = reply.response.result;
-        res.actionOptions = actionOptions;
+        res.actionOptions = opts;
         log.info(`[${idx}] ${reply.activationId} ${res.statusCode} ${res.errorMessage || ''}`);
         return actionOptions.resolve(res);
       });
