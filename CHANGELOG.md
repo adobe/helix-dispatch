@@ -1,3 +1,10 @@
+## [2.1.13](https://github.com/adobe/helix-dispatch/compare/v2.1.12...v2.1.13) (2019-10-08)
+
+
+### Bug Fixes
+
+* **resolve:** use linked sequence action ([e3a54f5](https://github.com/adobe/helix-dispatch/commit/e3a54f5))
+
 ## [2.1.12](https://github.com/adobe/helix-dispatch/compare/v2.1.11...v2.1.12) (2019-10-08)
 
 
