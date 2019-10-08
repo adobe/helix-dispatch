@@ -254,7 +254,7 @@ async function resolveRef(opts, log) {
   try {
     const ow = openwhisk();
     const res = await ow.actions.invoke({
-      name: 'helix-services/resolve-git-ref@v1',
+      name: 'helix-services/resolve-git-ref@v1_link',
       blocking: true,
       result: true,
       params: opts,
