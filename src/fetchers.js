@@ -147,7 +147,6 @@ function fetch404tasks(infos, contentPromise, staticPromise) {
       blocking: true,
       params: {
         path: '/404.html',
-        entry: '/404.html',
         esi: false,
         plain: true,
         ...contentOpts,
@@ -160,7 +159,6 @@ function fetch404tasks(infos, contentPromise, staticPromise) {
       blocking: true,
       params: {
         path: '/404.html',
-        entry: '/404.html',
         esi: false,
         plain: true,
         ...staticOpts,
@@ -186,7 +184,6 @@ function fetchfallbacktasks(infos, wskOpts, contentPromise, staticPromise) {
         blocking: true,
         params: {
           path: info.path,
-          entry: info.path,
           esi: false,
           plain: true,
           ...wskOpts,
@@ -231,7 +228,6 @@ function fetchrawtasks(infos, params, contentPromise) {
     blocking: true,
     params: {
       path: info.path,
-      entry: info.path,
       esi: false,
       plain: true,
       root: params['content.root'],
