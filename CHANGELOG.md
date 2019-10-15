@@ -1,3 +1,10 @@
+# [2.2.0](https://github.com/adobe/helix-dispatch/compare/v2.1.13...v2.2.0) (2019-10-15)
+
+
+### Features
+
+* **fetchers:** remove `entry` param ([#104](https://github.com/adobe/helix-dispatch/issues/104)) ([111f457](https://github.com/adobe/helix-dispatch/commit/111f457)), closes [#96](https://github.com/adobe/helix-dispatch/issues/96)
+
 ## [2.1.13](https://github.com/adobe/helix-dispatch/compare/v2.1.12...v2.1.13) (2019-10-08)
 
 
