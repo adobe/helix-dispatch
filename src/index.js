@@ -68,7 +68,7 @@ async function executeActions(params) {
   const { __ow_logger: log } = params;
   const ow = openwhisk();
 
-  log.debug('executeActions - entering dispatch action', sanatizeParams(params));
+  log.info('executeActions - entering dispatch action', sanatizeParams(params));
 
   const invoker = (actionPromise, idx) => Promise.resolve(actionPromise).then((actionOptions) => {
     const opts = {
