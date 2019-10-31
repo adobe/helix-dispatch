@@ -41,7 +41,7 @@ async function executeActions(params) {
   const { __ow_logger: log } = params;
   const ow = openwhisk();
 
-  logger.debug('executeActions - entering dispatch action', params);
+  log.debug('executeActions - entering dispatch action', params);
 
   const invoker = (actionPromise, idx) => Promise.resolve(actionPromise).then((actionOptions) => {
     // todo: sanitizing the secrets should be better handled in the logging framework.
