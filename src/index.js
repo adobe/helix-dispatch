@@ -76,6 +76,9 @@ async function executeActions(params) {
       params: sanatizeParams(actionOptions.params),
     };
 
+    // eslint-disable-next-line no-underscore-dangle
+    opts.__referrer = { params };
+
     log.info({ actionOptions: opts }, `[${idx}] Action: ${actionOptions.name}`);
     return ow.actions.invoke(actionOptions)
       .then((reply) => {
