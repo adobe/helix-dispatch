@@ -77,7 +77,7 @@ async function executeActions(params) {
     };
 
     // propage the X-Referrer header
-    opts.params.__ow_headers = { 'X-Referrer': params.__ow_headers ? params.__ow_headers['X-Referrer'] : 'n/a' };
+    opts.params.__ow_headers = { 'x-referrer': params.__ow_headers ? params.__ow_headers['x-referrer'] : 'n/a' };
 
     log.info({ actionOptions: opts }, `[${idx}] Action: ${actionOptions.name}`);
     return ow.actions.invoke(actionOptions)
