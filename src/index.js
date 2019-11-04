@@ -71,13 +71,15 @@ async function executeActions(params) {
   log.info('executeActions - entering dispatch action', sanatizeParams(params));
 
   const invoker = (actionPromise, idx) => Promise.resolve(actionPromise).then((actionOptions) => {
+    const newParams = actionOptions.params;
+
+    // propage the OW headers
+    newParams.__ow_headers = params.__ow_headers || {};
+
     const opts = {
       name: actionOptions.name,
-      params: sanatizeParams(actionOptions.params),
+      params: sanatizeParams(newParams),
     };
-
-    // propage the X-Referrer header
-    opts.params.__ow_headers = { 'x-referrer': params.__ow_headers ? params.__ow_headers['x-referrer'] : 'n/a' };
 
     log.info({ actionOptions: opts }, `[${idx}] Action: ${actionOptions.name}`);
     return ow.actions.invoke(actionOptions)
