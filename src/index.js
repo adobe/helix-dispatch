@@ -18,7 +18,7 @@ const resolvePreferred = require('./resolve-preferred');
 const { fetchers } = require('./fetchers');
 
 // todo: sanitizing the secrets should be better handled in the logging framework.
-const sanatizeParams = (params) => {
+const sanitizeParams = (params) => {
   // backup and restore __ow_logger because deepclone cannot clone it
   // eslint-disable-next-line camelcase
   const { __ow_logger } = params;
@@ -68,7 +68,8 @@ async function executeActions(params) {
   const { __ow_logger: log } = params;
   const ow = openwhisk();
 
-  log.info('executeActions - entering dispatch action', sanatizeParams(params));
+  const sanitizedParams = sanitizeParams(params);
+  log.info('executeActions - entering dispatch action', sanitizedParams);
 
   const invoker = (actionPromise, idx) => Promise.resolve(actionPromise).then((actionOptions) => {
     const newParams = actionOptions.params;
@@ -78,7 +79,7 @@ async function executeActions(params) {
 
     const opts = {
       name: actionOptions.name,
-      params: sanatizeParams(newParams),
+      params: sanitizedParams,
     };
 
     log.info({ actionOptions: opts }, `[${idx}] Action: ${actionOptions.name}`);
@@ -86,8 +87,11 @@ async function executeActions(params) {
       .then((reply) => {
         const res = reply.response.result;
         res.actionOptions = opts;
-        log.info(`[${idx}] ${reply.activationId} ${res.statusCode} ${res.errorMessage || ''}`);
+        log.info(`[${idx}] Result: ${reply.activationId} ${res.statusCode} ${res.errorMessage || ''}`);
         return actionOptions.resolve(res);
+      }).catch((reply) => {
+        const res = reply.response.result;
+        log.info(`[${idx}] Result error: ${reply.activationId} ${res.statusCode} ${res.errorMessage || ''}`);
       });
   });
 
