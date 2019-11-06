@@ -90,8 +90,8 @@ async function executeActions(params) {
         log.info(`[${idx}] Result: ${reply.activationId} ${res.statusCode} ${res.errorMessage || ''}`);
         return actionOptions.resolve(res);
       }).catch((reply) => {
-        const res = reply.response.result;
-        log.info(`[${idx}] Result error: ${reply.activationId} ${res.statusCode} ${res.errorMessage || ''}`);
+        log.info(`[${idx}] Result error: ${reply.activationId}`, reply);
+        throw reply;
       });
   });
 
