@@ -1,3 +1,10 @@
+## [2.2.5](https://github.com/adobe/helix-dispatch/compare/v2.2.4...v2.2.5) (2019-11-10)
+
+
+### Bug Fixes
+
+* **deps:** update dependency epsagon to v1.41.0 ([#115](https://github.com/adobe/helix-dispatch/issues/115)) ([425dc43](https://github.com/adobe/helix-dispatch/commit/425dc43d236d7d71f8801c0146090880cd338d85))
+
 ## [2.2.4](https://github.com/adobe/helix-dispatch/compare/v2.2.3...v2.2.4) (2019-10-31)
 
 
