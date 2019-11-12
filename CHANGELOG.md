@@ -1,3 +1,10 @@
+## [2.2.6](https://github.com/adobe/helix-dispatch/compare/v2.2.5...v2.2.6) (2019-11-12)
+
+
+### Bug Fixes
+
+* **deps:** update any ([6de2deb](https://github.com/adobe/helix-dispatch/commit/6de2deb2a409099025c33ea6e955e7e4564d8268))
+
 ## [2.2.5](https://github.com/adobe/helix-dispatch/compare/v2.2.4...v2.2.5) (2019-11-10)
 
 
