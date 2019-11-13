@@ -1,3 +1,24 @@
+## [2.2.7](https://github.com/adobe/helix-dispatch/compare/v2.2.6...v2.2.7) (2019-11-13)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @adobe/openwhisk-action-utils to v2.5.0 ([#117](https://github.com/adobe/helix-dispatch/issues/117)) ([af3dec3](https://github.com/adobe/helix-dispatch/commit/af3dec3afb9b92f0994915a8dfbe85898ea84895))
+
+## [2.2.6](https://github.com/adobe/helix-dispatch/compare/v2.2.5...v2.2.6) (2019-11-12)
+
+
+### Bug Fixes
+
+* **deps:** update any ([6de2deb](https://github.com/adobe/helix-dispatch/commit/6de2deb2a409099025c33ea6e955e7e4564d8268))
+
+## [2.2.5](https://github.com/adobe/helix-dispatch/compare/v2.2.4...v2.2.5) (2019-11-10)
+
+
+### Bug Fixes
+
+* **deps:** update dependency epsagon to v1.41.0 ([#115](https://github.com/adobe/helix-dispatch/issues/115)) ([425dc43](https://github.com/adobe/helix-dispatch/commit/425dc43d236d7d71f8801c0146090880cd338d85))
+
 ## [2.2.4](https://github.com/adobe/helix-dispatch/compare/v2.2.3...v2.2.4) (2019-10-31)
 
 
