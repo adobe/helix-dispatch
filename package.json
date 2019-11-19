@@ -32,7 +32,7 @@
   "homepage": "https://github.com/adobe/helix-dispatch#readme",
   "dependencies": {
     "@adobe/helix-status": "6.0.2",
-    "@adobe/openwhisk-action-utils": "2.7.2",
+    "@adobe/openwhisk-action-utils": "https://github.com/adobe/openwhisk-action-utils.git#f6919b4a85899a7b05e190890a0382e174af6452",
     "epsagon": "1.42.0",
     "ferrum": "1.4.1",
     "openwhisk": "3.20.0"
