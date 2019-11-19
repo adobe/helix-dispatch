@@ -137,6 +137,7 @@ describe('Index Tests', () => {
     const output = logger.streams[0].stream.records.join('\n');
     assert.ok(output.indexOf('super-secret-token') < 0, 'log should not contain GITHUB_TOKEN');
     assert.ok(output.indexOf('super-secret-authorization') < 0, 'log should not contain authorization header');
+    assert.ok(output.indexOf('3e8dec3886cb75bcea6970b4b00783f69cbf487a') >= 0, 'log should contain static.ref');
   });
 
   it('X-Dispatch-NoCache header is set, Cache-Control and Surrogate-Control response header are set', async () => {
@@ -256,5 +257,17 @@ describe('Index Tests', () => {
     });
     const output = logger.streams[0].stream.records.join('\n');
     assert.ok(output.indexOf('instrumenting epsagon.') >= 0);
+  });
+
+  it('action does log referrer', async () => {
+    const logger = createLogger('debug');
+    await index({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      __referrer: 'the-referrer',
+      __ow_logger: logger,
+    });
+    const output = logger.streams[0].stream.records.join('\n');
+    assert.ok(output.indexOf('the-referrer') >= 0, 'the-referrer is logged');
   });
 });
