@@ -16,33 +16,6 @@ const { wrap } = require('@adobe/helix-status');
 const { deepclone } = require('ferrum');
 const resolvePreferred = require('./resolve-preferred');
 const { fetchers } = require('./fetchers');
-
-// todo: sanitizing the secrets should be better handled in the logging framework.
-const sanitizeParams = (params) => {
-  // backup and restore __ow_logger because deepclone cannot clone it
-  // eslint-disable-next-line camelcase
-  const { __ow_logger } = params;
-  // eslint-disable-next-line no-underscore-dangle, no-param-reassign
-  delete params.__ow_logger;
-
-  const filtered = deepclone(params);
-
-  Object.keys(filtered).forEach((key) => {
-    if (key.match(/^[A-Z0-9_]+$/)) {
-      filtered[key] = '[undisclosed secret]';
-    }
-  });
-
-  if (filtered.__ow_headers && filtered.__ow_headers.authorization) {
-    filtered.__ow_headers.authorization = '[undisclosed secret]';
-  }
-
-  // eslint-disable-next-line no-underscore-dangle, no-param-reassign, camelcase
-  params.__ow_logger = __ow_logger;
-
-  return filtered;
-};
-
 /**
  * This function dispatches the request to the content repository, the pipeline, and the static
  * repository. The preference order is:
@@ -68,30 +41,29 @@ async function executeActions(params) {
   const { __ow_logger: log } = params;
   const ow = openwhisk();
 
-  const sanitizedParams = sanitizeParams(params);
-  log.info('executeActions - entering dispatch action', sanitizedParams);
-
   const invoker = (actionPromise, idx) => Promise.resolve(actionPromise).then((actionOptions) => {
-    const newParams = actionOptions.params;
-
-    // propage the OW headers
-    newParams.__ow_headers = params.__ow_headers || {};
-
+    // todo: sanitizing the secrets should be better handled in the logging framework.
+    // maybe with https://github.com/adobe/helix-log/issues/44
     const opts = {
       name: actionOptions.name,
-      params: sanitizedParams,
+      params: deepclone(actionOptions.params),
     };
+    Object.keys(opts.params).forEach((key) => {
+      if (key.match(/^[A-Z0-9_]+$/)) {
+        opts.params[key] = '[undisclosed secret]';
+      }
+    });
+    if (opts.params.__ow_headers && opts.params.__ow_headers.authorization) {
+      opts.params.__ow_headers.authorization = '[undisclosed secret]';
+    }
 
     log.info({ actionOptions: opts }, `[${idx}] Action: ${actionOptions.name}`);
     return ow.actions.invoke(actionOptions)
       .then((reply) => {
         const res = reply.response.result;
         res.actionOptions = opts;
-        log.info(`[${idx}] Result: ${reply.activationId} ${res.statusCode} ${res.errorMessage || ''}`);
+        log.info(`[${idx}] ${reply.activationId} ${res.statusCode} ${res.errorMessage || ''}`);
         return actionOptions.resolve(res);
-      }).catch((reply) => {
-        log.info(`[${idx}] Result error: ${reply.activationId}`, reply);
-        throw reply;
       });
   });
 
