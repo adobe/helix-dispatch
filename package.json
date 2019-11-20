@@ -14,7 +14,7 @@
     "build": "wsk-builder -v",
     "deploy": "wsk-builder -v --deploy --test=/_status_check/healthcheck.json",
     "deploy-sequences": "wsk-builder --no-build -no-hints -l latest -l major -l minor",
-    "deploy-ci": "wsk-builder -v --deploy --test=/_status_check/healthcheck.json --pkgVersion=ci$CIRCLE_BUILD_NUM -l ci"
+    "deploy-ci": "wsk-builder -v --deploy --test=/_status_check/healthcheck.json --pkgVersion=ci$CIRCLE_BUILD_NUM -l ci -l b_${CIRCLE_BRANCH}"
   },
   "wsk": {
     "name": "helix-services-private/dispatch@${version}",
@@ -39,7 +39,7 @@
   },
   "devDependencies": {
     "@adobe/eslint-config-helix": "1.1.0",
-    "@adobe/openwhisk-action-builder": "2.2.2",
+    "@adobe/openwhisk-action-builder": "2.3.1",
     "@semantic-release/changelog": "3.0.5",
     "@semantic-release/exec": "3.3.8",
     "@semantic-release/git": "7.0.18",
