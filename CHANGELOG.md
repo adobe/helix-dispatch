@@ -1,3 +1,10 @@
+## [2.2.11](https://github.com/adobe/helix-dispatch/compare/v2.2.10...v2.2.11) (2019-11-21)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @adobe/helix-status to v7.0.2 ([82137e0](https://github.com/adobe/helix-dispatch/commit/82137e008bc7388ea4644e7308f8c195f3891455))
+
 ## [2.2.10](https://github.com/adobe/helix-dispatch/compare/v2.2.9...v2.2.10) (2019-11-20)
 
 
