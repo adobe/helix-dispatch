@@ -33,7 +33,7 @@
   "dependencies": {
     "@adobe/helix-status": "7.0.2",
     "@adobe/openwhisk-action-utils": "2.7.3",
-    "epsagon": "1.42.0",
+    "epsagon": "1.42.1",
     "ferrum": "1.4.1",
     "openwhisk": "3.20.0"
   },
@@ -41,7 +41,7 @@
     "@adobe/eslint-config-helix": "1.1.0",
     "@adobe/helix-ops": "1.0.1",
     "@adobe/openwhisk-action-builder": "2.3.1",
-    "@semantic-release/changelog": "3.0.5",
+    "@semantic-release/changelog": "3.0.6",
     "@semantic-release/exec": "3.3.8",
     "@semantic-release/git": "7.0.18",
     "@semantic-release/github": "5.5.5",
@@ -50,7 +50,7 @@
     "chai": "4.2.0",
     "chai-http": "4.3.0",
     "codecov": "3.6.1",
-    "eslint": "6.6.0",
+    "eslint": "6.7.0",
     "eslint-plugin-header": "3.0.0",
     "eslint-plugin-import": "2.18.2",
     "istanbul": "1.1.0-alpha.1",
