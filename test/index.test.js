@@ -14,16 +14,17 @@
 
 const proxyquire = require('proxyquire');
 const assert = require('assert');
-const bunyan = require('bunyan');
+const { MemLogger, SimpleInterface } = require('@adobe/helix-log');
 
 function createLogger(level = 'info') {
-  return bunyan.createLogger({
-    name: 'test-logger',
-    streams: [{
-      level,
-      stream: new bunyan.RingBuffer({ limit: 100 }),
-    }],
+  const logger = new MemLogger({
+    level,
+    filter: (fields) => ({
+      ...fields,
+      timestamp: '1970-01-01T00:00:00.000Z',
+    }),
   });
+  return new SimpleInterface({ logger });
 }
 
 const OK_RESULT = () => Promise.resolve({
@@ -134,7 +135,7 @@ describe('Index Tests', () => {
         authorization: 'super-secret-authorization',
       },
     });
-    const output = logger.streams[0].stream.records.join('\n');
+    const output = JSON.stringify(logger.logger.buf);
     assert.ok(output.indexOf('super-secret-token') < 0, 'log should not contain GITHUB_TOKEN');
     assert.ok(output.indexOf('super-secret-authorization') < 0, 'log should not contain authorization header');
   });
@@ -159,16 +160,7 @@ describe('Index Tests', () => {
   });
 
   it('index returns 404 response', async () => {
-    const logger = bunyan.createLogger({
-      name: 'test-logger',
-      streams: [{
-        level: 'info',
-        type: 'stream',
-        stream: new bunyan.RingBuffer({ limit: 100 }),
-      }],
-    });
-    logger.fields = {}; // avoid errors during setup. test logger is winston, but we need bunyan.
-    logger.flush = () => {};
+    const logger = createLogger('debug');
     invokeResult = ERR_RESULT;
 
     const result = await index({
@@ -181,7 +173,7 @@ describe('Index Tests', () => {
       statusCode: 404,
     });
 
-    const output = logger.streams[0].stream.records.join('\n');
+    const output = JSON.stringify(logger.logger.buf);
     assert.ok(output.indexOf('no valid response could be fetched') >= 0);
   });
 
@@ -205,7 +197,7 @@ describe('Index Tests', () => {
       statusCode: 500,
     });
 
-    const output = logger.streams[0].stream.records.join('\n');
+    const output = JSON.stringify(logger.logger.buf);
     assert.ok(output.indexOf('no valid response could be fetched') >= 0);
   });
 
@@ -229,7 +221,7 @@ describe('Index Tests', () => {
       statusCode: 503,
     });
 
-    const output = logger.streams[0].stream.records.join('\n');
+    const output = JSON.stringify(logger.logger.buf);
     assert.ok(output.indexOf('no valid response could be fetched') >= 0);
   });
 
@@ -244,8 +236,8 @@ describe('Index Tests', () => {
     });
     assert.ok(result.error.indexOf('Error: runtime failure.\n    at FAIL_RESULT') >= 0);
 
-    const output = logger.streams[0].stream.records.join('\n');
-    assert.ok(output.indexOf('error while invoking fetchers:  Error: runtime failure.') >= 0);
+    const output = JSON.stringify(logger.logger.buf);
+    assert.ok(output.indexOf('error while invoking fetchers: Error: runtime failure.') >= 0);
   });
 
   it('index function instruments epsagon', async () => {
@@ -254,7 +246,7 @@ describe('Index Tests', () => {
       EPSAGON_TOKEN: 'foobar',
       __ow_logger: logger,
     });
-    const output = logger.streams[0].stream.records.join('\n');
+    const output = JSON.stringify(logger.logger.buf);
     assert.ok(output.indexOf('instrumenting epsagon.') >= 0);
   });
 });

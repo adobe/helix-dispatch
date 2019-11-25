@@ -11,8 +11,9 @@
  */
 
 const openwhisk = require('openwhisk');
-const { logger } = require('@adobe/openwhisk-action-utils');
-const { wrap } = require('@adobe/helix-status');
+const { wrap } = require('@adobe/openwhisk-action-utils');
+const { logger } = require('@adobe/openwhisk-action-logger');
+const { wrap: status } = require('@adobe/helix-status');
 const { deepclone } = require('ferrum');
 const resolvePreferred = require('./resolve-preferred');
 const { fetchers } = require('./fetchers');
@@ -57,7 +58,7 @@ async function executeActions(params) {
       opts.params.__ow_headers.authorization = '[undisclosed secret]';
     }
 
-    log.info({ actionOptions: opts }, `[${idx}] Action: ${actionOptions.name}`);
+    log.infoFields(`[${idx}] Action: ${actionOptions.name}`, { actionOptions: opts });
     return ow.actions.invoke(actionOptions)
       .then((reply) => {
         const res = reply.response.result;
@@ -100,9 +101,9 @@ async function executeActions(params) {
 
     if (severe.statusCode) {
       if (severe.statusCode >= 500) {
-        log.error('no valid response could be fetched', severe);
+        log.error(`no valid response could be fetched: ${severe}`);
       } else {
-        log.info('no valid response could be fetched', severe);
+        log.info(`no valid response could be fetched: ${severe}`);
       }
       return {
         statusCode: severe.statusCode,
@@ -111,7 +112,7 @@ async function executeActions(params) {
 
     // a fetchers `resolve` should never throw an exception but report a proper status response.
     // so we consider any exception thrown as application error and propagate it to openwhisk.
-    log.error('error while invoking fetchers: ', severe);
+    log.error(`error while invoking fetchers: ${severe}`);
     return {
       error: `${String(severe.stack)}`,
     };
@@ -119,30 +120,27 @@ async function executeActions(params) {
 }
 
 /**
- * Runs the action by wrapping the `fetch` function with the pingdom-status utility.
- * Additionally, if a EPSAGON_TOKEN is configured, the epsagon tracers are instrumented.
- * @param params Action params
- * @returns {Promise<*>} The response
+ * Instruments the action with epsagon, if a EPSAGON_TOKEN is configured.
  */
-async function run(params) {
-  const { __ow_logger: log } = params;
-  let action = executeActions;
-  if (params && params.EPSAGON_TOKEN) {
-    // ensure that epsagon is only required, if a token is present. this is to avoid invoking their
-    // patchers otherwise.
-    // eslint-disable-next-line global-require
-    const { openWhiskWrapper } = require('epsagon');
-    log.info('instrumenting epsagon.');
-    action = openWhiskWrapper(action, {
-      token_param: 'EPSAGON_TOKEN',
-      appName: 'Helix Services',
-      metadataOnly: false, // Optional, send more trace data
-      ignoredKeys: [/[A-Z0-0_]+/],
-    });
-  }
-  // we don't issue any pingdom checks, since those backends are tested by
-  // the respective fetcher-actions
-  return wrap(action)(params);
+function epsagon(action) {
+  return async (params) => {
+    if (params && params.EPSAGON_TOKEN) {
+      const { __ow_logger: log } = params;
+      // ensure that epsagon is only required, if a token is present.
+      // This is to avoid invoking their patchers otherwise.
+      // eslint-disable-next-line global-require
+      const { openWhiskWrapper } = require('epsagon');
+      log.info('instrumenting epsagon.');
+      // eslint-disable-next-line no-param-reassign
+      action = openWhiskWrapper(action, {
+        token_param: 'EPSAGON_TOKEN',
+        appName: 'Helix Services',
+        metadataOnly: false, // Optional, send more trace data
+        ignoredKeys: [/[A-Z0-9_]+/],
+      });
+    }
+    return action(params);
+  };
 }
 
 /**
@@ -150,8 +148,8 @@ async function run(params) {
  * @param params Action params
  * @returns {Promise<*>} The response
  */
-async function main(params) {
-  return logger.wrap(run, params);
-}
-
-module.exports.main = main;
+module.exports.main = wrap(executeActions)
+  .with(epsagon)
+  .with(status)
+  .with(logger.trace)
+  .with(logger);
