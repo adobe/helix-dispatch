@@ -1,3 +1,10 @@
+## [2.2.14](https://github.com/adobe/helix-dispatch/compare/v2.2.13...v2.2.14) (2019-12-02)
+
+
+### Bug Fixes
+
+* **release:** triggering release ([e030b74](https://github.com/adobe/helix-dispatch/commit/e030b74d18722b8416f007eb108d86414d6dc91d))
+
 ## [2.2.13](https://github.com/adobe/helix-dispatch/compare/v2.2.12...v2.2.13) (2019-11-25)
 
 
