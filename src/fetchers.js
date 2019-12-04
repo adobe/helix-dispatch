@@ -276,7 +276,7 @@ function fetchrawtasks(infos, params, contentPromise) {
  * @returns {Promise<*>} returns a promise of the resolved ref.
  * options, with a sha instead of a branch name
  */
-async function resolveRef(opts, { error = () => {} } = {}) {
+async function resolveRef(opts, log) {
   const { ref } = opts;
   if (ref && ref.match(/^[a-f0-9]{40}$/i)) {
     return { ref };
@@ -296,9 +296,9 @@ async function resolveRef(opts, { error = () => {} } = {}) {
         branch: ref,
       };
     }
-    error(`Unable to resolve branch name ${res.statusCode} ${res.body}`);
+    log.error(`Unable to resolve branch name ${res.statusCode} ${res.body}`);
   } catch (e) {
-    error(`Unable to resolve branch name ${e}`);
+    log.error(`Unable to resolve branch name ${e}`);
   }
   return { ref };
 }
