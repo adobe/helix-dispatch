@@ -1,3 +1,10 @@
+## [2.2.15](https://github.com/adobe/helix-dispatch/compare/v2.2.14...v2.2.15) (2019-12-16)
+
+
+### Bug Fixes
+
+* **deps:** update external ([#146](https://github.com/adobe/helix-dispatch/issues/146)) ([587b552](https://github.com/adobe/helix-dispatch/commit/587b5521fce1c118b25d03ea65396eda2a5f7b61))
+
 ## [2.2.14](https://github.com/adobe/helix-dispatch/compare/v2.2.13...v2.2.14) (2019-12-02)
 
 
