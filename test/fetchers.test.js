@@ -15,7 +15,7 @@ const proxyquire = require('proxyquire');
 const assert = require('assert');
 const { AssertionError } = require('assert');
 const {
-  defaultResolver, errorPageResolver, getPathInfos,
+  defaultResolver, errorPageResolver, getPathInfos, getDefault,
 } = require('../src/fetchers');
 
 const SHAS = {
@@ -75,14 +75,15 @@ function logres(r) {
       path: s.params.path,
       ref: s.params.ref,
     })));
-  });
+    // eslint-disable-next-line no-console
+  }).catch(console.error);
 }
 
 describe('testing fetchers.js', () => {
-  it('fetch nothing', () => {
+  it('fetch nothing', async () => {
     const res = fetchers();
 
-    assert.equal(res.length, 8);
+    assert.equal(res.length, 9);
     logres(res);
   });
 
@@ -94,7 +95,7 @@ describe('testing fetchers.js', () => {
     }));
 
     logres(res);
-    assert.equal(res.length, 5);
+    assert.equal(res.length, 6);
     assert.equal(res[0].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/hlx--static');
     assert.equal(res[0].params.ref, SHAS.trieloff);
     assert.equal(res[0].params.branch, 'master');
@@ -102,8 +103,11 @@ describe('testing fetchers.js', () => {
     assert.equal(res[1].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html');
     assert.equal(res[1].params.path, '/dir/example.md');
     assert.equal(res[1].params.ref, SHAS.trieloff);
-    assert.equal(res[2].params.ref, SHAS.adobe);
-    assert.equal(res[2].params.branch, 'master');
+    assert.equal(res[2].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html');
+    assert.equal(res[2].params.path, '/dir/default.md');
+    assert.equal(res[2].params.ref, SHAS.trieloff);
+    assert.equal(res[3].params.ref, SHAS.adobe);
+    assert.equal(res[3].params.branch, 'master');
     assert.equal(resolverInvocationCount - ric, 2);
   });
 
@@ -116,7 +120,7 @@ describe('testing fetchers.js', () => {
     }));
 
     logres(res);
-    assert.equal(res.length, 5);
+    assert.equal(res.length, 6);
     assert.equal(res[0].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/hlx--static');
     assert.equal(res[0].params.ref, SHAS.adobe);
     assert.equal(res[0].params.branch, 'master');
@@ -136,7 +140,7 @@ describe('testing fetchers.js', () => {
     }));
 
     logres(res);
-    assert.equal(res.length, 5);
+    assert.equal(res.length, 6);
     assert.equal(res[0].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/hlx--static');
     assert.equal(res[0].params.path, '/dir/example.html');
     assert.equal(res[1].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html');
@@ -152,12 +156,14 @@ describe('testing fetchers.js', () => {
     }));
 
     logres(res);
-    assert.equal(res.length, 5);
+    assert.equal(res.length, 6);
     assert.equal(res[0].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/hlx--static');
     assert.equal(res[0].params.path, '/dir/example.html');
     assert.equal(res[1].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html');
     assert.equal(res[1].params.path, '/dir/example.md');
-    assert.equal(res[2].params.ref, 'branch');
+    assert.equal(res[2].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html');
+    assert.equal(res[2].params.path, '/dir/default.md');
+    assert.equal(res[3].params.ref, 'branch');
   });
 
   it('fetch basic HTML from branch while resolver fails', async () => {
@@ -170,7 +176,7 @@ describe('testing fetchers.js', () => {
     }));
 
     logres(res);
-    assert.equal(res.length, 5);
+    assert.equal(res.length, 6);
     assert.equal(res[0].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/hlx--static');
     assert.equal(res[0].params.path, '/dir/example.html');
     assert.equal(res[1].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html');
@@ -184,7 +190,7 @@ describe('testing fetchers.js', () => {
       path: '/dir/example.nav.html',
     });
 
-    assert.equal(res.length, 5);
+    assert.equal(res.length, 6);
     logres(res);
   });
 
@@ -194,7 +200,7 @@ describe('testing fetchers.js', () => {
       path: '/example/dir',
     });
 
-    assert.equal(res.length, 8);
+    assert.equal(res.length, 9);
     logres(res);
   });
 
@@ -204,7 +210,7 @@ describe('testing fetchers.js', () => {
       path: '/style.css',
     });
 
-    assert.equal(res.length, 3);
+    assert.equal(res.length, 4);
     logres(res);
   });
 
@@ -215,7 +221,7 @@ describe('testing fetchers.js', () => {
       path: '/style.css',
     }));
 
-    assert.equal(res.length, 3);
+    assert.equal(res.length, 4);
     assert.equal(res[0].params.GITHUB_TOKEN, SAMPLE_GITHUB_TOKEN);
     assert.equal(res[1].params.GITHUB_TOKEN, SAMPLE_GITHUB_TOKEN);
     assert.equal(res[2].params.GITHUB_TOKEN, SAMPLE_GITHUB_TOKEN);
@@ -229,7 +235,7 @@ describe('testing fetchers.js', () => {
       path: '/style.css',
     }));
 
-    assert.equal(res.length, 3);
+    assert.equal(res.length, 4);
     assert.equal(res[0].params.GITHUB_TOKEN, SAMPLE_GITHUB_TOKEN);
     assert.equal(res[1].params.GITHUB_TOKEN, SAMPLE_GITHUB_TOKEN);
     assert.equal(res[2].params.GITHUB_TOKEN, SAMPLE_GITHUB_TOKEN);
@@ -300,6 +306,33 @@ describe('testing error page promise resolver', () => {
   });
 });
 
+describe('testing dynamic default resolution', () => {
+  it('Test for simple HTML URLs', () => {
+    assert.equal(getDefault('/foo.html'), '/default.html');
+    assert.equal(getDefault('/foo/bar.html'), '/foo/default.html');
+  });
+
+  it('Test for HTML URLs with selectors', () => {
+    assert.equal(getDefault('/foo.baz.html'), '/default.baz.html');
+    assert.equal(getDefault('/foo/bar.baz.html'), '/foo/default.baz.html');
+  });
+
+  it('Test for HTML URLs with double selectors', () => {
+    assert.equal(getDefault('/foo.baz.zip.html'), '/default.zip.html');
+    assert.equal(getDefault('/foo/bar.baz.zip.html'), '/foo/default.zip.html');
+  });
+
+  it('Test for simple JSON URLs', () => {
+    assert.equal(getDefault('/foo.json'), '/default.json');
+    assert.equal(getDefault('/foo/bar.json'), '/foo/default.json');
+  });
+
+  it('Test for JSON URLs with selectors', () => {
+    assert.equal(getDefault('/foo.baz.json'), '/default.baz.json');
+    assert.equal(getDefault('/foo/bar.baz.json'), '/foo/default.baz.json');
+  });
+});
+
 
 describe('testing path info resolution', () => {
   const tests = [
@@ -319,6 +352,13 @@ describe('testing path info resolution', () => {
         selector: '',
         ext: 'html',
         relPath: '/readme',
+      },
+      {
+        path: '/default.html',
+        name: 'default',
+        selector: '',
+        ext: 'html',
+        relPath: '/default',
       }],
     },
     {
@@ -331,6 +371,13 @@ describe('testing path info resolution', () => {
         selector: '',
         ext: 'html',
         relPath: '/foo/index',
+      },
+      {
+        path: '/foo/default.html',
+        name: 'default',
+        selector: '',
+        ext: 'html',
+        relPath: '/foo/default',
       }],
     },
     {
@@ -343,6 +390,13 @@ describe('testing path info resolution', () => {
         selector: '',
         ext: 'html',
         relPath: '/index',
+      },
+      {
+        path: '/default.html',
+        name: 'default',
+        selector: '',
+        ext: 'html',
+        relPath: '/default',
       }],
     },
     {
@@ -355,6 +409,13 @@ describe('testing path info resolution', () => {
         selector: '',
         ext: 'html',
         relPath: '/foo/hello',
+      },
+      {
+        path: '/foo/default.html',
+        name: 'default',
+        selector: '',
+        ext: 'html',
+        relPath: '/foo/default',
       }],
     },
     {
@@ -367,6 +428,13 @@ describe('testing path info resolution', () => {
         selector: 'info',
         ext: 'html',
         relPath: '/foo/hello',
+      },
+      {
+        path: '/foo/default.info.html',
+        name: 'default',
+        selector: 'info',
+        ext: 'html',
+        relPath: '/foo/default',
       }],
     },
     {
@@ -379,6 +447,13 @@ describe('testing path info resolution', () => {
         selector: 'info',
         ext: 'html',
         relPath: '/hello',
+      },
+      {
+        path: '/default.info.html',
+        name: 'default',
+        selector: 'info',
+        ext: 'html',
+        relPath: '/default',
       }],
     },
     {
@@ -391,6 +466,13 @@ describe('testing path info resolution', () => {
         selector: 'info',
         ext: 'html',
         relPath: '/foo/hello',
+      },
+      {
+        path: '/foo/default.info.html',
+        name: 'default',
+        selector: 'info',
+        ext: 'html',
+        relPath: '/foo/default',
       }],
     },
     {
@@ -403,6 +485,13 @@ describe('testing path info resolution', () => {
         selector: 'info',
         ext: 'html',
         relPath: '/hello.test',
+      },
+      {
+        path: '/default.info.html',
+        name: 'default',
+        selector: 'info',
+        ext: 'html',
+        relPath: '/default',
       }],
     },
     {
@@ -415,14 +504,42 @@ describe('testing path info resolution', () => {
         selector: '',
         ext: 'html',
         relPath: '/index',
+      },
+      {
+        path: '/default.html',
+        name: 'default',
+        selector: '',
+        ext: 'html',
+        relPath: '/default',
+      }],
+    },
+    {
+      url: '/default.html',
+      indices: ['index.html'],
+      mount: '',
+      expected: [{
+        path: '/default.html',
+        name: 'default',
+        selector: '',
+        ext: 'html',
+        relPath: '/default',
       }],
     },
   ];
 
   tests.forEach((test, idx) => {
-    it(`[${idx}] resolver works correctly for ${test.url}`, () => {
-      const result = getPathInfos(test.url, test.mount, test.indices);
-      assert.deepEqual(result, test.expected);
+    it(`[${idx + 1}] resolver works correctly for ${test.url}`, () => {
+      const resultwithdefault = getPathInfos(test.url, test.mount, test.indices, getDefault);
+      assert.deepEqual(resultwithdefault, test.expected);
+
+      // we test this twice. The first assertion uses the default fallback generator,
+      // this second test doesn't. Therefore the last expected result should be dropped
+      const resultwithoutdefault = getPathInfos(test.url, test.mount, test.indices);
+      // except in the last case, when the input URL is indeed /default.html
+      if (test.expected.length > 1) {
+        test.expected.pop();
+      }
+      assert.deepEqual(resultwithoutdefault, test.expected);
     });
   });
 
