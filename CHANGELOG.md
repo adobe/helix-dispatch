@@ -1,3 +1,20 @@
+# [3.0.0](https://github.com/adobe/helix-dispatch/compare/v2.2.17...v3.0.0) (2019-12-18)
+
+
+### Bug Fixes
+
+* **resolver:** pass in complete logger ([c6d16fb](https://github.com/adobe/helix-dispatch/commit/c6d16fbb8cc2c328a0e08dc00a43e79bcff5d7ef))
+
+
+### Features
+
+* **actions:** add support for dynamic defaults ([5c98a1a](https://github.com/adobe/helix-dispatch/commit/5c98a1ab6b415ce42e188895698dec2c11631f49)), closes [#138](https://github.com/adobe/helix-dispatch/issues/138)
+
+
+### BREAKING CHANGES
+
+* **actions:** Dynamic defaults are a new way of providing placeholders for content that should exist, but isn't fully fleshed out yet. Examples include a tag detail page or author detail page for a blog, when said defaults haven't been provided yet. In the case of requesting `/authors/lars.html`, the corresponding URL is requested, an additional request is made as if the URL was `/authors/default.html`, which will then start the action invocation and trigger loading `/authors/default.md` which can be a placeholder page for authors that for instance fetches all blog posts by this author, but doesn't show a biography. The dyanamic default has higher precedence than a 404 fallback and works for the current directory only. It adds one additional invocation to each request.
+
 ## [2.2.17](https://github.com/adobe/helix-dispatch/compare/v2.2.16...v2.2.17) (2019-12-18)
 
 
