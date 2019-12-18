@@ -78,7 +78,15 @@ function staticaction(contentOpts) {
  * @property {string} ref branch or tag name, or sha of a commit
  * @property {string} [branch] the optional branch or tag name
  */
-
+/**
+ * Determines the default URL to use as dynamic default for a requested URL.
+ * For instance:
+ * - `/foo.html` - `/default.html`
+ * - `/foo/bar.json` - `/foo/default.json`
+ * - `/foo/bar.baz.xml` - `/foo/default.baz.xml`
+ * @param {string} url the original path of the URL (without hostname or query string)
+ * @returns {string} the corresponding default URL
+ */
 function getDefault(url) {
   const pathsegments = url.split('/');
   const filename = pathsegments.pop();
