@@ -1,3 +1,10 @@
+## [3.0.2](https://github.com/adobe/helix-dispatch/compare/v3.0.1...v3.0.2) (2020-01-09)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @adobe/helix-status to v7.0.3 ([#155](https://github.com/adobe/helix-dispatch/issues/155)) ([de30911](https://github.com/adobe/helix-dispatch/commit/de309112e116abd0ff2824cb96371cd1fdf100b9))
+
 ## [3.0.1](https://github.com/adobe/helix-dispatch/compare/v3.0.0...v3.0.1) (2020-01-06)
 
 
