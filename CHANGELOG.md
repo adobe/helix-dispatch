@@ -1,3 +1,10 @@
+## [3.0.4](https://github.com/adobe/helix-dispatch/compare/v3.0.3...v3.0.4) (2020-01-16)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @adobe/openwhisk-action-utils to v4 ([#160](https://github.com/adobe/helix-dispatch/issues/160)) ([b682e3b](https://github.com/adobe/helix-dispatch/commit/b682e3be64384971df6ea6bcbb7553deb5f4414a))
+
 ## [3.0.3](https://github.com/adobe/helix-dispatch/compare/v3.0.2...v3.0.3) (2020-01-14)
 
 
