@@ -74,6 +74,9 @@ const FAIL_RESULT = () => {
 // this is a bit a hack, but I don't know how to change it during tests
 let invokeResult = OK_RESULT;
 
+// count how many time espagon was run.
+let epsagonified = 0;
+
 const index = proxyquire('../src/index.js', {
   openwhisk() {
     return {
@@ -87,8 +90,12 @@ const index = proxyquire('../src/index.js', {
 
   epsagon: {
     openWhiskWrapper(action) {
-      return (params) => action(params);
+      return (params) => {
+        epsagonified += 1;
+        return action(params);
+      };
     },
+    '@global': true,
   },
 }).main;
 
@@ -240,13 +247,28 @@ describe('Index Tests', () => {
     assert.ok(output.indexOf('error while invoking fetchers: Error: runtime failure.') >= 0);
   });
 
+  it('index function w/o token does not instrument epsagon', async () => {
+    const expected = epsagonified;
+    await index({});
+    assert.equal(expected, epsagonified, 'epsagon not instrumented');
+  });
+
   it('index function instruments epsagon', async () => {
-    const logger = createLogger();
+    const expected = epsagonified + 1;
     await index({
       EPSAGON_TOKEN: 'foobar',
-      __ow_logger: logger,
     });
-    const output = JSON.stringify(logger.logger.buf);
-    assert.ok(output.indexOf('instrumenting epsagon.') >= 0);
+    assert.equal(expected, epsagonified, 'epsagon instrumented');
+  });
+
+  it('index function runs epsagon once for each invocation', async () => {
+    const expected = epsagonified + 2;
+    await index({
+      EPSAGON_TOKEN: 'foobar',
+    });
+    await index({
+      EPSAGON_TOKEN: 'foobar',
+    });
+    assert.equal(expected, epsagonified, 'epsagon instrumented');
   });
 });
