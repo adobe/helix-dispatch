@@ -1,3 +1,10 @@
+## [3.0.6](https://github.com/adobe/helix-dispatch/compare/v3.0.5...v3.0.6) (2020-01-24)
+
+
+### Bug Fixes
+
+* **epsagon:** use helix-epsagon ([#166](https://github.com/adobe/helix-dispatch/issues/166)) ([dc7067e](https://github.com/adobe/helix-dispatch/commit/dc7067e9adde064ab9c0a76726be0f50ec965755))
+
 ## [3.0.5](https://github.com/adobe/helix-dispatch/compare/v3.0.4...v3.0.5) (2020-01-23)
 
 
