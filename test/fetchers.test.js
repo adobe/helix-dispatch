@@ -36,6 +36,12 @@ const { fetchers } = proxyquire('../src/fetchers', {
           if (ref === 'branch') {
             return Promise.reject(new Error('unknown'));
           }
+          if (ref === 'notfound') {
+            return Promise.resolve({
+              statusCode: 404, // not found
+              body: 'ref not found',
+            });
+          }
           if (ref === 'fail') {
             return Promise.resolve({
               statusCode: 503, // service unavailable
@@ -75,7 +81,7 @@ function logres(r) {
       path: s.params.path,
       ref: s.params.ref,
     })));
-    // eslint-disable-next-line no-console
+  // eslint-disable-next-line no-console
   }).catch(console.error);
 }
 
@@ -164,6 +170,36 @@ describe('testing fetchers.js', () => {
     assert.equal(res[2].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html');
     assert.equal(res[2].params.path, '/dir/default.md');
     assert.equal(res[3].params.ref, 'branch');
+  });
+
+  it('log info if resolver returns 404', async () => {
+    let test;
+    await Promise.all(fetchers({
+      ...opts,
+      'static.ref': 'notfound',
+      path: '/dir/example.html',
+      __ow_logger: {
+        info: (msg) => { test = msg; },
+        error: () => {},
+      },
+    }));
+    assert.equal(test, 'Unable to resolve ref notfound: 404 ref not found',
+      'expected console.info() to be called');
+  });
+
+  it('log error if resolver returns 503', async () => {
+    let test;
+    await Promise.all(fetchers({
+      ...opts,
+      'static.ref': 'fail',
+      path: '/dir/example.html',
+      __ow_logger: {
+        info: () => {},
+        error: (msg) => { test = msg; },
+      },
+    }));
+    assert.equal(test, 'Unable to resolve ref fail: 503 failed to fetch git repo info.',
+      'expected console.error() to be called');
   });
 
   it('fetch basic HTML from branch while resolver fails', async () => {

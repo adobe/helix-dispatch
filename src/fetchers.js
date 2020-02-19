@@ -304,9 +304,13 @@ async function resolveRef(opts, log) {
         branch: ref,
       };
     }
-    log.error(`Unable to resolve branch name ${res.statusCode} ${res.body}`);
+    let level = 'info';
+    if (!res.statusCode || res.statusCode >= 500) {
+      level = 'error';
+    }
+    log[level](`Unable to resolve ref ${ref}: ${res.statusCode} ${res.body}`);
   } catch (e) {
-    log.error(`Unable to resolve branch name ${e}`);
+    log.error(`Unable to resolve ref ${ref}: ${e}`);
   }
   return { ref };
 }
