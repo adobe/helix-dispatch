@@ -1,3 +1,10 @@
+## [3.0.9](https://github.com/adobe/helix-dispatch/compare/v3.0.8...v3.0.9) (2020-02-19)
+
+
+### Bug Fixes
+
+* **logging:** do not log 40x responses as errors ([84841d1](https://github.com/adobe/helix-dispatch/commit/84841d1ddfbdf0fa65020c72d81119f61387152c))
+
 ## [3.0.8](https://github.com/adobe/helix-dispatch/compare/v3.0.7...v3.0.8) (2020-01-31)
 
 
