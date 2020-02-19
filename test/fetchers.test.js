@@ -25,8 +25,6 @@ const SHAS = {
 
 const SAMPLE_GITHUB_TOKEN = 'some-github-token-value';
 
-const logger = console;
-
 let resolverInvocationCount = 0;
 
 const { fetchers } = proxyquire('../src/fetchers', {
@@ -76,13 +74,15 @@ const opts = {
 
 function logres(r) {
   Promise.all(r).then((res) => {
-    logger.table(res.map((s) => ({
+    // eslint-disable-next-line no-console
+    console.table(res.map((s) => ({
       name: s.name,
       owner: s.params.owner,
       path: s.params.path,
       ref: s.params.ref,
     })));
-  }).catch(logger.error);
+  // eslint-disable-next-line no-console
+  }).catch(console.error);
 }
 
 describe('testing fetchers.js', () => {
@@ -158,7 +158,7 @@ describe('testing fetchers.js', () => {
       ...opts,
       'static.ref': 'branch',
       path: '/dir/example.html',
-      __ow_logger: logger,
+      __ow_logger: console,
     }));
 
     logres(res);
@@ -208,7 +208,7 @@ describe('testing fetchers.js', () => {
       'static.ref': 'fail',
       'content.ref': 'fail',
       path: '/dir/example.html',
-      __ow_logger: logger,
+      __ow_logger: console,
     }));
 
     logres(res);
