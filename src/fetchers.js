@@ -304,7 +304,10 @@ async function resolveRef(opts, log) {
         branch: ref,
       };
     }
-    const level = (!res.statusCode || res.statusCode >= 500) ? 'error' : 'info';
+    let level = 'info';
+    if (!res.statusCode || res.statusCode >= 500) {
+      level = 'error';
+    }
     log[level](`Unable to resolve ref ${ref}: ${res.statusCode} ${res.body}`);
   } catch (e) {
     log.error(`Unable to resolve ref ${ref}: ${e}`);
