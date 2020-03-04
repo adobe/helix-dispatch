@@ -1,3 +1,11 @@
+# [3.1.0](https://github.com/adobe/helix-dispatch/compare/v3.0.13...v3.1.0) (2020-03-04)
+
+
+### Features
+
+* **resolve:** Transfer incoming __ow_headers to resolveRef action ([5569f2c](https://github.com/adobe/helix-dispatch/commit/5569f2cf0d6b7ea38fe8d29a66c6220f74d8c634))
+* **static:** Incoming __ow_headers are not transferred to static actions ([f6e2e6a](https://github.com/adobe/helix-dispatch/commit/f6e2e6a5cd23bf9946a26e9d3c1080e6f700f896))
+
 ## [3.0.13](https://github.com/adobe/helix-dispatch/compare/v3.0.12...v3.0.13) (2020-03-04)
 
 
