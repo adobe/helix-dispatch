@@ -179,7 +179,7 @@ function getPathInfos(urlPath, mount, indices, resolveDefault = ((a) => a)) {
  * @param {Promise<ActionOptions>} staticPromise coordinates for the fallback repo
  * @returns {object[]} list of actions that should get invoked
  */
-function fetch404tasks(infos, contentPromise, staticPromise) {
+function fetch404tasks(infos, wskOpts, contentPromise, staticPromise) {
   const attempts = [];
   if (infos[0].ext === 'html') {
     // then get the 404.html from the content repo, but only for html requests
@@ -191,6 +191,7 @@ function fetch404tasks(infos, contentPromise, staticPromise) {
         path: '/404.html',
         esi: false,
         plain: true,
+        ...wskOpts,
         ...contentOpts,
       },
     })));
@@ -203,6 +204,7 @@ function fetch404tasks(infos, contentPromise, staticPromise) {
         path: '/404.html',
         esi: false,
         plain: true,
+        ...wskOpts,
         ...staticOpts,
       },
     }))));
@@ -240,7 +242,7 @@ function fetchfallbacktasks(infos, wskOpts, contentPromise, staticPromise) {
  * @param {Promise<ActionOptions>} contentPromise coordinates for the content repo
  * @returns {object[]} list of actions that should get invoked
  */
-function fetchactiontasks(infos, contentPromise, params, wskOpts) {
+function fetchactiontasks(infos, wskOpts, contentPromise, params) {
   return infos.map((info) => contentPromise.then((contentOpts) => {
     const actionname = `${contentOpts.package || 'default'}/${info.selector ? `${info.selector}_` : ''}${info.ext}`;
     return {
@@ -263,7 +265,7 @@ function fetchactiontasks(infos, contentPromise, params, wskOpts) {
  * @param {Promise<ActionOptions>} contentPromise coordinates for the content repo
  * @returns {object[]} list of actions that should get invoked
  */
-function fetchrawtasks(infos, params, contentPromise) {
+function fetchrawtasks(infos, params, contentPromise, wskOpts) {
   return infos.map((info) => contentPromise.then((contentOpts) => ({
     resolve: defaultResolver,
     name: staticaction(contentOpts),
@@ -273,6 +275,7 @@ function fetchrawtasks(infos, params, contentPromise) {
       esi: false,
       plain: true,
       root: params['content.root'],
+      ...wskOpts,
       ...contentOpts,
     },
   })));
@@ -284,7 +287,7 @@ function fetchrawtasks(infos, params, contentPromise) {
  * @returns {Promise<*>} returns a promise of the resolved ref.
  * options, with a sha instead of a branch name
  */
-async function resolveRef(opts, log) {
+async function resolveRef(opts, wskOpts, log) {
   const { ref } = opts;
   if (ref && ref.match(/^[a-f0-9]{40}$/i)) {
     return { ref };
@@ -295,7 +298,10 @@ async function resolveRef(opts, log) {
       name: 'helix-services/resolve-git-ref@v1_link',
       blocking: true,
       result: true,
-      params: opts,
+      params: {
+        ...opts,
+        ...wskOpts,
+      },
     });
     if (res.body && res.body.sha) {
       return {
@@ -382,14 +388,6 @@ function fetchers(params = {}) {
     contentOpts.GITHUB_TOKEN = githubToken;
   }
 
-  const staticResolver = resolveRef(staticOpts, log);
-  const contentResolver = equalRepository(staticOpts, contentOpts)
-    ? staticResolver
-    : resolveRef(contentOpts, log);
-
-  const staticPromise = updateOpts(staticOpts, staticResolver);
-  const contentPromise = updateOpts(contentOpts, contentResolver);
-
   const wskOpts = {
     // eslint-disable-next-line no-underscore-dangle
     __ow_headers: params.__ow_headers,
@@ -397,15 +395,23 @@ function fetchers(params = {}) {
     __ow_method: params.__ow_method,
   };
 
+  const staticResolver = resolveRef(staticOpts, wskOpts, log);
+  const contentResolver = equalRepository(staticOpts, contentOpts)
+    ? staticResolver
+    : resolveRef(contentOpts, wskOpts, log);
+
+  const staticPromise = updateOpts(staticOpts, staticResolver);
+  const contentPromise = updateOpts(contentOpts, contentResolver);
+
   return [
     // try to get the raw content from the content repo
-    ...fetchrawtasks(infos, params, contentPromise),
+    ...fetchrawtasks(infos, params, contentPromise, wskOpts),
     // then, try to call the action
-    ...fetchactiontasks(actioninfos, contentPromise, params, wskOpts),
+    ...fetchactiontasks(actioninfos, wskOpts, contentPromise, params),
     // try to get the raw content from the static repo
     ...fetchfallbacktasks(infos, wskOpts, contentPromise, staticPromise),
     // finally, fetch the 404 pages
-    ...fetch404tasks(infos, contentPromise, staticPromise),
+    ...fetch404tasks(infos, wskOpts, contentPromise, staticPromise),
   ];
 }
 

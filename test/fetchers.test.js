@@ -277,6 +277,24 @@ describe('testing fetchers.js', () => {
     assert.equal(res[2].params.GITHUB_TOKEN, SAMPLE_GITHUB_TOKEN);
     logres(res);
   });
+
+  it('test if headers are passed to all fetchers', async () => {
+    const res = await Promise.all(fetchers({
+      ...opts,
+      path: '/dir/example.html',
+      __ow_headers: {
+        'a-header': 'its-value',
+      },
+    }));
+
+    logres(res);
+    assert.equal(res.length, 6);
+    // all fetchers should propagate the headers
+    res.forEach((r) => {
+      assert.ok(r.params.__ow_headers);
+      assert.equal(r.params.__ow_headers['a-header'], 'its-value');
+    });
+  });
 });
 
 describe('testing default promise resolver', () => {
