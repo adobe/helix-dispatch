@@ -287,7 +287,7 @@ function fetchrawtasks(infos, params, contentPromise, wskOpts) {
  * @returns {Promise<*>} returns a promise of the resolved ref.
  * options, with a sha instead of a branch name
  */
-async function resolveRef(opts, log) {
+async function resolveRef(opts, wskOpts, log) {
   const { ref } = opts;
   if (ref && ref.match(/^[a-f0-9]{40}$/i)) {
     return { ref };
@@ -298,7 +298,10 @@ async function resolveRef(opts, log) {
       name: 'helix-services/resolve-git-ref@v1_link',
       blocking: true,
       result: true,
-      params: opts,
+      params: {
+        ...opts,
+        ...wskOpts,
+      },
     });
     if (res.body && res.body.sha) {
       return {
@@ -385,20 +388,20 @@ function fetchers(params = {}) {
     contentOpts.GITHUB_TOKEN = githubToken;
   }
 
-  const staticResolver = resolveRef(staticOpts, log);
-  const contentResolver = equalRepository(staticOpts, contentOpts)
-    ? staticResolver
-    : resolveRef(contentOpts, log);
-
-  const staticPromise = updateOpts(staticOpts, staticResolver);
-  const contentPromise = updateOpts(contentOpts, contentResolver);
-
   const wskOpts = {
     // eslint-disable-next-line no-underscore-dangle
     __ow_headers: params.__ow_headers,
     // eslint-disable-next-line no-underscore-dangle
     __ow_method: params.__ow_method,
   };
+
+  const staticResolver = resolveRef(staticOpts, wskOpts, log);
+  const contentResolver = equalRepository(staticOpts, contentOpts)
+    ? staticResolver
+    : resolveRef(contentOpts, wskOpts, log);
+
+  const staticPromise = updateOpts(staticOpts, staticResolver);
+  const contentPromise = updateOpts(contentOpts, contentResolver);
 
   return [
     // try to get the raw content from the content repo
