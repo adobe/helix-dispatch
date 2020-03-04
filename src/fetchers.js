@@ -179,7 +179,7 @@ function getPathInfos(urlPath, mount, indices, resolveDefault = ((a) => a)) {
  * @param {Promise<ActionOptions>} staticPromise coordinates for the fallback repo
  * @returns {object[]} list of actions that should get invoked
  */
-function fetch404tasks(infos, contentPromise, staticPromise) {
+function fetch404tasks(infos, wskOpts, contentPromise, staticPromise) {
   const attempts = [];
   if (infos[0].ext === 'html') {
     // then get the 404.html from the content repo, but only for html requests
@@ -191,6 +191,7 @@ function fetch404tasks(infos, contentPromise, staticPromise) {
         path: '/404.html',
         esi: false,
         plain: true,
+        ...wskOpts,
         ...contentOpts,
       },
     })));
@@ -203,6 +204,7 @@ function fetch404tasks(infos, contentPromise, staticPromise) {
         path: '/404.html',
         esi: false,
         plain: true,
+        ...wskOpts,
         ...staticOpts,
       },
     }))));
@@ -240,7 +242,7 @@ function fetchfallbacktasks(infos, wskOpts, contentPromise, staticPromise) {
  * @param {Promise<ActionOptions>} contentPromise coordinates for the content repo
  * @returns {object[]} list of actions that should get invoked
  */
-function fetchactiontasks(infos, contentPromise, params, wskOpts) {
+function fetchactiontasks(infos, wskOpts, contentPromise, params) {
   return infos.map((info) => contentPromise.then((contentOpts) => {
     const actionname = `${contentOpts.package || 'default'}/${info.selector ? `${info.selector}_` : ''}${info.ext}`;
     return {
@@ -263,7 +265,7 @@ function fetchactiontasks(infos, contentPromise, params, wskOpts) {
  * @param {Promise<ActionOptions>} contentPromise coordinates for the content repo
  * @returns {object[]} list of actions that should get invoked
  */
-function fetchrawtasks(infos, params, contentPromise) {
+function fetchrawtasks(infos, params, contentPromise, wskOpts) {
   return infos.map((info) => contentPromise.then((contentOpts) => ({
     resolve: defaultResolver,
     name: staticaction(contentOpts),
@@ -273,6 +275,7 @@ function fetchrawtasks(infos, params, contentPromise) {
       esi: false,
       plain: true,
       root: params['content.root'],
+      ...wskOpts,
       ...contentOpts,
     },
   })));
@@ -399,13 +402,13 @@ function fetchers(params = {}) {
 
   return [
     // try to get the raw content from the content repo
-    ...fetchrawtasks(infos, params, contentPromise),
+    ...fetchrawtasks(infos, params, contentPromise, wskOpts),
     // then, try to call the action
-    ...fetchactiontasks(actioninfos, contentPromise, params, wskOpts),
+    ...fetchactiontasks(actioninfos, wskOpts, contentPromise, params),
     // try to get the raw content from the static repo
     ...fetchfallbacktasks(infos, wskOpts, contentPromise, staticPromise),
     // finally, fetch the 404 pages
-    ...fetch404tasks(infos, contentPromise, staticPromise),
+    ...fetch404tasks(infos, wskOpts, contentPromise, staticPromise),
   ];
 }
 
