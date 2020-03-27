@@ -78,15 +78,13 @@ let invokeResult = OK_RESULT;
 let epsagonified = 0;
 
 const index = proxyquire('../src/index.js', {
-  openwhisk() {
-    return {
-      actions: {
-        invoke(...args) {
-          return invokeResult(...args);
-        },
+  './openwhisk.js': () => ({
+    actions: {
+      invoke(...args) {
+        return invokeResult(...args);
       },
-    };
-  },
+    },
+  }),
 
   epsagon: {
     openWhiskWrapper(action) {

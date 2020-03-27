@@ -28,40 +28,38 @@ const SAMPLE_GITHUB_TOKEN = 'some-github-token-value';
 let resolverInvocationCount = 0;
 
 const { fetchers } = proxyquire('../src/fetchers', {
-  openwhisk() {
-    return {
-      actions: {
-        invoke({ params: { ref, owner } }) {
-          resolverInvocationCount += 1;
-          if (ref === 'branch') {
-            return Promise.reject(new Error('unknown'));
-          }
-          if (ref === 'notfound') {
-            return Promise.resolve({
-              statusCode: 404, // not found
-              body: 'ref not found',
-            });
-          }
-          if (ref === 'fail') {
-            return Promise.resolve({
-              statusCode: 503, // service unavailable
-              body: 'failed to fetch git repo info.',
-            });
-          }
+  './openwhisk.js': () => ({
+    actions: {
+      invoke({ params: { ref, owner } }) {
+        resolverInvocationCount += 1;
+        if (ref === 'branch') {
+          return Promise.reject(new Error('unknown'));
+        }
+        if (ref === 'notfound') {
           return Promise.resolve({
-            body: {
-              fqRef: 'refs/heads/master',
-              sha: SHAS[owner],
-            },
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            statusCode: 200,
+            statusCode: 404, // not found
+            body: 'ref not found',
           });
-        },
+        }
+        if (ref === 'fail') {
+          return Promise.resolve({
+            statusCode: 503, // service unavailable
+            body: 'failed to fetch git repo info.',
+          });
+        }
+        return Promise.resolve({
+          body: {
+            fqRef: 'refs/heads/master',
+            sha: SHAS[owner],
+          },
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          statusCode: 200,
+        });
       },
-    };
-  },
+    },
+  }),
 });
 
 const opts = {
