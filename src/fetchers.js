@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 const path = require('path').posix;
-const openwhisk = require('openwhisk');
+const openwhisk = require('./openwhisk.js');
 
 /**
  * An order-preserving uniqueness filter

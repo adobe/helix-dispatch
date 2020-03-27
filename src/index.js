@@ -10,12 +10,12 @@
  * governing permissions and limitations under the License.
  */
 
-const openwhisk = require('openwhisk');
 const { wrap } = require('@adobe/openwhisk-action-utils');
 const { logger } = require('@adobe/openwhisk-action-logger');
 const { wrap: status } = require('@adobe/helix-status');
 const { epsagon } = require('@adobe/helix-epsagon');
 const { deepclone } = require('ferrum');
+const openwhisk = require('./openwhisk.js');
 const resolvePreferred = require('./resolve-preferred');
 const { fetchers } = require('./fetchers');
 /**
