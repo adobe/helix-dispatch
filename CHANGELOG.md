@@ -1,3 +1,10 @@
+# [3.2.0](https://github.com/adobe/helix-dispatch/compare/v3.1.9...v3.2.0) (2020-03-27)
+
+
+### Features
+
+* **actions:** propagate transaction id ([#216](https://github.com/adobe/helix-dispatch/issues/216)) ([29816d0](https://github.com/adobe/helix-dispatch/commit/29816d03cbe2bf7f63a98762de532fa11ff841de)), closes [#211](https://github.com/adobe/helix-dispatch/issues/211)
+
 ## [3.1.9](https://github.com/adobe/helix-dispatch/compare/v3.1.8...v3.1.9) (2020-03-26)
 
 
