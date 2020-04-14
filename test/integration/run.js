@@ -22,8 +22,8 @@ async function run() {
     __OW_ACTION_NAME: '/helix/helix-services-private/dispatch@3.2.4-testing',
     __OW_ACTION_VERSION: '0.0.3',
     __OW_ACTIVATION_ID: crypto.randomBytes(16).toString('hex'),
-    // __OW_API_HOST: 'https://adobeioruntime.net',
-    __OW_API_HOST: 'https://localhost:9998',
+    __OW_API_HOST: 'https://adobeioruntime.net',
+    // __OW_API_HOST: 'https://localhost:9998',
     __OW_TRANSACTION_ID: crypto.randomBytes(16).toString('hex'),
     __OW_NAMESPACE: process.env.WSK_NAMESPACE,
     __OW_API_KEY: process.env.WSK_AUTH,
@@ -44,7 +44,7 @@ async function run() {
     rootPath: '',
     params: '',
     strain: 'default',
-    // EPSAGON_TOKEN: process.env.EPSAGON_TOKEN,
+    EPSAGON_TOKEN: process.env.EPSAGON_TOKEN,
   });
   console.log(ret);
 }
