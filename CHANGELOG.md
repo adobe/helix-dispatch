@@ -1,3 +1,10 @@
+## [3.2.5](https://github.com/adobe/helix-dispatch/compare/v3.2.4...v3.2.5) (2020-04-14)
+
+
+### Bug Fixes
+
+* **deploy:** use helix-services package ([b5b5d0f](https://github.com/adobe/helix-dispatch/commit/b5b5d0faeaf380cf72a93bd67b1b553832c74eb5))
+
 ## [3.2.4](https://github.com/adobe/helix-dispatch/compare/v3.2.3...v3.2.4) (2020-04-08)
 
 
