@@ -19,7 +19,7 @@ require('dotenv').config();
 async function run() {
   Object.assign(process.env, {
     NODE_TLS_REJECT_UNAUTHORIZED: '0',
-    __OW_ACTION_NAME: '/helix/helix-services-private/dispatch@3.2.4-testing',
+    __OW_ACTION_NAME: '/helix/helix-services/dispatch@3.2.4-testing',
     __OW_ACTION_VERSION: '0.0.3',
     __OW_ACTIVATION_ID: crypto.randomBytes(16).toString('hex'),
     __OW_API_HOST: 'https://adobeioruntime.net',
