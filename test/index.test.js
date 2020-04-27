@@ -67,6 +67,26 @@ const TIMEOUT_RESULT = () => Promise.resolve({
   },
 });
 
+const OVERLOAD_RESULT = () => Promise.resolve({
+  activationId: 'abcd-1234',
+  response: {
+    result: {
+      statusCode: 429,
+      body: 'too many requests',
+    },
+  },
+});
+
+const SEQUENCE_OVERLOAD_RESULT = () => Promise.resolve({
+  activationId: 'abcd-1234',
+  response: {
+    result: {
+      statusCode: 502,
+      body: 'too many requests (in a sequence)',
+    },
+  },
+});
+
 const FAIL_RESULT = () => {
   throw new Error('runtime failure.');
 };
@@ -224,6 +244,54 @@ describe('Index Tests', () => {
     delete result.actionOptions;
     assert.deepEqual(result, {
       statusCode: 503,
+    });
+
+    const output = JSON.stringify(logger.logger.buf);
+    assert.ok(output.indexOf('no valid response could be fetched') >= 0);
+  });
+
+  it('index returns 429 response when seeing 429s', async () => {
+    const logger = createLogger();
+    invokeResult = (req) => {
+      if (req.params.path === '/404.html') {
+        return ERR_RESULT();
+      } else {
+        return OVERLOAD_RESULT();
+      }
+    };
+
+    const result = await index({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      __ow_logger: logger,
+    }, logger);
+    delete result.actionOptions;
+    assert.deepEqual(result, {
+      statusCode: 429,
+    });
+
+    const output = JSON.stringify(logger.logger.buf);
+    assert.ok(output.indexOf('no valid response could be fetched') >= 0);
+  });
+
+  it('index returns 429 response when seeing 502s', async () => {
+    const logger = createLogger();
+    invokeResult = (req) => {
+      if (req.params.path === '/404.html') {
+        return ERR_RESULT();
+      } else {
+        return SEQUENCE_OVERLOAD_RESULT();
+      }
+    };
+
+    const result = await index({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      __ow_logger: logger,
+    }, logger);
+    delete result.actionOptions;
+    assert.deepEqual(result, {
+      statusCode: 429,
     });
 
     const output = JSON.stringify(logger.logger.buf);
