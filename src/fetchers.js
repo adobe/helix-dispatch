@@ -34,7 +34,7 @@ function defaultResolver(res) {
     const { params } = res.actionOptions;
     const rp = `${params.owner}/${params.repo}/${params.ref}${params.path}`;
     const error = new Error(`Error invoking ${res.actionOptions.name}(${rp}): ${res.statusCode}`);
-    error.statusCode = res.statusCode;
+    error.statusCode = res.statusCode === 502 ? 504 : res.statusCode;
     return Promise.reject(error);
   }
   return Promise.resolve(res);

@@ -14,6 +14,7 @@
 
 const proxyquire = require('proxyquire');
 const assert = require('assert');
+const OpenWhiskError = require('openwhisk/lib/openwhisk_error');
 const { MemLogger, SimpleInterface } = require('@adobe/helix-log');
 
 function createLogger(level = 'info') {
@@ -47,6 +48,12 @@ const ERR_RESULT = () => Promise.resolve({
   },
 });
 
+/*
+const ERR_ERROR = () => {
+  throw new OpenWhiskError('POST https://runtime.adobe.io/api/v1/namespaces/helix-mini/actions/not_here?blocking=true Returned HTTP 404 (Not Found) --> "The requested resource does not exist."', {}, 404);
+};
+*/
+
 const SEVERE_RESULT = () => Promise.resolve({
   activationId: 'abcd-1234',
   response: {
@@ -67,12 +74,51 @@ const TIMEOUT_RESULT = () => Promise.resolve({
   },
 });
 
+const TIMEOUT_ERROR = () => {
+  throw new OpenWhiskError('POST https://runtime.adobe.io/api/v1/namespaces/helix-mini/actions/hello?blocking=true Returned HTTP 502 (Bad Gateway) --> "The action exceeded its time limits of 100 milliseconds."', {}, 502);
+};
+
+const OVERLOAD_RESULT = () => Promise.resolve({
+  activationId: 'abcd-1234',
+  response: {
+    result: {
+      statusCode: 429,
+      body: 'too many requests',
+    },
+  },
+});
+
+const OVERLOAD_ERROR = () => {
+  throw new OpenWhiskError('POST https://runtime.adobe.io/api/v1/namespaces/helix-mini/actions/hellooo?blocking=true Returned HTTP 429 (Too Many Requests) --> "Too many requests in the last minute (count: 3, allowed: 2)."', {}, 429);
+};
+
+const ACTION_TIMEOUT_RESULT = () => Promise.resolve({
+  activationId: 'abcd-1234',
+  response: {
+    result: {
+      statusCode: 502,
+      body: 'action timed out',
+    },
+  },
+});
+
 const FAIL_RESULT = () => {
   throw new Error('runtime failure.');
 };
 
+const REF_RESULT = () => Promise.resolve({
+  body:
+  {
+    fqRef: 'refs/heads/master',
+    sha: '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+  },
+  headers: { 'Content-Type': 'application/json' },
+  statusCode: 200,
+});
+
 // this is a bit a hack, but I don't know how to change it during tests
 let invokeResult = OK_RESULT;
+let refResult = REF_RESULT;
 
 // count how many time espagon was run.
 let epsagonified = 0;
@@ -81,6 +127,9 @@ const index = proxyquire('../src/index.js', {
   './openwhisk.js': () => ({
     actions: {
       invoke(...args) {
+        if (args[0].name.startsWith('helix-services/resolve-git-ref')) {
+          return refResult(...args);
+        }
         return invokeResult(...args);
       },
     },
@@ -224,6 +273,104 @@ describe('Index Tests', () => {
     delete result.actionOptions;
     assert.deepEqual(result, {
       statusCode: 503,
+    });
+
+    const output = JSON.stringify(logger.logger.buf);
+    assert.ok(output.indexOf('no valid response could be fetched') >= 0);
+  });
+
+  it('index returns 429 response when seeing 429s', async () => {
+    const logger = createLogger();
+    invokeResult = (req) => {
+      if (req.params.path === '/404.html') {
+        return ERR_RESULT();
+      } else {
+        return OVERLOAD_RESULT();
+      }
+    };
+
+    const result = await index({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      __ow_logger: logger,
+    }, logger);
+    delete result.actionOptions;
+    assert.deepEqual(result, {
+      statusCode: 429,
+    });
+
+    const output = JSON.stringify(logger.logger.buf);
+    assert.ok(output.indexOf('no valid response could be fetched') >= 0);
+  });
+
+  it('index returns 429 response when seeing 429s (as Errors)', async () => {
+    const logger = createLogger();
+    refResult = OVERLOAD_ERROR;
+    invokeResult = (req) => {
+      if (req.params.path === '/404.html') {
+        return ERR_RESULT();
+      } else {
+        return OVERLOAD_ERROR();
+      }
+    };
+
+    const result = await index({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      __ow_logger: logger,
+    }, logger);
+    delete result.actionOptions;
+    assert.deepEqual(result, {
+      statusCode: 429,
+    });
+
+    const output = JSON.stringify(logger.logger.buf);
+    assert.ok(output.indexOf('no valid response could be fetched') >= 0);
+  });
+
+  it('index returns 504 response when seeing 502s', async () => {
+    const logger = createLogger();
+    invokeResult = (req) => {
+      if (req.params.path === '/404.html') {
+        return ERR_RESULT();
+      } else {
+        return ACTION_TIMEOUT_RESULT();
+      }
+    };
+
+    const result = await index({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      __ow_logger: logger,
+    }, logger);
+    delete result.actionOptions;
+    assert.deepEqual(result, {
+      statusCode: 504,
+    });
+
+    const output = JSON.stringify(logger.logger.buf);
+    assert.ok(output.indexOf('no valid response could be fetched') >= 0);
+  });
+
+  it('index returns 504 response when seeing 502s (as Errors)', async () => {
+    const logger = createLogger();
+    refResult = TIMEOUT_ERROR;
+    invokeResult = (req) => {
+      if (req.params.path === '/404.html') {
+        return ERR_RESULT();
+      } else {
+        return TIMEOUT_ERROR();
+      }
+    };
+
+    const result = await index({
+      'static.ref': 'master',
+      'content.ref': 'master',
+      __ow_logger: logger,
+    }, logger);
+    delete result.actionOptions;
+    assert.deepEqual(result, {
+      statusCode: 504,
     });
 
     const output = JSON.stringify(logger.logger.buf);

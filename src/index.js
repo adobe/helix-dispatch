@@ -92,7 +92,7 @@ async function executeActions(params) {
     if (Array.isArray(e)) {
       let worst = 0;
       e.forEach((err, idx) => {
-        if (!err.statusCode || err.statusCode >= 500) {
+        if (!err.statusCode || err.statusCode >= 500 || err.statusCode === 429) {
           log.error(err.message);
           worst = idx;
         }
@@ -101,13 +101,13 @@ async function executeActions(params) {
     }
 
     if (severe.statusCode) {
-      if (severe.statusCode >= 500) {
+      if (severe.statusCode >= 500 || severe.statusCode === 429) {
         log.error(`no valid response could be fetched: ${severe}`);
       } else {
         log.info(`no valid response could be fetched: ${severe}`);
       }
       return {
-        statusCode: severe.statusCode,
+        statusCode: severe.statusCode === 502 ? 504 : severe.statusCode,
       };
     }
 
