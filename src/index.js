@@ -107,7 +107,7 @@ async function executeActions(params) {
         log.info(`no valid response could be fetched: ${severe}`);
       }
       return {
-        statusCode: severe.statusCode,
+        statusCode: severe.statusCode === 502 ? 504 : severe.statusCode,
       };
     }
 
