@@ -77,12 +77,12 @@ const OVERLOAD_RESULT = () => Promise.resolve({
   },
 });
 
-const SEQUENCE_OVERLOAD_RESULT = () => Promise.resolve({
+const ACTION_TIMEOUT_RESULT = () => Promise.resolve({
   activationId: 'abcd-1234',
   response: {
     result: {
       statusCode: 502,
-      body: 'too many requests (in a sequence)',
+      body: 'action timed out',
     },
   },
 });
@@ -274,13 +274,13 @@ describe('Index Tests', () => {
     assert.ok(output.indexOf('no valid response could be fetched') >= 0);
   });
 
-  it('index returns 429 response when seeing 502s', async () => {
+  it('index returns 503 response when seeing 502s', async () => {
     const logger = createLogger();
     invokeResult = (req) => {
       if (req.params.path === '/404.html') {
         return ERR_RESULT();
       } else {
-        return SEQUENCE_OVERLOAD_RESULT();
+        return ACTION_TIMEOUT_RESULT();
       }
     };
 
@@ -291,7 +291,7 @@ describe('Index Tests', () => {
     }, logger);
     delete result.actionOptions;
     assert.deepEqual(result, {
-      statusCode: 429,
+      statusCode: 503,
     });
 
     const output = JSON.stringify(logger.logger.buf);
