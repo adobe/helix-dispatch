@@ -1,3 +1,11 @@
+## [3.2.7](https://github.com/adobe/helix-dispatch/compare/v3.2.6...v3.2.7) (2020-04-28)
+
+
+### Bug Fixes
+
+* **fetchers:** handle 502 and 429 errors from OpenWhisk ([8d1da1f](https://github.com/adobe/helix-dispatch/commit/8d1da1ffb82b585f00188c84b96e1d605e1fd6b6)), closes [#238](https://github.com/adobe/helix-dispatch/issues/238)
+* **index:** handle 502 and 429 errors correctly ([5047870](https://github.com/adobe/helix-dispatch/commit/5047870a314aa280ac135cad03494df498c815d6)), closes [#238](https://github.com/adobe/helix-dispatch/issues/238)
+
 ## [3.2.6](https://github.com/adobe/helix-dispatch/compare/v3.2.5...v3.2.6) (2020-04-14)
 
 
