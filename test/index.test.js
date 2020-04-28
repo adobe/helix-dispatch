@@ -303,7 +303,7 @@ describe('Index Tests', () => {
     assert.ok(output.indexOf('no valid response could be fetched') >= 0);
   });
 
-  it.only('index returns 429 response when seeing 429s (as Errors)', async () => {
+  it('index returns 429 response when seeing 429s (as Errors)', async () => {
     const logger = createLogger();
     refResult = OVERLOAD_ERROR;
     invokeResult = (req) => {
@@ -328,7 +328,7 @@ describe('Index Tests', () => {
     assert.ok(output.indexOf('no valid response could be fetched') >= 0);
   });
 
-  it.only('index returns 504 response when seeing 502s', async () => {
+  it('index returns 504 response when seeing 502s', async () => {
     const logger = createLogger();
     invokeResult = (req) => {
       if (req.params.path === '/404.html') {
@@ -352,7 +352,7 @@ describe('Index Tests', () => {
     assert.ok(output.indexOf('no valid response could be fetched') >= 0);
   });
 
-  it.only('index returns 504 response when seeing 502s (as Errors)', async () => {
+  it('index returns 504 response when seeing 502s (as Errors)', async () => {
     const logger = createLogger();
     refResult = TIMEOUT_ERROR;
     invokeResult = (req) => {
