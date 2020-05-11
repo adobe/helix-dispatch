@@ -116,18 +116,25 @@ function getPathInfos(urlPath, mount, indices, resolveDefault = ((a) => a)) {
   urlPath = urlPath.replace(/\/+/, '/');
   // check if url has extension, and if not create array of directory indices.
   const urls = [];
+  const extensionlessurls = [];
   if (urlPath.lastIndexOf('.') <= urlPath.lastIndexOf('/')) {
     // no extension, get the directory index
     indices.forEach((index) => {
       const indexPath = path.resolve(urlPath || '/', index);
       urls.push(indexPath);
     });
+
+    if (urlPath !== '/' && urlPath !== '') {
+      // allow extension-less requests, i.e. /foo becomes /foo.html
+      extensionlessurls.push(`${path.resolve(urlPath)}.html`);
+    }
   } else {
     urls.push(urlPath);
   }
 
   // add a default.* fallback
   const defaultUrls = urls.map(resolveDefault);
+  urls.push(...extensionlessurls);
   urls.push(...defaultUrls);
 
   // calculate the path infos for each url
