@@ -1,3 +1,10 @@
+## [3.2.9](https://github.com/adobe/helix-dispatch/compare/v3.2.8...v3.2.9) (2020-05-12)
+
+
+### Bug Fixes
+
+* **deps:** update dependency openwhisk to v3.21.2 ([#248](https://github.com/adobe/helix-dispatch/issues/248)) ([d10a169](https://github.com/adobe/helix-dispatch/commit/d10a169ea156c0242a6c471568f9d8d4a0897094))
+
 ## [3.2.8](https://github.com/adobe/helix-dispatch/compare/v3.2.7...v3.2.8) (2020-05-07)
 
 
