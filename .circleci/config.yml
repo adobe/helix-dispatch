@@ -89,6 +89,9 @@ jobs:
           command: npm run test-postdeploy
       - store_test_results:
           path: junit
+      - run:
+          name: Branch Undeployment
+          command: npm run undeploy-ci
 
 workflows:
   version: 2
