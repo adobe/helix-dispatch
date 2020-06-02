@@ -1,3 +1,10 @@
+## [3.2.15](https://github.com/adobe/helix-dispatch/compare/v3.2.14...v3.2.15) (2020-06-02)
+
+
+### Bug Fixes
+
+* **deps:** update [@adobe](https://github.com/adobe) ([3912725](https://github.com/adobe/helix-dispatch/commit/391272538268d35924242b0e1bd788b37085a06f))
+
 ## [3.2.14](https://github.com/adobe/helix-dispatch/compare/v3.2.13...v3.2.14) (2020-06-01)
 
 
