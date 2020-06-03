@@ -1,3 +1,10 @@
+## [3.2.16](https://github.com/adobe/helix-dispatch/compare/v3.2.15...v3.2.16) (2020-06-03)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @adobe/helix-epsagon to v1.3.5 ([d02d584](https://github.com/adobe/helix-dispatch/commit/d02d5843ab13da7a6085d4839bbc6d1793a9498d))
+
 ## [3.2.15](https://github.com/adobe/helix-dispatch/compare/v3.2.14...v3.2.15) (2020-06-02)
 
 
