@@ -385,7 +385,6 @@ describe('testing dynamic default resolution', () => {
   });
 });
 
-
 describe('testing path info resolution', () => {
   const tests = [
     {

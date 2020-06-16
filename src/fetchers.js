@@ -68,7 +68,6 @@ function staticaction(contentOpts) {
  * @property {string} relPath - The relative path ot the resolved resource. eg '/foo/index'.
  */
 
-
 /**
  * Standard Parameters for Pipeline and Static Invocations
  *
