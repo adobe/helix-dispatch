@@ -146,7 +146,6 @@ const index = proxyquire('../src/index.js', {
   },
 }).main;
 
-
 describe('Index Tests', () => {
   beforeEach(() => {
     invokeResult = OK_RESULT;
