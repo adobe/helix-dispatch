@@ -71,12 +71,12 @@ async function executeActions(params) {
           if (reply && reply.response) {
             log.error(`[${idx}] provided a response but no result. Unknown state for ${reply.activationId}`, reply);
           } else {
-            log.error(`[${idx}] did not provide a response. Unknown state for ${reply ? reply.activationId : 'No activation id'}`, reply);
+            log.error(`[${idx}] did not provide a response. Unknown state for ${reply && reply.activationId ? reply.activationId : 'No activation id'}`, reply);
           }
-          return actionOptions.reject({
+          return {
             statusCode: 500,
-            message: 'Unknown error',
-          });
+            body: 'Invalid state',
+          };
         }
       });
   });
