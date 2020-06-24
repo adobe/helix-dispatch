@@ -415,4 +415,50 @@ describe('Index Tests', () => {
     });
     assert.equal(expected, epsagonified, 'epsagon instrumented');
   });
+
+  it('index does not crash with empty action response', async () => {
+    invokeResult = () => Promise.resolve({});
+
+    const result = await index({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+    });
+    delete result.actionOptions;
+    assert.deepEqual(result, {
+      statusCode: 500,
+      body: 'Invalid state',
+    });
+  });
+
+  it('index does not crash with no action response', async () => {
+    invokeResult = () => Promise.resolve();
+
+    const result = await index({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+    });
+    delete result.actionOptions;
+    assert.deepEqual(result, {
+      statusCode: 500,
+      body: 'Invalid state',
+    });
+  });
+
+  it('index does not crash with incomplete action response', async () => {
+    invokeResult = () => Promise.resolve({
+      activationId: 'abcd-1234',
+      response: {
+      },
+    });
+
+    const result = await index({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+    });
+    delete result.actionOptions;
+    assert.deepEqual(result, {
+      statusCode: 500,
+      body: 'Invalid state',
+    });
+  });
 });

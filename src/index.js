@@ -62,10 +62,22 @@ async function executeActions(params) {
     log.infoFields(`[${idx}] Action: ${actionOptions.name}`, { actionOptions: opts });
     return ow.actions.invoke(actionOptions)
       .then((reply) => {
-        const res = reply.response.result;
-        res.actionOptions = opts;
-        log.info(`[${idx}] ${reply.activationId} ${res.statusCode} ${res.errorMessage || ''}`);
-        return actionOptions.resolve(res);
+        if (reply && reply.response && reply.response.result) {
+          const res = reply.response.result;
+          res.actionOptions = opts;
+          log.info(`[${idx}] ${reply.activationId} ${res.statusCode} ${res.errorMessage || ''}`);
+          return actionOptions.resolve(res);
+        } else {
+          if (reply && reply.response) {
+            log.error(`[${idx}] provided a response but no result. Unknown state for ${reply.activationId}`, reply);
+          } else {
+            log.error(`[${idx}] did not provide a response. Unknown state for ${reply && reply.activationId ? reply.activationId : 'No activation id'}`, reply);
+          }
+          return {
+            statusCode: 500,
+            body: 'Invalid state',
+          };
+        }
       });
   });
 
