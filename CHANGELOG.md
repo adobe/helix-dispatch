@@ -1,3 +1,12 @@
+## [3.2.24](https://github.com/adobe/helix-dispatch/compare/v3.2.23...v3.2.24) (2020-06-24)
+
+
+### Bug Fixes
+
+* **dispatch:** add corresponding tests ([195c302](https://github.com/adobe/helix-dispatch/commit/195c3028deb749e20bb31fa652c855db438b6d92))
+* **dispatch:** catch unexpected states ([47b3347](https://github.com/adobe/helix-dispatch/commit/47b33478d4bf613578a4eb1d237f1f88f17fede2))
+* **dispatch:** catch unexpected states ([272ad8a](https://github.com/adobe/helix-dispatch/commit/272ad8abccc22e4acd634889dd3ebec0e87911a4))
+
 ## [3.2.23](https://github.com/adobe/helix-dispatch/compare/v3.2.22...v3.2.23) (2020-06-16)
 
 
