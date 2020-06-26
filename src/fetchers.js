@@ -361,7 +361,7 @@ function extractGithubToken(params = {}) {
  */
 function fetchers(params = {}) {
   const { __ow_logger: log } = params;
-  const dirindex = (params['content.index'] || 'index.html,README.html').split(',');
+  const dirindex = (params['content.index'] || 'index.html').split(',');
   const infos = getPathInfos(params.path || '/', params.rootPath || '', dirindex);
   const actioninfos = getPathInfos(params.path || '/', params.rootPath || '', dirindex, getDefault);
   const githubToken = extractGithubToken(params);
