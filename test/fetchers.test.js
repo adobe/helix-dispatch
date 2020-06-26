@@ -87,7 +87,7 @@ describe('testing fetchers.js', () => {
   it('fetch nothing', async () => {
     const res = fetchers();
 
-    assert.equal(res.length, 9);
+    assert.equal(res.length, 6);
     logres(res);
   });
 
@@ -234,7 +234,7 @@ describe('testing fetchers.js', () => {
       path: '/example/dir',
     });
 
-    assert.equal(res.length, 12);
+    assert.equal(res.length, 9);
     logres(res);
   });
 
