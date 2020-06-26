@@ -234,7 +234,7 @@ describe('testing fetchers.js', () => {
       path: '/example/dir',
     });
 
-    assert.equal(res.length, 9);
+    assert.equal(res.length, 12);
     logres(res);
   });
 
@@ -422,6 +422,12 @@ describe('testing path info resolution', () => {
         selector: '',
         ext: 'html',
         relPath: '/foo/index',
+      }, {
+        path: '/foo.html',
+        name: 'foo',
+        selector: '',
+        ext: 'html',
+        relPath: '/foo',
       },
       {
         path: '/foo/default.html',
