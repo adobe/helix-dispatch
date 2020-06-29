@@ -106,6 +106,8 @@ function getPathInfos(urlPath, mount, indices) {
     urls.push(urlPath);
   }
 
+  urls.push(...extensionlessurls);
+
   // calculate the path infos for each url
   return unique(urls).map((url) => {
     const lastSlash = url.lastIndexOf('/');

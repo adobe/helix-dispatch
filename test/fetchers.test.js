@@ -229,7 +229,7 @@ describe('testing fetchers.js', () => {
       path: '/example/dir',
     });
 
-    assert.equal(res.length, 5);
+    assert.equal(res.length, 8);
     logres(res);
   });
 
@@ -371,6 +371,12 @@ describe('testing path info resolution', () => {
         selector: '',
         ext: 'html',
         relPath: '/hä/readme',
+      }, {
+        path: '/hä.html',
+        name: 'hä',
+        selector: '',
+        ext: 'html',
+        relPath: '/hä',
       }],
     },
     {
@@ -383,6 +389,12 @@ describe('testing path info resolution', () => {
         selector: '',
         ext: 'html',
         relPath: '/foo/index',
+      }, {
+        path: '/foo.html',
+        name: 'foo',
+        selector: '',
+        ext: 'html',
+        relPath: '/foo',
       }],
     },
     {
