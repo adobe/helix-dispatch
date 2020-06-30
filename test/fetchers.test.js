@@ -229,7 +229,7 @@ describe('testing fetchers.js', () => {
       path: '/example/dir',
     });
 
-    assert.equal(res.length, 8);
+    assert.equal(res.length, 5);
     logres(res);
   });
 
