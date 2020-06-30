@@ -356,7 +356,7 @@ describe('testing error page promise resolver', () => {
 describe('testing path info resolution', () => {
   const tests = [
     {
-      url: '/hä',
+      url: '/hä/',
       indices: ['index.html', 'readme.html'],
       mount: '',
       expected: [{
@@ -371,7 +371,13 @@ describe('testing path info resolution', () => {
         selector: '',
         ext: 'html',
         relPath: '/hä/readme',
-      }, {
+      }],
+    },
+    {
+      url: '/hä',
+      indices: ['index.html', 'readme.html'],
+      mount: '',
+      expected: [{
         path: '/hä.html',
         name: 'hä',
         selector: '',
@@ -380,21 +386,15 @@ describe('testing path info resolution', () => {
       }],
     },
     {
-      url: '/foo',
+      url: '/my.directory/foo/',
       indices: ['index.html'],
       mount: '',
       expected: [{
-        path: '/foo/index.html',
+        path: '/my.directory/foo/index.html',
         name: 'index',
         selector: '',
         ext: 'html',
-        relPath: '/foo/index',
-      }, {
-        path: '/foo.html',
-        name: 'foo',
-        selector: '',
-        ext: 'html',
-        relPath: '/foo',
+        relPath: '/my.directory/foo/index',
       }],
     },
     {
@@ -425,30 +425,6 @@ describe('testing path info resolution', () => {
       url: '/foo/hello.info.html',
       indices: ['index.html'],
       mount: '',
-      expected: [{
-        path: '/foo/hello.info.html',
-        name: 'hello',
-        selector: 'info',
-        ext: 'html',
-        relPath: '/foo/hello',
-      }],
-    },
-    {
-      url: '/foo/hello.info.html',
-      indices: ['index.html'],
-      mount: '/foo',
-      expected: [{
-        path: '/hello.info.html',
-        name: 'hello',
-        selector: 'info',
-        ext: 'html',
-        relPath: '/hello',
-      }],
-    },
-    {
-      url: '/foo/hello.info.html',
-      indices: ['index.html'],
-      mount: '/foot',
       expected: [{
         path: '/foo/hello.info.html',
         name: 'hello',
@@ -504,7 +480,7 @@ describe('testing path info resolution', () => {
 
   it('fails to resolve a path info, if the index has no extension', () => {
     try {
-      getPathInfos('/foo', '', ['invalid']);
+      getPathInfos('/foo/', '', ['invalid']);
       assert.fail('should fail');
     } catch (e) {
       assert.equal(e.message, 'directory index must have an extension.');
