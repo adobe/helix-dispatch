@@ -77,31 +77,6 @@ function staticaction(contentOpts) {
  * @property {string} ref branch or tag name, or sha of a commit
  * @property {string} [branch] the optional branch or tag name
  */
-/**
- * Determines the default URL to use as dynamic default for a requested URL.
- * For instance:
- * - `/foo.html` - `/default.html`
- * - `/foo/bar.json` - `/foo/default.json`
- * - `/foo/bar.baz.xml` - `/foo/default.baz.xml`
- * @param {string} url the original path of the URL (without hostname or query string)
- * @returns {string} the corresponding default URL
- */
-function getDefault(url) {
-  const pathsegments = url.split('/');
-  const filename = pathsegments.pop();
-  const namesegments = filename.split('.');
-  if (namesegments.length > 3) {
-    // this is for handling "double selectors". In /foo.baz.baz.html the
-    // selector is 'baz', and the name is 'foo.baz'.
-    const extension = namesegments.pop();
-    const selector = namesegments.pop();
-    pathsegments.push(['default', selector, extension].join('.'));
-  } else {
-    namesegments[0] = 'default';
-    pathsegments.push(namesegments.join('.'));
-  }
-  return pathsegments.join('/');
-}
 
 /**
  * Resolves the given url in respect to the mount point and potential fallback directory indices.
@@ -110,24 +85,25 @@ function getDefault(url) {
  * @param {string[]} indices - array of indices.
  * @returns {PathInfo[]} An array of path info structures.
  */
-function getPathInfos(urlPath, mount, indices, resolveDefault = ((a) => a)) {
+function getPathInfos(urlPath, mount, indices) {
   // eslint-disable-next-line no-param-reassign
   urlPath = urlPath.replace(/\/+/, '/');
   // check if url has extension, and if not create array of directory indices.
   const urls = [];
   if (urlPath.lastIndexOf('.') <= urlPath.lastIndexOf('/')) {
-    // no extension, get the directory index
-    indices.forEach((index) => {
-      const indexPath = path.resolve(urlPath || '/', index);
-      urls.push(indexPath);
-    });
+    // ends with '/', get the directory index
+    if (!urlPath || urlPath.endsWith('/')) {
+      indices.forEach((index) => {
+        const indexPath = path.resolve(urlPath || '/', index);
+        urls.push(indexPath);
+      });
+    } else {
+      // allow extension-less requests, i.e. /foo becomes /foo.html
+      urls.push(`${path.resolve(urlPath)}.html`);
+    }
   } else {
     urls.push(urlPath);
   }
-
-  // add a default.* fallback
-  const defaultUrls = urls.map(resolveDefault);
-  urls.push(...defaultUrls);
 
   // calculate the path infos for each url
   return unique(urls).map((url) => {
@@ -361,9 +337,9 @@ function extractGithubToken(params = {}) {
  */
 function fetchers(params = {}) {
   const { __ow_logger: log } = params;
-  const dirindex = (params['content.index'] || 'index.html,README.html').split(',');
+  const dirindex = (params['content.index'] || 'index.html').split(',');
   const infos = getPathInfos(params.path || '/', params.rootPath || '', dirindex);
-  const actioninfos = getPathInfos(params.path || '/', params.rootPath || '', dirindex, getDefault);
+  const actioninfos = getPathInfos(params.path || '/', params.rootPath || '', dirindex);
   const githubToken = extractGithubToken(params);
 
   const staticOpts = {
@@ -419,5 +395,4 @@ module.exports = {
   defaultResolver,
   errorPageResolver,
   getPathInfos,
-  getDefault,
 };
