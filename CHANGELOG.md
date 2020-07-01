@@ -1,3 +1,15 @@
+# [4.0.0](https://github.com/adobe/helix-dispatch/compare/v3.2.25...v4.0.0) (2020-07-01)
+
+
+### Bug Fixes
+
+* **path:** changes to extension less request fallbacks ([8ea8b65](https://github.com/adobe/helix-dispatch/commit/8ea8b65d839276fc4a39245e63acbdf3bfe0dce5)), closes [#267](https://github.com/adobe/helix-dispatch/issues/267) [#268](https://github.com/adobe/helix-dispatch/issues/268) [#269](https://github.com/adobe/helix-dispatch/issues/269)
+
+
+### BREAKING CHANGES
+
+* **path:** As discussed in https://github.com/adobe/helix-home/issues/121#issuecomment-633903103 `README.html` is no longer a default directory index. Either rename your `README.md` to `index.md` or set the [`directoryIndex`](https://github.com/adobe/helix-shared/blob/master/docs/strains-definitions-anystrain-oneof-runtime-strain.md#directoryIndex) property in your strain config to `index.html,README.html` to restore the old behavior
+
 ## [3.2.25](https://github.com/adobe/helix-dispatch/compare/v3.2.24...v3.2.25) (2020-06-29)
 
 
