@@ -16,6 +16,7 @@ const proxyquire = require('proxyquire');
 const assert = require('assert');
 const OpenWhiskError = require('openwhisk/lib/openwhisk_error');
 const { MemLogger, SimpleInterface } = require('@adobe/helix-log');
+const pkgJson = require('../package.json');
 
 function createLogger(level = 'info') {
   const logger = new MemLogger({
@@ -154,15 +155,21 @@ describe('Index Tests', () => {
   it('index returns pingdom response', async () => {
     const result = await index({
       __ow_method: 'get',
-      __ow_path: '/_status_check/pingdom.xml',
+      __ow_path: '/_status_check/healthcheck.json',
     });
     delete result.actionOptions;
     delete result.headers['X-Version'];
     assert.equal(result.statusCode, 200);
     assert.deepEqual(result.headers, {
-      'Content-Type': 'application/xml',
+      'Content-Type': 'application/json',
     });
-    assert.ok(/<pingdom_http_custom_check>[^]*<\/pingdom_http_custom_check>/.test(result.body));
+    const { body } = result;
+    delete body.process;
+    delete body.response_time;
+    assert.deepEqual(body, {
+      status: 'OK',
+      version: pkgJson.version,
+    });
   });
 
   it('index returns action response', async () => {
