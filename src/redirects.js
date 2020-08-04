@@ -9,19 +9,30 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
+const TYPES = {
+  301: 'permanent',
+  302: 'temporary',
+  307: 'internal',
+};
 
 async function redirect(params, ow) {
   const opts = {
     name: 'helix-services/redirect@v1',
-    params,
+    params: {
+      owner: params['content.owner'],
+      repo: params['content.repo'],
+      ref: params['content.ref'],
+      path: params.path,
+    },
+    blocking: true,
+    result: true,
   };
-  console.log(opts);
-  const result = await ow.actions.invoke(opts);
-  console.log(result);
+  const { response } = await ow.actions.invoke(opts);
+  const { result } = response;
 
   return {
-    type: 'none',
-    target: null,
+    type: TYPES[result.statusCode] || null,
+    target: result.headers ? result.headers.Location : null,
     result,
   };
 }

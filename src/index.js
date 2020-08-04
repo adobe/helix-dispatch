@@ -110,8 +110,9 @@ async function executeActions(params) {
       log.info(`${type} redirect to ${target}`);
       //
       return executeActions({
-        path: target,
         ...params,
+        redirects,
+        path: target,
       });
     }
 
