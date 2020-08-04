@@ -1,3 +1,10 @@
+## [4.0.5](https://github.com/adobe/helix-dispatch/compare/v4.0.4...v4.0.5) (2020-08-04)
+
+
+### Bug Fixes
+
+* **deps:** npm audit fix ([57e6022](https://github.com/adobe/helix-dispatch/commit/57e60220a3c7a4958e781b0b5137d73ec1edda0d))
+
 ## [4.0.4](https://github.com/adobe/helix-dispatch/compare/v4.0.3...v4.0.4) (2020-07-23)
 
 
