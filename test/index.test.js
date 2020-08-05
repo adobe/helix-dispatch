@@ -118,47 +118,27 @@ const REF_RESULT = () => Promise.resolve({
 });
 
 const NO_REDIR_RESULT = () => Promise.resolve({
-  activationId: 'acca-0000',
-  response: {
-    result: {
-      statusCode: 204,
-    },
-  },
+  statusCode: 204,
 });
 
 const TEMP_REDIR_RESULT = () => Promise.resolve({
-  activationId: 'acca-0302',
-  response: {
-    result: {
-      statusCode: 302,
-      headers: {
-        Location: '/look-here.html',
-      },
-    },
+  statusCode: 302,
+  headers: {
+    Location: '/look-here.html',
   },
 });
 
 const PERM_REDIR_RESULT = () => Promise.resolve({
-  activationId: 'acca-0301',
-  response: {
-    result: {
-      statusCode: 301,
-      headers: {
-        Location: '/look-here.html',
-      },
-    },
+  statusCode: 301,
+  headers: {
+    Location: '/look-here.html',
   },
 });
 
 const INTL_REDIR_RESULT = () => Promise.resolve({
-  activationId: 'acca-0307',
-  response: {
-    result: {
-      statusCode: 307,
-      headers: {
-        Location: '/look-here.html',
-      },
-    },
+  statusCode: 307,
+  headers: {
+    Location: '/look-here.html',
   },
 });
 

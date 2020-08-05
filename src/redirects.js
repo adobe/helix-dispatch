@@ -27,8 +27,7 @@ async function redirect(params, ow) {
     blocking: true,
     result: true,
   };
-  const { response } = await ow.actions.invoke(opts);
-  const { result } = response;
+  const result = await ow.actions.invoke(opts);
 
   return {
     type: TYPES[result.statusCode] || null,
