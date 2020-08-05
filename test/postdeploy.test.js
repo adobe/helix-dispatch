@@ -50,5 +50,5 @@ describe('Running Post-Deployment Integration Tests', () => {
       }).catch((e) => {
         throw e;
       });
-  });
+  }).timeout(5000);
 });
