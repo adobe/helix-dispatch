@@ -47,6 +47,25 @@ async function run() {
     EPSAGON_TOKEN: process.env.EPSAGON_TOKEN,
   });
   console.log(ret);
+
+  const ret2 = await action.main({
+    'content.owner': 'trieloff',
+    'content.repo': 'helix-demo',
+    'content.ref': 'blog-redirects',
+    'content.root': '',
+    'content.index': 'index.html',
+    'content.package': 'github-com--adobe--helix-pages--v1-8-14-dirty',
+    'static.owner': 'adobe',
+    'static.repo': 'helix-pages',
+    'static.ref': 'master',
+    'static.root': '/htdocs',
+    path: '/tag/coronavirus/',
+    rootPath: '',
+    params: '',
+    strain: 'default',
+    EPSAGON_TOKEN: process.env.EPSAGON_TOKEN,
+  });
+  console.log(ret2);
 }
 
 run().catch(console.error);

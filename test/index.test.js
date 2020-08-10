@@ -117,9 +117,35 @@ const REF_RESULT = () => Promise.resolve({
   statusCode: 200,
 });
 
+const NO_REDIR_RESULT = () => Promise.resolve({
+  statusCode: 204,
+});
+
+const TEMP_REDIR_RESULT = () => Promise.resolve({
+  statusCode: 302,
+  headers: {
+    Location: '/look-here.html',
+  },
+});
+
+const PERM_REDIR_RESULT = () => Promise.resolve({
+  statusCode: 301,
+  headers: {
+    Location: '/look-here.html',
+  },
+});
+
+const INTL_REDIR_RESULT = () => Promise.resolve({
+  statusCode: 307,
+  headers: {
+    Location: '/look-here.html',
+  },
+});
+
 // this is a bit a hack, but I don't know how to change it during tests
 let invokeResult = OK_RESULT;
 let refResult = REF_RESULT;
+let redirResult = NO_REDIR_RESULT;
 
 // count how many time espagon was run.
 let epsagonified = 0;
@@ -130,6 +156,8 @@ const index = proxyquire('../src/index.js', {
       invoke(...args) {
         if (args[0].name.startsWith('helix-services/resolve-git-ref')) {
           return refResult(...args);
+        } else if (args[0].name.startsWith('helix-services/redirect')) {
+          return redirResult(...args);
         }
         return invokeResult(...args);
       },
@@ -150,6 +178,7 @@ const index = proxyquire('../src/index.js', {
 describe('Index Tests', () => {
   beforeEach(() => {
     invokeResult = OK_RESULT;
+    redirResult = NO_REDIR_RESULT;
   });
 
   it('index returns pingdom response', async () => {
@@ -181,6 +210,78 @@ describe('Index Tests', () => {
     assert.deepEqual(result, {
       statusCode: 200,
       body: 'Hello, world.',
+    });
+  });
+
+  it('index returns action response when redirect cannot be determined', async () => {
+    redirResult = ERR_RESULT;
+
+    const result = await index({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.owner': 'adobe',
+      'content.repo': 'helix-home',
+      'content.path': '/redirect-me',
+    });
+    delete result.actionOptions;
+    assert.deepEqual(result, {
+      statusCode: 200,
+      body: 'Hello, world.',
+    });
+  });
+
+  it('index returns 301 for permanent redirect', async () => {
+    redirResult = PERM_REDIR_RESULT;
+
+    const result = await index({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.owner': 'adobe',
+      'content.repo': 'helix-home',
+      'content.path': '/redirect-me',
+    });
+
+    assert.deepEqual(result, {
+      statusCode: 301,
+      headers: {
+        Location: '/look-here.html',
+      },
+    });
+  });
+
+  it('index returns 302 for temporary redirect', async () => {
+    redirResult = TEMP_REDIR_RESULT;
+
+    const result = await index({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.owner': 'adobe',
+      'content.repo': 'helix-home',
+      'content.path': '/redirect-me',
+    });
+
+    assert.deepEqual(result, {
+      statusCode: 302,
+      headers: {
+        Location: '/look-here.html',
+      },
+    });
+  });
+
+  it('index returns 508 for internal redirect loop', async () => {
+    redirResult = INTL_REDIR_RESULT;
+
+    const result = await index({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.owner': 'adobe',
+      'content.repo': 'helix-home',
+      'content.path': '/redirect-me',
+    });
+
+    assert.deepEqual(result, {
+      statusCode: 508,
+      body: 'Too many internal redirects to /look-here.html',
     });
   });
 

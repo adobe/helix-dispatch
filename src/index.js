@@ -18,6 +18,12 @@ const { deepclone } = require('ferrum');
 const openwhisk = require('./openwhisk.js');
 const resolvePreferred = require('./resolve-preferred');
 const { fetchers } = require('./fetchers');
+const { redirect, abortRedirect } = require('./redirects');
+
+/**
+ * Maximum number of internal redirects to follow before a loop is assumed
+ */
+const MAX_REDIRECTS = 3;
 /**
  * This function dispatches the request to the content repository, the pipeline, and the static
  * repository. The preference order is:
@@ -82,8 +88,36 @@ async function executeActions(params) {
   });
 
   try {
+    // start the redirect process
+    const redirectPromise = redirect(params, ow);
+
+    // start the fetching processes
+    const responsePromise = resolvePreferred(fetchers(params, log).map(invoker));
+
+    const { type, target } = await redirectPromise;
+
+    if (type === 'temporary' || type === 'permanent') {
+      log.info(`${type} redirect to ${target}`);
+      return (await redirectPromise).result;
+    } else if (type === 'internal' && target) {
+      // increase the internal redirect counter
+      const redirects = (params.redirects || 0) + 1;
+      if (redirects > MAX_REDIRECTS) {
+        log.warn(`${type} redirect to ${target} exceeds redirect counter`);
+        return abortRedirect(target);
+      }
+
+      log.info(`${type} redirect to ${target}`);
+      //
+      return executeActions({
+        ...params,
+        redirects,
+        path: target,
+      });
+    }
+
     // we explicitly (a)wait here, so we can catch a potential exception.
-    const resp = await resolvePreferred(fetchers(params, log).map(invoker));
+    const resp = await responsePromise;
 
     // check if X-Dispatch-NoCache header is in the request,
     // this will override the Cache-Control and Surrogate-Control

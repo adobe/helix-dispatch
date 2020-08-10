@@ -25,18 +25,30 @@ function getbaseurl() {
   if (process.env.CI && process.env.CIRCLE_BUILD_NUM && process.env.CIRCLE_BRANCH !== 'master') {
     version = `ci${process.env.CIRCLE_BUILD_NUM}`;
   }
-  return `api/v1/web/${namespace}/${package}/${name}@${version}?static.owner=trieloff&static.repo=helix-demo&static.ref=master&path=/index.md`;
+  return `api/v1/web/${namespace}/${package}/${name}@${version}`;
 }
 
 describe('Running Post-Deployment Integration Tests', () => {
   it('Service is reachable', async () => {
     await chai
       .request('https://adobeioruntime.net/')
-      .get(getbaseurl())
+      .get(`${getbaseurl()}?static.owner=trieloff&static.repo=helix-demo&static.ref=master&path=/index.md`)
       .then((response) => {
         expect(response).to.have.status(200);
       }).catch((e) => {
         throw e;
       });
   });
+
+  it('Redirects work', async () => {
+    // this is using the spreadsheet from https://adobe.sharepoint.com/:x:/r/sites/TheBlog/_layouts/15/doc2.aspx?sourcedoc=%7Bb20ba4a8-5040-40da-a19c-bad381543fb6%7D&action=editnew&cid=0c46f5e7-178b-4783-96d6-3f49edbe3043
+    await chai
+      .request('https://adobeioruntime.net/')
+      .get(`${getbaseurl()}?static.owner=trieloff&static.repo=helix-demo&static.ref=master&path=/tag/coronavirus/&content.owner=trieloff&content.repo=helix-demo&content.ref=blog-redirects`)
+      .then((response) => {
+        expect(response).to.redirectTo('https://blog.adobe.com/en/topics/covid-19.html');
+      }).catch((e) => {
+        throw e;
+      });
+  }).timeout(30000);
 });
