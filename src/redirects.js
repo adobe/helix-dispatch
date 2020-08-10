@@ -36,19 +36,16 @@ async function redirect(params, ow) {
   };
 }
 
-async function sendRedirect(redirectPromise) {
-  return (await redirectPromise).result;
-}
-
-async function abortRedirect(redirectPromise) {
+function abortRedirect(target) {
   return {
     statusCode: 508, // loop detected, from webdav
     body: `Too many internal redirects to ${
-      ((await redirectPromise).target || '').replace(/&/g, '&amp;')
+      (target || '')
+        .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;').replace(/>/g, '&gt;')}`,
   };
 }
 
 module.exports = {
-  redirect, sendRedirect, abortRedirect,
+  redirect, abortRedirect,
 };

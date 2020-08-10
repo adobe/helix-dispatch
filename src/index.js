@@ -18,7 +18,7 @@ const { deepclone } = require('ferrum');
 const openwhisk = require('./openwhisk.js');
 const resolvePreferred = require('./resolve-preferred');
 const { fetchers } = require('./fetchers');
-const { redirect, sendRedirect, abortRedirect } = require('./redirects');
+const { redirect, abortRedirect } = require('./redirects');
 
 /**
  * Maximum number of internal redirects to follow before a loop is assumed
@@ -98,13 +98,13 @@ async function executeActions(params) {
 
     if (type === 'temporary' || type === 'permanent') {
       log.info(`${type} redirect to ${target}`);
-      return sendRedirect(redirectPromise);
+      return (await redirectPromise).result;
     } else if (type === 'internal' && target) {
       // increase the internal redirect counter
       const redirects = (params.redirects || 0) + 1;
       if (redirects > MAX_REDIRECTS) {
         log.warn(`${type} redirect to ${target} exceeds redirect counter`);
-        return abortRedirect(redirectPromise);
+        return abortRedirect(target);
       }
 
       log.info(`${type} redirect to ${target}`);
