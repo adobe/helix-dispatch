@@ -1,3 +1,15 @@
+# [4.1.0](https://github.com/adobe/helix-dispatch/compare/v4.0.5...v4.1.0) (2020-08-10)
+
+
+### Bug Fixes
+
+* **redirects:** use correct response format ([8882440](https://github.com/adobe/helix-dispatch/commit/8882440abc91d548407416ece139fea44f9f0b05))
+
+
+### Features
+
+* **index:** handle redirects ([0f1a687](https://github.com/adobe/helix-dispatch/commit/0f1a68715fcc113ecae280dae41239dfe9db644a)), closes [#204](https://github.com/adobe/helix-dispatch/issues/204)
+
 ## [4.0.5](https://github.com/adobe/helix-dispatch/compare/v4.0.4...v4.0.5) (2020-08-04)
 
 
