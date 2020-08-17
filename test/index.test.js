@@ -39,7 +39,7 @@ const OK_RESULT = () => Promise.resolve({
   },
 });
 
-const ERR_RESULT = () => Promise.resolve({
+const ERR_RESULT_404 = () => Promise.resolve({
   activationId: 'abcd-1234',
   response: {
     result: {
@@ -48,12 +48,6 @@ const ERR_RESULT = () => Promise.resolve({
     },
   },
 });
-
-/*
-const ERR_ERROR = () => {
-  throw new OpenWhiskError('POST https://runtime.adobe.io/api/v1/namespaces/helix-mini/actions/not_here?blocking=true Returned HTTP 404 (Not Found) --> "The requested resource does not exist."', {}, 404);
-};
-*/
 
 const SEVERE_RESULT = () => Promise.resolve({
   activationId: 'abcd-1234',
@@ -103,8 +97,44 @@ const ACTION_TIMEOUT_RESULT = () => Promise.resolve({
   },
 });
 
-const FAIL_RESULT = () => {
-  throw new Error('runtime failure.');
+const FAIL_RESULT_404 = (handle404) => async (resolver) => {
+  // only create 404 failure for html action.
+  if (resolver.name === 'default/html') {
+    const error = new Error('OpenWhiskError: POST https://runtime.adobe.io/api/v1/namespaces/acme/default/html Returned HTTP 404 (Not Found)');
+    error.error = {
+      code: '46qNNODdPtdUc0BEwMJzvVqOBDcv18uA',
+      error: 'The requested resource does not exist.',
+    };
+    error.statusCode = 404;
+    throw error;
+  } else if (resolver.params.path === '/404.html' && handle404) {
+    return OK_RESULT();
+  } else {
+    return ERR_RESULT_404();
+  }
+};
+
+const FAIL_RESULT_502 = (handle404) => async (resolver) => {
+  // only create 502 failure for html action.
+  if (resolver.name === 'default/html') {
+    const error = new Error('OpenWhiskError: POST https://runtime.adobe.io/api/v1/namespaces/acme/default/html Returned HTTP 502 (Bad Gateway)');
+    error.error = {
+      activationId: '1f92c2987a9a4eef92c2987a9abeefcf',
+      response: {
+        result: {
+          error: 'The action did not produce a valid response and exited unexpectedly.',
+        },
+        status: 'action developer error',
+        success: false,
+      },
+    };
+    error.statusCode = 502;
+    throw error;
+  } else if (resolver.params.path === '/404.html' && handle404) {
+    return OK_RESULT();
+  } else {
+    return ERR_RESULT_404();
+  }
 };
 
 const REF_RESULT = () => Promise.resolve({
@@ -214,7 +244,7 @@ describe('Index Tests', () => {
   });
 
   it('index returns action response when redirect cannot be determined', async () => {
-    redirResult = ERR_RESULT;
+    redirResult = ERR_RESULT_404;
 
     const result = await index({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
@@ -322,7 +352,7 @@ describe('Index Tests', () => {
 
   it('index returns 404 response', async () => {
     const logger = createLogger('debug');
-    invokeResult = ERR_RESULT;
+    invokeResult = ERR_RESULT_404;
 
     const result = await index({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
@@ -334,7 +364,8 @@ describe('Index Tests', () => {
       statusCode: 404,
     });
 
-    const output = JSON.stringify(logger.logger.buf);
+    const output = JSON.stringify(logger.logger.buf, null, 2);
+    // console.log(output);
     assert.ok(output.indexOf('no valid response could be fetched') >= 0);
   });
 
@@ -342,7 +373,7 @@ describe('Index Tests', () => {
     const logger = createLogger();
     invokeResult = (req) => {
       if (req.params.path === '/404.html') {
-        return ERR_RESULT();
+        return ERR_RESULT_404();
       } else {
         return SEVERE_RESULT();
       }
@@ -366,7 +397,7 @@ describe('Index Tests', () => {
     const logger = createLogger();
     invokeResult = (req) => {
       if (req.params.path === '/404.html') {
-        return ERR_RESULT();
+        return ERR_RESULT_404();
       } else {
         return TIMEOUT_RESULT();
       }
@@ -390,7 +421,7 @@ describe('Index Tests', () => {
     const logger = createLogger();
     invokeResult = (req) => {
       if (req.params.path === '/404.html') {
-        return ERR_RESULT();
+        return ERR_RESULT_404();
       } else {
         return OVERLOAD_RESULT();
       }
@@ -415,7 +446,7 @@ describe('Index Tests', () => {
     refResult = OVERLOAD_ERROR;
     invokeResult = (req) => {
       if (req.params.path === '/404.html') {
-        return ERR_RESULT();
+        return ERR_RESULT_404();
       } else {
         return OVERLOAD_ERROR();
       }
@@ -439,7 +470,7 @@ describe('Index Tests', () => {
     const logger = createLogger();
     invokeResult = (req) => {
       if (req.params.path === '/404.html') {
-        return ERR_RESULT();
+        return ERR_RESULT_404();
       } else {
         return ACTION_TIMEOUT_RESULT();
       }
@@ -464,7 +495,7 @@ describe('Index Tests', () => {
     refResult = TIMEOUT_ERROR;
     invokeResult = (req) => {
       if (req.params.path === '/404.html') {
-        return ERR_RESULT();
+        return ERR_RESULT_404();
       } else {
         return TIMEOUT_ERROR();
       }
@@ -484,19 +515,78 @@ describe('Index Tests', () => {
     assert.ok(output.indexOf('no valid response could be fetched') >= 0);
   });
 
-  it('index produces application error when fetcher fails.', async () => {
+  it('index produces 404 when fetcher fails due to missing action (with 404 handler).', async () => {
     const logger = createLogger();
-    invokeResult = FAIL_RESULT;
+    invokeResult = FAIL_RESULT_404(true);
 
     const result = await index({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       __ow_logger: logger,
     });
-    assert.ok(result.error.indexOf('Error: runtime failure.\n    at FAIL_RESULT') >= 0);
 
-    const output = JSON.stringify(logger.logger.buf);
-    assert.ok(output.indexOf('error while invoking fetchers: Error: runtime failure.') >= 0);
+    // const output = JSON.stringify(logger.logger.buf, null, 2);
+    // console.log(output);
+
+    delete result.actionOptions;
+    assert.deepEqual(result, {
+      body: 'Hello, world.',
+      statusCode: 404,
+    });
+  });
+
+  it('index produces 404 when fetcher fails due to missing action (without 404 handler).', async () => {
+    const logger = createLogger();
+    invokeResult = FAIL_RESULT_404(false);
+
+    const result = await index({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      __ow_logger: logger,
+    });
+
+    // const output = JSON.stringify(logger.logger.buf, null, 2);
+    // console.log(output);
+
+    delete result.actionOptions;
+    assert.deepEqual(result, {
+      statusCode: 404,
+    });
+  });
+
+  it('index produces 504 error when fetcher fails due to terminating action (with 404 handler).', async () => {
+    const logger = createLogger();
+    invokeResult = FAIL_RESULT_502(true);
+
+    const result = await index({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      __ow_logger: logger,
+    });
+    const output = JSON.stringify(logger.logger.buf, null, 2);
+    // console.log(output);
+
+    assert.deepEqual(result, {
+      statusCode: 504,
+    });
+    assert.ok(output.indexOf('Error: OpenWhiskError: POST https://runtime.adobe.io/api/v1/namespaces/acme/default/html Returned HTTP 502 (Bad Gateway)') >= 0);
+  });
+
+  it('index produces 504 error when fetcher fails due to terminating action (without 404 handler).', async () => {
+    const logger = createLogger();
+    invokeResult = FAIL_RESULT_502(false);
+
+    const result = await index({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      __ow_logger: logger,
+    });
+    const output = JSON.stringify(logger.logger.buf, null, 2);
+    // console.log(output);
+    assert.deepEqual(result, {
+      statusCode: 504,
+    });
+    assert.ok(output.indexOf('Error: OpenWhiskError: POST https://runtime.adobe.io/api/v1/namespaces/acme/default/html Returned HTTP 502 (Bad Gateway)') >= 0);
   });
 
   it('index function w/o token does not instrument epsagon', async () => {

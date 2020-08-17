@@ -33,7 +33,7 @@ function defaultResolver(res) {
   if (res && res.statusCode >= 400) {
     const { params } = res.actionOptions;
     const rp = `${params.owner}/${params.repo}/${params.ref}${params.path}`;
-    const error = new Error(`Error invoking ${res.actionOptions.name}(${rp}): ${res.statusCode}`);
+    const error = new Error(`[${res.actionOptions.idx}] Error invoking ${res.actionOptions.name}(${rp}): ${res.statusCode}`);
     error.statusCode = res.statusCode === 502 ? 504 : res.statusCode;
     return Promise.reject(error);
   }
@@ -152,9 +152,10 @@ function getPathInfos(urlPath, mount, indices) {
  * @param {PathInfo[]} infos the paths to fetch from
  * @param {Promise<ActionOptions>} contentPromise coordinates for the content repo
  * @param {Promise<ActionOptions>} staticPromise coordinates for the fallback repo
+ * @param {number} idxOffset helper variable for logging
  * @returns {object[]} list of actions that should get invoked
  */
-function fetch404tasks(infos, wskOpts, contentPromise, staticPromise) {
+function fetch404tasks(infos, wskOpts, contentPromise, staticPromise, idxOffset) {
   const attempts = [];
   if (infos[0].ext === 'html') {
     // then get the 404.html from the content repo, but only for html requests
@@ -162,6 +163,7 @@ function fetch404tasks(infos, wskOpts, contentPromise, staticPromise) {
       resolve: errorPageResolver,
       name: staticaction(contentOpts),
       blocking: true,
+      idxOffset,
       params: {
         path: '/404.html',
         esi: false,
@@ -175,6 +177,7 @@ function fetch404tasks(infos, wskOpts, contentPromise, staticPromise) {
       resolve: errorPageResolver,
       name: staticaction(contentOpts),
       blocking: true,
+      idxOffset,
       params: {
         path: '/404.html',
         esi: false,
@@ -378,16 +381,18 @@ function fetchers(params = {}) {
   const staticPromise = updateOpts(staticOpts, staticResolver);
   const contentPromise = updateOpts(contentOpts, contentResolver);
 
-  return [
+  const baseTasks = [
     // try to get the raw content from the content repo
     ...fetchrawtasks(infos, params, contentPromise, wskOpts),
     // then, try to call the action
     ...fetchactiontasks(actioninfos, wskOpts, contentPromise, params),
     // try to get the raw content from the static repo
     ...fetchfallbacktasks(infos, wskOpts, contentPromise, staticPromise),
-    // finally, fetch the 404 pages
-    ...fetch404tasks(infos, wskOpts, contentPromise, staticPromise),
   ];
+  return {
+    base: baseTasks,
+    fetch404: fetch404tasks(infos, wskOpts, contentPromise, staticPromise, baseTasks.length),
+  };
 }
 
 module.exports = {
