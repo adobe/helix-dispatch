@@ -38,7 +38,7 @@ describe('Running Post-Deployment Integration Tests', () => {
       }).catch((e) => {
         throw e;
       });
-  });
+  }).timeout(10000);
 
   it('Redirects work', async () => {
     // this is using the spreadsheet from https://adobe.sharepoint.com/:x:/r/sites/TheBlog/_layouts/15/doc2.aspx?sourcedoc=%7Bb20ba4a8-5040-40da-a19c-bad381543fb6%7D&action=editnew&cid=0c46f5e7-178b-4783-96d6-3f49edbe3043
