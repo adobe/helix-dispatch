@@ -124,7 +124,7 @@ async function executeActions(params) {
       });
   });
 
-  let fetch404Promise;
+  let fetch404Promise = Promise.resolve();
   try {
     // start the redirect process
     const redirectPromise = redirect(params, ow);
@@ -163,12 +163,13 @@ async function executeActions(params) {
 
     try {
       const resp404 = await fetch404Promise;
-      if (resp && resp.statusCode === 404) {
+      if (resp.statusCode === 404) {
         resp = resp404;
       }
     } catch (e) {
-      // ignore
-      log.info('no valid response could be fetched');
+      if (resp.statusCode === 404) {
+        log.info('no valid response could be fetched');
+      }
     }
     // check if X-Dispatch-NoCache header is in the request,
     // this will override the Cache-Control and Surrogate-Control

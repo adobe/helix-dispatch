@@ -180,7 +180,27 @@ let redirResult = NO_REDIR_RESULT;
 // count how many time espagon was run.
 let epsagonified = 0;
 
+const fetchers = proxyquire('../src/fetchers.js', {
+  './openwhisk.js': () => ({
+    actions: {
+      async invoke(params) {
+        if (params.name === 'helix-services/resolve-git-ref@v1_link') {
+          return {
+            statusCode: 200,
+            body: {
+              sha: '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+            },
+          };
+        } else {
+          throw Error('unexpected call to action ', params.name);
+        }
+      },
+    },
+  }),
+});
+
 const index = proxyquire('../src/index.js', {
+  './fetchers.js': fetchers,
   './openwhisk.js': () => ({
     actions: {
       invoke(...args) {
@@ -367,6 +387,50 @@ describe('Index Tests', () => {
     const output = JSON.stringify(logger.logger.buf, null, 2);
     // console.log(output);
     assert.ok(output.indexOf('no valid response could be fetched') >= 0);
+  });
+
+  it('index returns 200 response for static files', async () => {
+    const logger = createLogger('debug');
+    invokeResult = (req) => {
+      if (req.params.path === '/index.html') {
+        return OK_RESULT();
+      } else {
+        return FAIL_RESULT_404(false);
+      }
+    };
+
+    const result = await index({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+    }, logger);
+    delete result.actionOptions;
+    assert.deepEqual(result, {
+      body: 'Hello, world.',
+      statusCode: 200,
+    });
+  });
+
+  it('index returns 200 response for static files with ref=master', async () => {
+    const logger = createLogger('debug');
+    invokeResult = (req) => {
+      if (req.params.path === '/index.md') {
+        return OK_RESULT();
+      } else {
+        return FAIL_RESULT_404(false);
+      }
+    };
+
+    const result = await index({
+      'static.owner': 'trieloff',
+      'static.repo': 'helix-demo',
+      'static.ref': 'master',
+      path: '/index.md',
+    }, logger);
+    delete result.actionOptions;
+    assert.deepEqual(result, {
+      body: 'Hello, world.',
+      statusCode: 200,
+    });
   });
 
   it('index returns 500 response', async () => {

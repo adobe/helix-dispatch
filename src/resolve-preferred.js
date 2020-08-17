@@ -11,6 +11,9 @@
  */
 
 const resolvePreferred = (promises) => new Promise((resolve, reject) => {
+  if (!promises.length) {
+    reject(new Error('unable to resolve preferred from empty array.'));
+  }
   const results = new Array(promises.length);
   let resolved = false;
   const unihandler = (idx, val, err) => {
