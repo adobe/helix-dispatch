@@ -1,3 +1,10 @@
+## [4.1.2](https://github.com/adobe/helix-dispatch/compare/v4.1.1...v4.1.2) (2020-08-18)
+
+
+### Bug Fixes
+
+* **dispatch:** severe errors hidden by 404.html ([#323](https://github.com/adobe/helix-dispatch/issues/323)) ([f4d9ffd](https://github.com/adobe/helix-dispatch/commit/f4d9ffdf0ee07bf55590224e55c5b1ee3e2a2b4b)), closes [#322](https://github.com/adobe/helix-dispatch/issues/322)
+
 ## [4.1.1](https://github.com/adobe/helix-dispatch/compare/v4.1.0...v4.1.1) (2020-08-11)
 
 
