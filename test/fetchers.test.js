@@ -27,7 +27,7 @@ const SAMPLE_GITHUB_TOKEN = 'some-github-token-value';
 
 let resolverInvocationCount = 0;
 
-const { fetchers } = proxyquire('../src/fetchers', {
+const { fetchers: originalFetchers } = proxyquire('../src/fetchers', {
   './openwhisk.js': () => ({
     actions: {
       invoke({ params: { ref, owner } }) {
@@ -61,6 +61,17 @@ const { fetchers } = proxyquire('../src/fetchers', {
     },
   }),
 });
+
+/**
+ * Returns the combined fetcher array, including the base and the 404 tasks.
+ */
+const fetchers = (params) => {
+  const { base, fetch404 } = originalFetchers(params);
+  return [
+    ...base,
+    ...fetch404,
+  ];
+};
 
 const opts = {
   'static.owner': 'adobe',
@@ -303,6 +314,7 @@ describe('testing default promise resolver', () => {
       await Promise.resolve({
         statusCode: 400,
         actionOptions: {
+          idx: 1,
           params: {
             owner: 'adobe',
             repo: 'helix-statix',
@@ -316,7 +328,7 @@ describe('testing default promise resolver', () => {
       if (e instanceof AssertionError) {
         throw e;
       }
-      assert.equal(e.message, 'Error invoking undefined(adobe/helix-statix/master/index.html): 400');
+      assert.equal(e.message, '[1] Error invoking undefined(adobe/helix-statix/master/index.html): 400');
     }
   });
 });
@@ -335,6 +347,7 @@ describe('testing error page promise resolver', () => {
       await Promise.resolve({
         statusCode: 400,
         actionOptions: {
+          idx: 1,
           params: {
             owner: 'adobe',
             repo: 'helix-statix',
@@ -348,7 +361,7 @@ describe('testing error page promise resolver', () => {
       if (e instanceof AssertionError) {
         throw e;
       }
-      assert.equal(e.message, 'Error invoking undefined(adobe/helix-statix/master/index.html): 400');
+      assert.equal(e.message, '[1] Error invoking undefined(adobe/helix-statix/master/index.html): 400');
     }
   });
 });

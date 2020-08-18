@@ -21,9 +21,41 @@ const { fetchers } = require('./fetchers');
 const { redirect, abortRedirect } = require('./redirects');
 
 /**
+ * Executes the fetcher promise and catches the errors. It determines the most severe error and
+ * throws it, unless it is a 404, in which case the function resolves with a 404 status code.
+ * @param {Logger} log logger
+ * @param {Promise} promise The promise of `executeActions`.
+ * @returns The result.
+ */
+async function deErrorify(log, promise) {
+  try {
+    return await promise;
+  } catch (e) {
+    let severe = e;
+    /* istanbul ignore next */
+    if (Array.isArray(e)) {
+      let worst = 0;
+      e.forEach((err, idx) => {
+        if (!err.statusCode || err.statusCode >= 500 || err.statusCode === 429) {
+          const id = err.actionOptions ? err.actionOptions.idx : '-';
+          log.error(`[${id}] ${err.message}`);
+          worst = idx;
+        }
+      });
+      severe = e[worst];
+    }
+    if (severe.statusCode === 404) {
+      return severe;
+    }
+    throw severe;
+  }
+}
+
+/**
  * Maximum number of internal redirects to follow before a loop is assumed
  */
 const MAX_REDIRECTS = 3;
+
 /**
  * This function dispatches the request to the content repository, the pipeline, and the static
  * repository. The preference order is:
@@ -55,6 +87,7 @@ async function executeActions(params) {
     const opts = {
       name: actionOptions.name,
       params: deepclone(actionOptions.params),
+      idx: idx + (actionOptions.idxOffset || 0),
     };
     Object.keys(opts.params).forEach((key) => {
       if (key.match(/^[A-Z0-9_]+$/)) {
@@ -64,35 +97,45 @@ async function executeActions(params) {
     if (opts.params.__ow_headers && opts.params.__ow_headers.authorization) {
       opts.params.__ow_headers.authorization = '[undisclosed secret]';
     }
-
-    log.infoFields(`[${idx}] Action: ${actionOptions.name}`, { actionOptions: opts });
+    log.infoFields(`[${opts.idx}] Action: ${actionOptions.name}`, { actionOptions: opts });
     return ow.actions.invoke(actionOptions)
       .then((reply) => {
         if (reply && reply.response && reply.response.result) {
           const res = reply.response.result;
           res.actionOptions = opts;
-          log.info(`[${idx}] ${reply.activationId} ${res.statusCode} ${res.errorMessage || ''}`);
+          log.info(`[${opts.idx}] ${reply.activationId} ${res.statusCode} ${res.errorMessage || ''}`);
           return actionOptions.resolve(res);
         } else {
           if (reply && reply.response) {
-            log.error(`[${idx}] provided a response but no result. Unknown state for ${reply.activationId}`, reply);
+            log.error(`[${opts.idx}] provided a response but no result. Unknown state for ${reply.activationId}`, reply);
           } else {
-            log.error(`[${idx}] did not provide a response. Unknown state for ${reply && reply.activationId ? reply.activationId : 'No activation id'}`, reply);
+            /* istanbul ignore next */
+            log.error(`[${opts.idx}] did not provide a response. Unknown state for ${reply && reply.activationId ? reply.activationId : 'No activation id'}`, reply);
           }
           return {
             statusCode: 500,
             body: 'Invalid state',
           };
         }
+      }).catch((err) => {
+        // eslint-disable-next-line no-param-reassign
+        err.actionOptions = opts;
+        throw err;
       });
   });
 
+  let fetch404Promise = Promise.resolve();
   try {
     // start the redirect process
     const redirectPromise = redirect(params, ow);
 
-    // start the fetching processes
-    const responsePromise = resolvePreferred(fetchers(params, log).map(invoker));
+    const tasks = fetchers(params, log);
+
+    // start the base fetching processes
+    const responsePromise = resolvePreferred(tasks.base.map(invoker));
+
+    // start the 404 fetching processes
+    fetch404Promise = resolvePreferred(tasks.fetch404.map(invoker));
 
     const { type, target } = await redirectPromise;
 
@@ -108,7 +151,6 @@ async function executeActions(params) {
       }
 
       log.info(`${type} redirect to ${target}`);
-      //
       return executeActions({
         ...params,
         redirects,
@@ -117,8 +159,18 @@ async function executeActions(params) {
     }
 
     // we explicitly (a)wait here, so we can catch a potential exception.
-    const resp = await responsePromise;
+    let resp = await deErrorify(log, responsePromise);
 
+    try {
+      const resp404 = await fetch404Promise;
+      if (resp.statusCode === 404) {
+        resp = resp404;
+      }
+    } catch (e) {
+      if (resp.statusCode === 404) {
+        log.info('no valid response could be fetched');
+      }
+    }
     // check if X-Dispatch-NoCache header is in the request,
     // this will override the Cache-Control and Surrogate-Control
     // response headers to ensure no caching
@@ -132,38 +184,41 @@ async function executeActions(params) {
 
     return resp;
   } catch (e) {
-    let severe = e;
-
-    /* istanbul ignore next */
-    if (Array.isArray(e)) {
-      let worst = 0;
-      e.forEach((err, idx) => {
-        if (!err.statusCode || err.statusCode >= 500 || err.statusCode === 429) {
-          log.error(err.message);
-          worst = idx;
-        }
-      });
-      severe = e[worst];
+    try {
+      // we need to wait for the 404 requests, otherwise we have unhandled promise rejections
+      await fetch404Promise;
+    } catch {
+      // ignore
     }
 
-    if (severe.statusCode) {
-      if (severe.statusCode >= 500 || severe.statusCode === 429) {
-        log.error(`no valid response could be fetched: ${severe}`);
-      } else {
-        log.info(`no valid response could be fetched: ${severe}`);
-      }
+    /* istanbul ignore else */
+    if (e.statusCode) {
+      log.error(`no valid response could be fetched: ${e}`);
       return {
-        statusCode: severe.statusCode === 502 ? 504 : severe.statusCode,
+        statusCode: e.statusCode === 502 ? 504 : e.statusCode,
       };
     }
 
     // a fetchers `resolve` should never throw an exception but report a proper status response.
     // so we consider any exception thrown as application error and propagate it to openwhisk.
-    log.error(`error while invoking fetchers: ${severe}`);
+    /* istanbul ignore next */
+    log.error(`error while invoking fetchers: ${e}`);
+    /* istanbul ignore next */
     return {
-      error: `${String(severe.stack)}`,
+      error: `${String(e.stack)}`,
     };
   }
+}
+
+/**
+ * Runs the action. This extra step is added because the resulting status code is most of the
+ * time missing in the logs.
+ */
+async function run(params) {
+  const { __ow_logger: log } = params;
+  const result = await executeActions(params);
+  log.info('dispatch status code: ', result.statusCode);
+  return result;
 }
 
 /**
@@ -171,7 +226,7 @@ async function executeActions(params) {
  * @param params Action params
  * @returns {Promise<*>} The response
  */
-module.exports.main = wrap(executeActions)
+module.exports.main = wrap(run)
   .with(epsagon)
   .with(status)
   .with(logger.trace)

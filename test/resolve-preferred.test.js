@@ -32,6 +32,10 @@ describe('Test custom Promise.race', () => {
     assert.ok(p.catch);
   });
 
+  it('race rejects empty tasks', async () => {
+    await assert.rejects(resolvePreferred([]), new Error('unable to resolve preferred from empty array.'));
+  });
+
   it('race resolves if only one promise succeeds', async () => {
     const p = await resolvePreferred([timeout(0, true)]);
     assert.equal(p, 'ok');
