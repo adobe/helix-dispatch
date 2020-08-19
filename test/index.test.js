@@ -263,8 +263,8 @@ describe('Index Tests', () => {
     });
   });
 
-  it('index returns action response when redirect cannot be determined', async () => {
-    redirResult = ERR_RESULT_404;
+  it('index returns action response even with redirect', async () => {
+    redirResult = PERM_REDIR_RESULT;
 
     const result = await index({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
@@ -281,6 +281,7 @@ describe('Index Tests', () => {
   });
 
   it('index returns 301 for permanent redirect', async () => {
+    invokeResult = ERR_RESULT_404;
     redirResult = PERM_REDIR_RESULT;
 
     const result = await index({
@@ -300,6 +301,7 @@ describe('Index Tests', () => {
   });
 
   it('index returns 302 for temporary redirect', async () => {
+    invokeResult = ERR_RESULT_404;
     redirResult = TEMP_REDIR_RESULT;
 
     const result = await index({
@@ -319,6 +321,7 @@ describe('Index Tests', () => {
   });
 
   it('index returns 508 for internal redirect loop', async () => {
+    invokeResult = ERR_RESULT_404;
     redirResult = INTL_REDIR_RESULT;
 
     const result = await index({
