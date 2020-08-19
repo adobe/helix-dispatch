@@ -124,11 +124,8 @@ async function executeActions(params) {
       });
   });
 
-  let fetch404Promise = Promise.resolve();
+  let fetch404Promise = Promise.reject();
   try {
-    // start the redirect process
-    const redirectPromise = redirect(params, ow);
-
     const tasks = fetchers(params, log);
 
     // start the base fetching processes
@@ -137,31 +134,33 @@ async function executeActions(params) {
     // start the 404 fetching processes
     fetch404Promise = resolvePreferred(tasks.fetch404.map(invoker));
 
-    const { type, target } = await redirectPromise;
-
-    if (type === 'temporary' || type === 'permanent') {
-      log.info(`${type} redirect to ${target}`);
-      return (await redirectPromise).result;
-    } else if (type === 'internal' && target) {
-      // increase the internal redirect counter
-      const redirects = (params.redirects || 0) + 1;
-      if (redirects > MAX_REDIRECTS) {
-        log.warn(`${type} redirect to ${target} exceeds redirect counter`);
-        return abortRedirect(target);
-      }
-
-      log.info(`${type} redirect to ${target}`);
-      return executeActions({
-        ...params,
-        redirects,
-        path: target,
-      });
-    }
-
     // we explicitly (a)wait here, so we can catch a potential exception.
     let resp = await deErrorify(log, responsePromise);
 
+    if (resp.statusCode === 404) {
+      // check for redirect
+      const { type, target, result } = await redirect(params, ow);
+      if (type === 'temporary' || type === 'permanent') {
+        log.info(`${type} redirect to ${target}`);
+        return result;
+      } else if (type === 'internal' && target) {
+        // increase the internal redirect counter
+        const redirects = (params.redirects || 0) + 1;
+        if (redirects > MAX_REDIRECTS) {
+          log.warn(`${type} redirect to ${target} exceeds redirect counter`);
+          return abortRedirect(target);
+        }
+        log.info(`${type} redirect to ${target}`);
+        return executeActions({
+          ...params,
+          redirects,
+          path: target,
+        });
+      }
+    }
+
     try {
+      // todo: maybe we should also only load the 404.html if resp.statusCode === 404 ?
       const resp404 = await fetch404Promise;
       if (resp.statusCode === 404) {
         resp = resp404;
