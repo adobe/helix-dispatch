@@ -52,6 +52,19 @@ async function deErrorify(log, promise) {
 }
 
 /**
+ * Helper function to safely get header, guarding against potentially missing __ow_headers
+ * @param {object} params action params
+ * @param {string} name header name
+ * @returns {string} the header or the empty string.
+ */
+function getHeader(params, name) {
+  if (!params || !params.__ow_headers) {
+    return '';
+  }
+  return params.__ow_headers[name] || '';
+}
+
+/**
  * Maximum number of internal redirects to follow before a loop is assumed
  */
 const MAX_REDIRECTS = 3;
@@ -94,7 +107,7 @@ async function executeActions(params) {
         opts.params[key] = '[undisclosed secret]';
       }
     });
-    if (opts.params.__ow_headers && opts.params.__ow_headers.authorization) {
+    if (getHeader(opts.params, 'authorization')) {
       opts.params.__ow_headers.authorization = '[undisclosed secret]';
     }
     log.infoFields(`[${opts.idx}] Action: ${actionOptions.name}`, { actionOptions: opts });
@@ -170,15 +183,13 @@ async function executeActions(params) {
         log.info('no valid response could be fetched');
       }
     }
-    // check if X-Dispatch-NoCache header is in the request,
-    // this will override the Cache-Control and Surrogate-Control
-    // response headers to ensure no caching
-    // eslint-disable-next-line no-underscore-dangle
-    if (resp && params.__ow_headers && params.__ow_headers['x-dispatch-nocache']) {
+
+    // if requested, disable caching in the CND (private) and
+    // tell browser to re-validate after 10 minutes (must-revalidate, max-age=600)
+    if (getHeader(params, 'x-dispatch-nocache')) {
       log.info('received no cache instruction via X-Dispatch-NoCache header');
       resp.headers = resp.headers || {};
-      resp.headers['Cache-Control'] = 'max-age=604800, must-revalidate, private';
-      resp.headers['Surrogate-Control'] = 'max-age=0';
+      resp.headers['Cache-Control'] = 'max-age=600, must-revalidate, private';
     }
 
     return resp;
