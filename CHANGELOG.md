@@ -1,3 +1,11 @@
+# [4.2.0](https://github.com/adobe/helix-dispatch/compare/v4.1.2...v4.2.0) (2020-08-19)
+
+
+### Features
+
+* **dispatch:** only lookup redirect after 404 ([#328](https://github.com/adobe/helix-dispatch/issues/328)) ([f3b20d4](https://github.com/adobe/helix-dispatch/commit/f3b20d4a7832553b698300e548f08e16116b4f43)), closes [#325](https://github.com/adobe/helix-dispatch/issues/325)
+* **dispatch:** use helix-static service ([#327](https://github.com/adobe/helix-dispatch/issues/327)) ([17f9f97](https://github.com/adobe/helix-dispatch/commit/17f9f97324186b73ddc0afc1483872910238450a)), closes [#319](https://github.com/adobe/helix-dispatch/issues/319)
+
 ## [4.1.2](https://github.com/adobe/helix-dispatch/compare/v4.1.1...v4.1.2) (2020-08-18)
 
 
