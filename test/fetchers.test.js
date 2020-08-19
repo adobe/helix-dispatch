@@ -111,7 +111,7 @@ describe('testing fetchers.js', () => {
 
     logres(res);
     assert.equal(res.length, 5);
-    assert.equal(res[0].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/hlx--static');
+    assert.equal(res[0].name, 'helix-services/static@v1');
     assert.equal(res[0].params.ref, SHAS.trieloff);
     assert.equal(res[0].params.branch, 'master');
     assert.equal(res[0].params.path, '/dir/example.html');
@@ -133,7 +133,7 @@ describe('testing fetchers.js', () => {
 
     logres(res);
     assert.equal(res.length, 5);
-    assert.equal(res[0].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/hlx--static');
+    assert.equal(res[0].name, 'helix-services/static@v1');
     assert.equal(res[0].params.ref, SHAS.adobe);
     assert.equal(res[0].params.branch, 'master');
     assert.equal(res[0].params.path, '/dir/example.html');
@@ -153,7 +153,7 @@ describe('testing fetchers.js', () => {
 
     logres(res);
     assert.equal(res.length, 5);
-    assert.equal(res[0].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/hlx--static');
+    assert.equal(res[0].name, 'helix-services/static@v1');
     assert.equal(res[0].params.path, '/dir/example.html');
     assert.equal(res[1].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html');
     assert.equal(res[1].params.path, '/dir/example.md');
@@ -169,7 +169,7 @@ describe('testing fetchers.js', () => {
 
     logres(res);
     assert.equal(res.length, 5);
-    assert.equal(res[0].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/hlx--static');
+    assert.equal(res[0].name, 'helix-services/static@v1');
     assert.equal(res[0].params.path, '/dir/example.html');
     assert.equal(res[1].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html');
     assert.equal(res[1].params.path, '/dir/example.md');
@@ -217,7 +217,7 @@ describe('testing fetchers.js', () => {
 
     logres(res);
     assert.equal(res.length, 5);
-    assert.equal(res[0].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/hlx--static');
+    assert.equal(res[0].name, 'helix-services/static@v1');
     assert.equal(res[0].params.path, '/dir/example.html');
     assert.equal(res[1].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html');
     assert.equal(res[1].params.path, '/dir/example.md');

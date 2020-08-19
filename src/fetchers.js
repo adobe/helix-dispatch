@@ -12,6 +12,8 @@
 const path = require('path').posix;
 const openwhisk = require('./openwhisk.js');
 
+const HELIX_STATIC_ACTION = 'helix-services/static@v1';
+
 /**
  * An order-preserving uniqueness filter
  * @param {Array} arr an array
@@ -51,10 +53,6 @@ function errorPageResolver(res) {
     return Promise.resolve(res);
   }
   return defaultResolver(res);
-}
-
-function staticaction(contentOpts) {
-  return contentOpts.package ? `${contentOpts.package}/hlx--static` : 'helix-services/static@v1';
 }
 
 /**
@@ -161,7 +159,7 @@ function fetch404tasks(infos, wskOpts, contentPromise, staticPromise, idxOffset)
     // then get the 404.html from the content repo, but only for html requests
     attempts.push(contentPromise.then((contentOpts) => ({
       resolve: errorPageResolver,
-      name: staticaction(contentOpts),
+      name: HELIX_STATIC_ACTION,
       blocking: true,
       idxOffset,
       params: {
@@ -173,9 +171,9 @@ function fetch404tasks(infos, wskOpts, contentPromise, staticPromise, idxOffset)
       },
     })));
     // if all fails, get the 404.html from the static repo
-    attempts.push(staticPromise.then((staticOpts) => contentPromise.then((contentOpts) => ({
+    attempts.push(staticPromise.then((staticOpts) => contentPromise.then(() => ({
       resolve: errorPageResolver,
-      name: staticaction(contentOpts),
+      name: HELIX_STATIC_ACTION,
       blocking: true,
       idxOffset,
       params: {
@@ -200,9 +198,9 @@ function fetch404tasks(infos, wskOpts, contentPromise, staticPromise, idxOffset)
 function fetchfallbacktasks(infos, wskOpts, contentPromise, staticPromise) {
   return infos.map((info) => staticPromise
     .then((staticOpts) => contentPromise
-      .then((contentOpts) => ({
+      .then(() => ({
         resolve: defaultResolver,
-        name: staticaction(contentOpts),
+        name: HELIX_STATIC_ACTION,
         blocking: true,
         params: {
           path: info.path,
@@ -246,7 +244,7 @@ function fetchactiontasks(infos, wskOpts, contentPromise, params) {
 function fetchrawtasks(infos, params, contentPromise, wskOpts) {
   return infos.map((info) => contentPromise.then((contentOpts) => ({
     resolve: defaultResolver,
-    name: staticaction(contentOpts),
+    name: HELIX_STATIC_ACTION,
     blocking: true,
     params: {
       path: info.path,
