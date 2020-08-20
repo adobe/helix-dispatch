@@ -184,7 +184,7 @@ async function executeActions(params) {
       }
     }
 
-    // if requested, disable caching in the CND (private) and
+    // if requested, disable caching in the CDN (private) and
     // tell browser to re-validate after 10 minutes (must-revalidate, max-age=600)
     if (getHeader(params, 'x-dispatch-nocache')) {
       log.info('received no cache instruction via X-Dispatch-NoCache header');
