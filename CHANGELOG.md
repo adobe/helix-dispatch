@@ -1,3 +1,10 @@
+## [4.2.1](https://github.com/adobe/helix-dispatch/compare/v4.2.0...v4.2.1) (2020-08-21)
+
+
+### Bug Fixes
+
+* **dispatch:** clarify CDN caching ([#329](https://github.com/adobe/helix-dispatch/issues/329)) ([f2098c6](https://github.com/adobe/helix-dispatch/commit/f2098c670bb140874d1f463f09b252c2744dca42))
+
 # [4.2.0](https://github.com/adobe/helix-dispatch/compare/v4.1.2...v4.2.0) (2020-08-19)
 
 
