@@ -1,3 +1,10 @@
+## [4.2.4](https://github.com/adobe/helix-dispatch/compare/v4.2.3...v4.2.4) (2020-08-27)
+
+
+### Bug Fixes
+
+* **wsk:** reduce concurrency to 40 ([#335](https://github.com/adobe/helix-dispatch/issues/335)) ([c1fe61c](https://github.com/adobe/helix-dispatch/commit/c1fe61cae6dadd4754b46f0299eb7c3dabee7267))
+
 ## [4.2.3](https://github.com/adobe/helix-dispatch/compare/v4.2.2...v4.2.3) (2020-08-26)
 
 
