@@ -18,7 +18,8 @@
   },
   "wsk": {
     "namespace": "helix",
-    "name": "helix-services/dispatch@${version}"
+    "name": "helix-services/dispatch@${version}",
+    "concurrency": 40
   },
   "repository": {
     "type": "git",
