@@ -11,11 +11,10 @@
  */
 
 /* eslint-env mocha */
-const proxyquire = require('proxyquire');
 const assert = require('assert');
 const { AssertionError } = require('assert');
 const {
-  defaultResolver, errorPageResolver, getPathInfos,
+  defaultResolver, errorPageResolver, getPathInfos, fetchers: originalFetchers,
 } = require('../src/fetchers');
 
 const SHAS = {
@@ -27,46 +26,44 @@ const SAMPLE_GITHUB_TOKEN = 'some-github-token-value';
 
 let resolverInvocationCount = 0;
 
-const { fetchers: originalFetchers } = proxyquire('../src/fetchers', {
-  './openwhisk.js': () => ({
-    actions: {
-      invoke({ params: { ref, owner } }) {
-        resolverInvocationCount += 1;
-        if (ref === 'branch') {
-          return Promise.reject(new Error('unknown'));
-        }
-        if (ref === 'notfound') {
-          return Promise.resolve({
-            statusCode: 404, // not found
-            body: 'ref not found',
-          });
-        }
-        if (ref === 'fail') {
-          return Promise.resolve({
-            statusCode: 503, // service unavailable
-            body: 'failed to fetch git repo info.',
-          });
-        }
+const openwhiskMock = {
+  actions: {
+    invoke({ params: { ref, owner } }) {
+      resolverInvocationCount += 1;
+      if (ref === 'branch') {
+        return Promise.reject(new Error('unknown'));
+      }
+      if (ref === 'notfound') {
         return Promise.resolve({
-          body: {
-            fqRef: 'refs/heads/master',
-            sha: SHAS[owner],
-          },
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          statusCode: 200,
+          statusCode: 404, // not found
+          body: 'ref not found',
         });
-      },
+      }
+      if (ref === 'fail') {
+        return Promise.resolve({
+          statusCode: 503, // service unavailable
+          body: 'failed to fetch git repo info.',
+        });
+      }
+      return Promise.resolve({
+        body: {
+          fqRef: 'refs/heads/master',
+          sha: SHAS[owner],
+        },
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        statusCode: 200,
+      });
     },
-  }),
-});
+  },
+};
 
 /**
  * Returns the combined fetcher array, including the base and the 404 tasks.
  */
-const fetchers = (params) => {
-  const { base, fetch404 } = originalFetchers(params);
+const fetchers = (...args) => {
+  const { base, fetch404 } = originalFetchers(...args);
   return [
     ...base,
     ...fetch404,
@@ -96,7 +93,7 @@ function logres(r) {
 
 describe('testing fetchers.js', () => {
   it('fetch nothing', async () => {
-    const res = fetchers();
+    const res = fetchers(openwhiskMock);
 
     assert.equal(res.length, 5);
     logres(res);
@@ -104,7 +101,7 @@ describe('testing fetchers.js', () => {
 
   it('fetch basic HTML', async () => {
     const ric = resolverInvocationCount;
-    const res = await Promise.all(fetchers({
+    const res = await Promise.all(fetchers(openwhiskMock, {
       ...opts,
       path: '/dir/example.html',
     }));
@@ -125,7 +122,7 @@ describe('testing fetchers.js', () => {
 
   it('fetch basic HTML invokes resolver only once if same repo', async () => {
     const ric = resolverInvocationCount;
-    const res = await Promise.all(fetchers({
+    const res = await Promise.all(fetchers(openwhiskMock, {
       ...opts,
       'content.owner': 'adobe',
       path: '/dir/example.html',
@@ -145,7 +142,7 @@ describe('testing fetchers.js', () => {
   });
 
   it('fetch basic HTML from sha', async () => {
-    const res = await Promise.all(fetchers({
+    const res = await Promise.all(fetchers(openwhiskMock, {
       ...opts,
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       path: '/dir/example.html',
@@ -160,7 +157,7 @@ describe('testing fetchers.js', () => {
   });
 
   it('fetch basic HTML from branch while resolver rejects', async () => {
-    const res = await Promise.all(fetchers({
+    const res = await Promise.all(fetchers(openwhiskMock, {
       ...opts,
       'static.ref': 'branch',
       path: '/dir/example.html',
@@ -178,7 +175,7 @@ describe('testing fetchers.js', () => {
 
   it('log info if resolver returns 404', async () => {
     let test;
-    await Promise.all(fetchers({
+    await Promise.all(fetchers(openwhiskMock, {
       ...opts,
       'static.ref': 'notfound',
       path: '/dir/example.html',
@@ -193,7 +190,7 @@ describe('testing fetchers.js', () => {
 
   it('log error if resolver returns 503', async () => {
     let test;
-    await Promise.all(fetchers({
+    await Promise.all(fetchers(openwhiskMock, {
       ...opts,
       'static.ref': 'fail',
       path: '/dir/example.html',
@@ -207,7 +204,7 @@ describe('testing fetchers.js', () => {
   });
 
   it('fetch basic HTML from branch while resolver fails', async () => {
-    const res = await Promise.all(fetchers({
+    const res = await Promise.all(fetchers(openwhiskMock, {
       ...opts,
       'static.ref': 'fail',
       'content.ref': 'fail',
@@ -225,7 +222,7 @@ describe('testing fetchers.js', () => {
   });
 
   it('fetch HTML with selector', () => {
-    const res = fetchers({
+    const res = fetchers(openwhiskMock, {
       ...opts,
       path: '/dir/example.nav.html',
     });
@@ -235,7 +232,7 @@ describe('testing fetchers.js', () => {
   });
 
   it('fetch directory index', () => {
-    const res = fetchers({
+    const res = fetchers(openwhiskMock, {
       ...opts,
       path: '/example/dir',
     });
@@ -245,7 +242,7 @@ describe('testing fetchers.js', () => {
   });
 
   it('fetch non html', () => {
-    const res = fetchers({
+    const res = fetchers(openwhiskMock, {
       ...opts,
       path: '/style.css',
     });
@@ -255,7 +252,7 @@ describe('testing fetchers.js', () => {
   });
 
   it('Github token provided via parameter is passed to fetchers', async () => {
-    const res = await Promise.all(fetchers({
+    const res = await Promise.all(fetchers(openwhiskMock, {
       ...opts,
       GITHUB_TOKEN: SAMPLE_GITHUB_TOKEN,
       path: '/style.css',
@@ -269,7 +266,7 @@ describe('testing fetchers.js', () => {
   });
 
   it('Github token provided via header is passed to fetchers', async () => {
-    const res = await Promise.all(fetchers({
+    const res = await Promise.all(fetchers(openwhiskMock, {
       ...opts,
       __ow_headers: { 'x-github-token': SAMPLE_GITHUB_TOKEN },
       path: '/style.css',
@@ -283,7 +280,7 @@ describe('testing fetchers.js', () => {
   });
 
   it('test if headers are passed to all fetchers', async () => {
-    const res = await Promise.all(fetchers({
+    const res = await Promise.all(fetchers(openwhiskMock, {
       ...opts,
       path: '/dir/example.html',
       __ow_headers: {

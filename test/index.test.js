@@ -97,49 +97,41 @@ const ACTION_TIMEOUT_RESULT = () => Promise.resolve({
   },
 });
 
-const FAIL_RESULT_404 = (handle404) => async (resolver) => {
-  // only create 404 failure for html action.
-  if (resolver.name === 'default/html') {
-    const error = new Error('OpenWhiskError: POST https://runtime.adobe.io/api/v1/namespaces/acme/default/html Returned HTTP 404 (Not Found)');
-    error.error = {
-      code: '46qNNODdPtdUc0BEwMJzvVqOBDcv18uA',
-      error: 'The requested resource does not exist.',
-    };
-    error.statusCode = 404;
-    throw error;
-  } else if (resolver.params.path === '/404.html' && handle404) {
+const ERR_RESULT_404_HANDLED = (resolver) => {
+  if (resolver.params.path === '/404.html') {
     return OK_RESULT();
-  } else {
-    return ERR_RESULT_404();
   }
+  return ERR_RESULT_404();
 };
 
-const FAIL_RESULT_502 = (handle404) => async (resolver) => {
-  // only create 502 failure for html action.
-  if (resolver.name === 'default/html') {
-    const error = new Error('OpenWhiskError: POST https://runtime.adobe.io/api/v1/namespaces/acme/default/html Returned HTTP 502 (Bad Gateway)');
-    error.error = {
-      activationId: '1f92c2987a9a4eef92c2987a9abeefcf',
-      response: {
-        result: {
-          error: 'The action did not produce a valid response and exited unexpectedly.',
-        },
-        status: 'action developer error',
-        success: false,
+const FAIL_RESULT_404 = () => {
+  const error = new Error('OpenWhiskError: POST https://runtime.adobe.io/api/v1/namespaces/acme/default/html Returned HTTP 404 (Not Found)');
+  error.error = {
+    code: '46qNNODdPtdUc0BEwMJzvVqOBDcv18uA',
+    error: 'The requested resource does not exist.',
+  };
+  error.statusCode = 404;
+  throw error;
+};
+
+const FAIL_RESULT_502 = () => {
+  const error = new Error('OpenWhiskError: POST https://runtime.adobe.io/api/v1/namespaces/acme/default/html Returned HTTP 502 (Bad Gateway)');
+  error.error = {
+    activationId: '1f92c2987a9a4eef92c2987a9abeefcf',
+    response: {
+      result: {
+        error: 'The action did not produce a valid response and exited unexpectedly.',
       },
-    };
-    error.statusCode = 502;
-    throw error;
-  } else if (resolver.params.path === '/404.html' && handle404) {
-    return OK_RESULT();
-  } else {
-    return ERR_RESULT_404();
-  }
+      status: 'action developer error',
+      success: false,
+    },
+  };
+  error.statusCode = 502;
+  throw error;
 };
 
 const REF_RESULT = () => Promise.resolve({
-  body:
-  {
+  body: {
     fqRef: 'refs/heads/master',
     sha: '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
   },
@@ -173,6 +165,7 @@ const INTL_REDIR_RESULT = () => Promise.resolve({
 });
 
 // this is a bit a hack, but I don't know how to change it during tests
+let staticResult = OK_RESULT;
 let invokeResult = OK_RESULT;
 let refResult = REF_RESULT;
 let redirResult = NO_REDIR_RESULT;
@@ -180,36 +173,26 @@ let redirResult = NO_REDIR_RESULT;
 // count how many time espagon was run.
 let epsagonified = 0;
 
-const fetchers = proxyquire('../src/fetchers.js', {
-  './openwhisk.js': () => ({
-    actions: {
-      async invoke(params) {
-        if (params.name === 'helix-services/resolve-git-ref@v1_link') {
-          return {
-            statusCode: 200,
-            body: {
-              sha: '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-            },
-          };
-        } else {
-          throw Error('unexpected call to action ', params.name);
-        }
-      },
-    },
-  }),
-});
-
 const index = proxyquire('../src/index.js', {
-  './fetchers.js': fetchers,
   './openwhisk.js': () => ({
     actions: {
       invoke(...args) {
-        if (args[0].name.startsWith('helix-services/resolve-git-ref')) {
+        const { name } = args[0];
+        if (name.startsWith('helix-services/resolve-git-ref')) {
           return refResult(...args);
-        } else if (args[0].name.startsWith('helix-services/redirect')) {
+        } else if (name.startsWith('helix-services/redirect')) {
           return redirResult(...args);
+        } else if (name.startsWith('helix-services/static')) {
+          return staticResult(...args);
         }
         return invokeResult(...args);
+      },
+      client: {
+        params: async () => ({
+          headers: {
+            'user-agent': 'helix-test',
+          },
+        }),
       },
     },
   }),
@@ -228,10 +211,11 @@ const index = proxyquire('../src/index.js', {
 describe('Index Tests', () => {
   beforeEach(() => {
     invokeResult = OK_RESULT;
+    staticResult = OK_RESULT;
     redirResult = NO_REDIR_RESULT;
   });
 
-  it('index returns pingdom response', async () => {
+  it('index returns status response', async () => {
     const result = await index({
       __ow_method: 'get',
       __ow_path: '/_status_check/healthcheck.json',
@@ -282,6 +266,7 @@ describe('Index Tests', () => {
 
   it('index returns 301 for permanent redirect', async () => {
     invokeResult = ERR_RESULT_404;
+    staticResult = ERR_RESULT_404;
     redirResult = PERM_REDIR_RESULT;
 
     const result = await index({
@@ -300,8 +285,36 @@ describe('Index Tests', () => {
     });
   });
 
+  it('index uses locked version for redirect', async () => {
+    invokeResult = ERR_RESULT_404;
+    staticResult = ERR_RESULT_404;
+    redirResult = (req) => {
+      assert.equal(req.name, 'helix-services/redirect@ci234');
+      return PERM_REDIR_RESULT();
+    };
+
+    const result = await index({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.owner': 'adobe',
+      'content.repo': 'helix-home',
+      'content.path': '/redirect-me',
+      __ow_headers: {
+        'x-ow-version-lock': 'redirect=redirect@ci234',
+      },
+    });
+
+    assert.deepEqual(result, {
+      statusCode: 301,
+      headers: {
+        Location: '/look-here.html',
+      },
+    });
+  });
+
   it('index returns 302 for temporary redirect', async () => {
     invokeResult = ERR_RESULT_404;
+    staticResult = ERR_RESULT_404;
     redirResult = TEMP_REDIR_RESULT;
 
     const result = await index({
@@ -322,6 +335,7 @@ describe('Index Tests', () => {
 
   it('index returns 508 for internal redirect loop', async () => {
     invokeResult = ERR_RESULT_404;
+    staticResult = ERR_RESULT_404;
     redirResult = INTL_REDIR_RESULT;
 
     const result = await index({
@@ -375,6 +389,7 @@ describe('Index Tests', () => {
   it('index returns 404 response', async () => {
     const logger = createLogger('debug');
     invokeResult = ERR_RESULT_404;
+    staticResult = ERR_RESULT_404;
 
     const result = await index({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
@@ -393,7 +408,8 @@ describe('Index Tests', () => {
 
   it('index returns 200 response for static files', async () => {
     const logger = createLogger('debug');
-    invokeResult = (req) => {
+    invokeResult = ERR_RESULT_404;
+    staticResult = (req) => {
       if (req.params.path === '/index.html') {
         return OK_RESULT();
       } else {
@@ -404,6 +420,32 @@ describe('Index Tests', () => {
     const result = await index({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+    }, logger);
+    delete result.actionOptions;
+    assert.deepEqual(result, {
+      body: 'Hello, world.',
+      statusCode: 200,
+    });
+  });
+
+  it('index uses locked version for helix-static', async () => {
+    const logger = createLogger('debug');
+    invokeResult = ERR_RESULT_404;
+    staticResult = (req) => {
+      assert.equal(req.name, 'helix-services/static@ci234');
+      if (req.params.path === '/index.html') {
+        return OK_RESULT();
+      } else {
+        return FAIL_RESULT_404(false);
+      }
+    };
+
+    const result = await index({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      __ow_headers: {
+        'x-ow-version-lock': 'static=static@ci234',
+      },
     }, logger);
     delete result.actionOptions;
     assert.deepEqual(result, {
@@ -435,15 +477,45 @@ describe('Index Tests', () => {
     });
   });
 
+  it('index uses locked version for git-resolve-ref', async () => {
+    const logger = createLogger('debug');
+    invokeResult = ERR_RESULT_404;
+    refResult = (req) => {
+      assert.equal(req.name, 'helix-services/resolve-git-ref@ci234');
+      return {
+        body: {
+          fqRef: 'refs/heads/master',
+          sha: 'aaaaaaaaaaaabbbbbbbbbbbcccccccccccdddddd',
+        },
+        headers: { 'Content-Type': 'application/json' },
+        statusCode: 200,
+      };
+    };
+    staticResult = (req) => {
+      assert.equal(req.params.ref, 'aaaaaaaaaaaabbbbbbbbbbbcccccccccccdddddd');
+      return OK_RESULT();
+    };
+
+    const result = await index({
+      'static.owner': 'trieloff',
+      'static.repo': 'helix-demo',
+      'static.ref': 'master',
+      path: '/index.md',
+      __ow_headers: {
+        'x-ow-version-lock': 'resolve-git-ref=resolve-git-ref@ci234',
+      },
+    }, logger);
+    delete result.actionOptions;
+    assert.deepEqual(result, {
+      body: 'Hello, world.',
+      statusCode: 200,
+    });
+  });
+
   it('index returns 500 response', async () => {
     const logger = createLogger();
-    invokeResult = (req) => {
-      if (req.params.path === '/404.html') {
-        return ERR_RESULT_404();
-      } else {
-        return SEVERE_RESULT();
-      }
-    };
+    invokeResult = SEVERE_RESULT;
+    staticResult = ERR_RESULT_404;
 
     const result = await index({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
@@ -461,13 +533,8 @@ describe('Index Tests', () => {
 
   it('index returns 503 response', async () => {
     const logger = createLogger();
-    invokeResult = (req) => {
-      if (req.params.path === '/404.html') {
-        return ERR_RESULT_404();
-      } else {
-        return TIMEOUT_RESULT();
-      }
-    };
+    invokeResult = TIMEOUT_RESULT;
+    staticResult = ERR_RESULT_404;
 
     const result = await index({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
@@ -485,13 +552,8 @@ describe('Index Tests', () => {
 
   it('index returns 429 response when seeing 429s', async () => {
     const logger = createLogger();
-    invokeResult = (req) => {
-      if (req.params.path === '/404.html') {
-        return ERR_RESULT_404();
-      } else {
-        return OVERLOAD_RESULT();
-      }
-    };
+    invokeResult = OVERLOAD_RESULT;
+    staticResult = ERR_RESULT_404;
 
     const result = await index({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
@@ -510,13 +572,8 @@ describe('Index Tests', () => {
   it('index returns 429 response when seeing 429s (as Errors)', async () => {
     const logger = createLogger();
     refResult = OVERLOAD_ERROR;
-    invokeResult = (req) => {
-      if (req.params.path === '/404.html') {
-        return ERR_RESULT_404();
-      } else {
-        return OVERLOAD_ERROR();
-      }
-    };
+    invokeResult = OVERLOAD_RESULT;
+    staticResult = ERR_RESULT_404;
 
     const result = await index({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
@@ -534,13 +591,8 @@ describe('Index Tests', () => {
 
   it('index returns 504 response when seeing 502s', async () => {
     const logger = createLogger();
-    invokeResult = (req) => {
-      if (req.params.path === '/404.html') {
-        return ERR_RESULT_404();
-      } else {
-        return ACTION_TIMEOUT_RESULT();
-      }
-    };
+    invokeResult = ACTION_TIMEOUT_RESULT;
+    staticResult = ERR_RESULT_404;
 
     const result = await index({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
@@ -559,13 +611,8 @@ describe('Index Tests', () => {
   it('index returns 504 response when seeing 502s (as Errors)', async () => {
     const logger = createLogger();
     refResult = TIMEOUT_ERROR;
-    invokeResult = (req) => {
-      if (req.params.path === '/404.html') {
-        return ERR_RESULT_404();
-      } else {
-        return TIMEOUT_ERROR();
-      }
-    };
+    invokeResult = TIMEOUT_ERROR;
+    staticResult = ERR_RESULT_404;
 
     const result = await index({
       'static.ref': 'master',
@@ -583,7 +630,8 @@ describe('Index Tests', () => {
 
   it('index produces 404 when fetcher fails due to missing action (with 404 handler).', async () => {
     const logger = createLogger();
-    invokeResult = FAIL_RESULT_404(true);
+    invokeResult = FAIL_RESULT_404;
+    staticResult = ERR_RESULT_404_HANDLED;
 
     const result = await index({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
@@ -603,7 +651,8 @@ describe('Index Tests', () => {
 
   it('index produces 404 when fetcher fails due to missing action (without 404 handler).', async () => {
     const logger = createLogger();
-    invokeResult = FAIL_RESULT_404(false);
+    invokeResult = FAIL_RESULT_404;
+    staticResult = ERR_RESULT_404;
 
     const result = await index({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
@@ -622,7 +671,8 @@ describe('Index Tests', () => {
 
   it('index produces 504 error when fetcher fails due to terminating action (with 404 handler).', async () => {
     const logger = createLogger();
-    invokeResult = FAIL_RESULT_502(true);
+    invokeResult = FAIL_RESULT_502;
+    staticResult = ERR_RESULT_404_HANDLED;
 
     const result = await index({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
@@ -640,7 +690,8 @@ describe('Index Tests', () => {
 
   it('index produces 504 error when fetcher fails due to terminating action (without 404 handler).', async () => {
     const logger = createLogger();
-    invokeResult = FAIL_RESULT_502(false);
+    invokeResult = FAIL_RESULT_502;
+    staticResult = ERR_RESULT_404;
 
     const result = await index({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
@@ -682,6 +733,7 @@ describe('Index Tests', () => {
 
   it('index does not crash with empty action response', async () => {
     invokeResult = () => Promise.resolve({});
+    staticResult = () => Promise.resolve({});
 
     const result = await index({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
@@ -696,6 +748,7 @@ describe('Index Tests', () => {
 
   it('index does not crash with no action response', async () => {
     invokeResult = () => Promise.resolve();
+    staticResult = () => Promise.resolve();
 
     const result = await index({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
@@ -714,6 +767,7 @@ describe('Index Tests', () => {
       response: {
       },
     });
+    staticResult = () => Promise.resolve();
 
     const result = await index({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',

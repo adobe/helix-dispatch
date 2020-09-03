@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-const { wrap } = require('@adobe/openwhisk-action-utils');
+const { wrap, VersionLock } = require('@adobe/openwhisk-action-utils');
 const { logger } = require('@adobe/openwhisk-action-logger');
 const { wrap: status } = require('@adobe/helix-status');
 const { epsagon } = require('@adobe/helix-epsagon');
@@ -92,7 +92,8 @@ const MAX_REDIRECTS = 3;
  */
 async function executeActions(params) {
   const { __ow_logger: log } = params;
-  const ow = openwhisk();
+  const lock = new VersionLock(params);
+  const ow = lock.wrapOpenwhisk(openwhisk());
 
   const invoker = (actionPromise, idx) => Promise.resolve(actionPromise).then((actionOptions) => {
     // todo: sanitizing the secrets should be better handled in the logging framework.
@@ -139,7 +140,7 @@ async function executeActions(params) {
 
   let fetch404Promise = Promise.reject();
   try {
-    const tasks = fetchers(params, log);
+    const tasks = fetchers(ow, params, log);
 
     // start the base fetching processes
     const responsePromise = resolvePreferred(tasks.base.map(invoker));
