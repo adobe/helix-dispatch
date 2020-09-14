@@ -1,3 +1,10 @@
+## [4.2.7](https://github.com/adobe/helix-dispatch/compare/v4.2.6...v4.2.7) (2020-09-14)
+
+
+### Bug Fixes
+
+* **deps:** update [@adobe](https://github.com/adobe) fixes ([#342](https://github.com/adobe/helix-dispatch/issues/342)) ([a3a96af](https://github.com/adobe/helix-dispatch/commit/a3a96af97ee9cfadfba7046a7898ed2e4cfcbab7))
+
 ## [4.2.6](https://github.com/adobe/helix-dispatch/compare/v4.2.5...v4.2.6) (2020-09-04)
 
 
