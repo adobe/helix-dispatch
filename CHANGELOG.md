@@ -1,3 +1,10 @@
+# [4.3.0](https://github.com/adobe/helix-dispatch/compare/v4.2.10...v4.3.0) (2020-09-30)
+
+
+### Features
+
+* **ci:** make use of ow-version-lock utility ([#338](https://github.com/adobe/helix-dispatch/issues/338)) ([fa81971](https://github.com/adobe/helix-dispatch/commit/fa81971ac7f736ced0cf5b7dd4e6cafa5bf87740))
+
 ## [4.2.10](https://github.com/adobe/helix-dispatch/compare/v4.2.9...v4.2.10) (2020-09-30)
 
 
