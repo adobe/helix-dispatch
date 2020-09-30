@@ -10,7 +10,6 @@
  * governing permissions and limitations under the License.
  */
 const path = require('path').posix;
-const openwhisk = require('./openwhisk.js');
 
 const HELIX_STATIC_ACTION = 'helix-services/static@v1';
 
@@ -259,19 +258,19 @@ function fetchrawtasks(infos, params, contentPromise, wskOpts) {
 
 /**
  * Resolves the branch or tag name into a sha.
+ * @param {openwhisk} ow Openwhisk client
  * @param {ActionOptions} opts action options
  * @returns {Promise<*>} returns a promise of the resolved ref.
  * options, with a sha instead of a branch name
  */
-async function resolveRef(opts, wskOpts, log) {
+async function resolveRef(ow, opts, wskOpts, log) {
   const { ref } = opts;
   if (ref && ref.match(/^[a-f0-9]{40}$/i)) {
     return { ref };
   }
   try {
-    const ow = openwhisk();
     const res = await ow.actions.invoke({
-      name: 'helix-services/resolve-git-ref@v1_link',
+      name: 'helix-services/resolve-git-ref@v1',
       blocking: true,
       result: true,
       params: {
@@ -333,10 +332,11 @@ function extractGithubToken(params = {}) {
 
 /**
  * Returns the action options to fetch the contents from.
+ * @param {openwhisk} ow - openwhisk client
  * @param {object} params - action params
  * @returns {Array} Array of action options to use to ow.action.invoke
  */
-function fetchers(params = {}) {
+function fetchers(ow, params = {}) {
   const { __ow_logger: log } = params;
   const dirindex = (params['content.index'] || 'index.html').split(',');
   const infos = getPathInfos(params.path || '/', params.rootPath || '', dirindex);
@@ -371,10 +371,10 @@ function fetchers(params = {}) {
     __ow_method: params.__ow_method,
   };
 
-  const staticResolver = resolveRef(staticOpts, wskOpts, log);
+  const staticResolver = resolveRef(ow, staticOpts, wskOpts, log);
   const contentResolver = equalRepository(staticOpts, contentOpts)
     ? staticResolver
-    : resolveRef(contentOpts, wskOpts, log);
+    : resolveRef(ow, contentOpts, wskOpts, log);
 
   const staticPromise = updateOpts(staticOpts, staticResolver);
   const contentPromise = updateOpts(contentOpts, contentResolver);
