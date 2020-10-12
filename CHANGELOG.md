@@ -1,3 +1,10 @@
+## [4.3.1](https://github.com/adobe/helix-dispatch/compare/v4.3.0...v4.3.1) (2020-10-12)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @adobe/openwhisk-action-logger to v2.2.1 ([62bfa6b](https://github.com/adobe/helix-dispatch/commit/62bfa6b020dfb063fc882e6761249ca670ae1a5d))
+
 # [4.3.0](https://github.com/adobe/helix-dispatch/compare/v4.2.10...v4.3.0) (2020-09-30)
 
 
