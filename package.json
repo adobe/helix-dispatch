@@ -34,7 +34,7 @@
   "dependencies": {
     "@adobe/helix-epsagon": "1.5.3",
     "@adobe/helix-status": "8.2.1",
-    "@adobe/openwhisk-action-logger": "2.2.0",
+    "@adobe/openwhisk-action-logger": "2.2.1",
     "@adobe/openwhisk-action-utils": "4.3.1",
     "ferrum": "1.7.0",
     "openwhisk": "3.21.2"
