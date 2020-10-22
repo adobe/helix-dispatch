@@ -231,6 +231,16 @@ describe('testing fetchers.js', () => {
     logres(res);
   });
 
+  it('fetch HTML with selector for malformed extension', async () => {
+    const res = await Promise.all(fetchers(openwhiskMock, {
+      ...opts,
+      path: '/dir/example.navä.ht=%ml',
+    }));
+    logres(res);
+    assert.equal(res.length, 3);
+    assert.equal(await res[1].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/nav_html');
+  });
+
   it('fetch directory index', () => {
     const res = fetchers(openwhiskMock, {
       ...opts,
