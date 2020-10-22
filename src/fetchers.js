@@ -219,7 +219,10 @@ function fetchfallbacktasks(infos, wskOpts, contentPromise, staticPromise) {
  */
 function fetchactiontasks(infos, wskOpts, contentPromise, params) {
   return infos.map((info) => contentPromise.then((contentOpts) => {
-    const actionname = `${contentOpts.package || 'default'}/${info.selector ? `${info.selector}_` : ''}${info.ext}`;
+    const actionname = `${contentOpts.package 
+      || 'default'}/${info.selector 
+        ? `${info.selector.toLowerCase().replace(/[^a-z0-9]/g,'')}_` 
+        : ''}${info.ext.toLowerCase().replace(/[^a-z0-9]/g,'')}`;
     return {
       resolve: defaultResolver,
       name: actionname,
