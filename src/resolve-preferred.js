@@ -11,8 +11,6 @@
  */
 
 const resolvePreferred = (promises) => new Promise((resolve, reject) => {
-  process.on('unhandledRejection', () => null);
-
   if (!promises.length) {
     reject(new Error('unable to resolve preferred from empty array.'));
   }

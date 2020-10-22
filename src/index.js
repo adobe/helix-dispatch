@@ -138,7 +138,8 @@ async function executeActions(params) {
       });
   });
 
-  let fetch404Promise = Promise.reject();
+  const rejection = Promise.reject();
+  let fetch404Promise = rejection;
   try {
     const tasks = fetchers(ow, params, log);
 
@@ -195,13 +196,6 @@ async function executeActions(params) {
 
     return resp;
   } catch (e) {
-    try {
-      // we need to wait for the 404 requests, otherwise we have unhandled promise rejections
-      await fetch404Promise;
-    } catch {
-      // ignore
-    }
-
     /* istanbul ignore else */
     if (e.statusCode) {
       log.error(`no valid response could be fetched: ${e}`);
@@ -213,11 +207,24 @@ async function executeActions(params) {
     // a fetchers `resolve` should never throw an exception but report a proper status response.
     // so we consider any exception thrown as application error and propagate it to openwhisk.
     /* istanbul ignore next */
-    log.error(`error while invoking fetchers: ${e}`);
+    log.error(`!!!error while invoking fetchers: ${e}`);
     /* istanbul ignore next */
     return {
       error: `${String(e.stack)}`,
     };
+  } finally {
+    try {
+      // we need to wait for the dummy 404 request, otherwise we have unhandled promise rejections
+      await rejection;
+    } catch {
+      // ignore
+    }
+    try {
+      // we need to wait for the 404 requests, otherwise we have unhandled promise rejections
+      await fetch404Promise;
+    } catch {
+      // ignore
+    }
   }
 }
 

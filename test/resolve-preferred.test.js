@@ -30,6 +30,9 @@ describe('Test custom Promise.race', () => {
     const p = resolvePreferred([]);
     assert.ok(p.then);
     assert.ok(p.catch);
+    p.catch((err) => {
+      assert.equal(err.message, 'unable to resolve preferred from empty array.');
+    });
   });
 
   it('race rejects empty tasks', async () => {
