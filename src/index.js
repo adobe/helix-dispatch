@@ -138,8 +138,7 @@ async function executeActions(params) {
       });
   });
 
-  const rejection = Promise.reject();
-  let fetch404Promise = rejection;
+  let fetch404Promise = Promise.reject().catch(() => {});
   try {
     const tasks = fetchers(ow, params, log);
 
@@ -214,17 +213,12 @@ async function executeActions(params) {
     };
   } finally {
     try {
-      // we need to wait for the dummy 404 request, otherwise we have unhandled promise rejections
-      await rejection;
-    } catch {
-      // ignore
-    }
-    try {
       // we need to wait for the 404 requests, otherwise we have unhandled promise rejections
       await fetch404Promise;
     } catch {
       // ignore
     }
+    
   }
 }
 
