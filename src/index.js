@@ -218,7 +218,6 @@ async function executeActions(params) {
     } catch {
       // ignore
     }
-    
   }
 }
 
