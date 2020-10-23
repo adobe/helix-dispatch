@@ -1,3 +1,10 @@
+## [4.3.2](https://github.com/adobe/helix-dispatch/compare/v4.3.1...v4.3.2) (2020-10-23)
+
+
+### Bug Fixes
+
+* **actions:** clean up action names before invocation ([db2920a](https://github.com/adobe/helix-dispatch/commit/db2920a28277efcb4a09604b9087bb7d265c8270))
+
 ## [4.3.1](https://github.com/adobe/helix-dispatch/compare/v4.3.0...v4.3.1) (2020-10-12)
 
 
