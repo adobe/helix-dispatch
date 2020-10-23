@@ -1,3 +1,16 @@
+## [4.3.3](https://github.com/adobe/helix-dispatch/compare/v4.3.2...v4.3.3) (2020-10-23)
+
+
+### Bug Fixes
+
+* **index:** make sure all rejected promises are handled ([13e0e36](https://github.com/adobe/helix-dispatch/commit/13e0e365767743556d822379f77abe3a9178667f))
+* **promises:** add default handler for all unhandled promises ([b3f67ea](https://github.com/adobe/helix-dispatch/commit/b3f67eaeac5adc72b962dadb0f70563f08286a93))
+
+
+### Reverts
+
+* Revert "ci(test): use node 15" ([30917e8](https://github.com/adobe/helix-dispatch/commit/30917e8cbb0fd01eb088babeda9f70531a8c228a))
+
 ## [4.3.2](https://github.com/adobe/helix-dispatch/compare/v4.3.1...v4.3.2) (2020-10-23)
 
 
