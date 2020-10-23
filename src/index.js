@@ -138,7 +138,7 @@ async function executeActions(params) {
       });
   });
 
-  let fetch404Promise = Promise.reject();
+  let fetch404Promise = Promise.reject().catch(() => {});
   try {
     const tasks = fetchers(ow, params, log);
 
@@ -195,13 +195,6 @@ async function executeActions(params) {
 
     return resp;
   } catch (e) {
-    try {
-      // we need to wait for the 404 requests, otherwise we have unhandled promise rejections
-      await fetch404Promise;
-    } catch {
-      // ignore
-    }
-
     /* istanbul ignore else */
     if (e.statusCode) {
       log.error(`no valid response could be fetched: ${e}`);
@@ -218,6 +211,13 @@ async function executeActions(params) {
     return {
       error: `${String(e.stack)}`,
     };
+  } finally {
+    try {
+      // we need to wait for the 404 requests, otherwise we have unhandled promise rejections
+      await fetch404Promise;
+    } catch {
+      // ignore
+    }
   }
 }
 
