@@ -207,7 +207,7 @@ async function executeActions(params) {
     // a fetchers `resolve` should never throw an exception but report a proper status response.
     // so we consider any exception thrown as application error and propagate it to openwhisk.
     /* istanbul ignore next */
-    log.error(`!!!error while invoking fetchers: ${e}`);
+    log.error(`error while invoking fetchers: ${e}`);
     /* istanbul ignore next */
     return {
       error: `${String(e.stack)}`,
