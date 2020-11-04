@@ -16,7 +16,7 @@ export class URL {
     return encoded;
   }
 
-  querystring():string {
+  querystring(): string {
     if (this.url != null && this.url.indexOf("?") > 0) {
       return this.url.substring(this.url.indexOf("?") + 1);
     }

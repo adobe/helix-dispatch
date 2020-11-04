@@ -55,12 +55,13 @@
     "typescript": "^4.0.5"
   },
   "dependencies": {
-    "@fastly/as-compute": "^0.1.1",
-    "as-wasi": "^0.4.0",
     "@adobe/helix-epsagon": "1.5.3",
     "@adobe/helix-status": "8.2.1",
     "@adobe/openwhisk-action-logger": "2.2.1",
     "@adobe/openwhisk-action-utils": "4.3.1",
+    "@fastly/as-compute": "^0.1.1",
+    "as-wasi": "^0.4.0",
+    "assemblyscript-json": "^0.3.3",
     "ferrum": "1.7.0",
     "openwhisk": "3.21.2"
   }
