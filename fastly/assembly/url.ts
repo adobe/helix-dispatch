@@ -1,5 +1,5 @@
 export class URL {
-  protected url: string | null;
+  protected url: string;
 
   constructor(url:string) {
     this.url = url;
@@ -11,7 +11,7 @@ export class URL {
       const code = encoded.substr(encoded.indexOf('%') + 1, 2);
       const after = encoded.substr(encoded.indexOf('%') + 3);
 
-      return before + String.fromCharCode(Number.parseInt(code, 16)) + URL.decode(after);
+      return before + String.fromCharCode(I32.parseInt(code, 16)) + URL.decode(after);
     }
     return encoded;
   }

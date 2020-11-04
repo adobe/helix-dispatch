@@ -35,7 +35,7 @@ function main(req: Request): Response {
   let cacheOverride = new Fastly.CacheOverride();
   cacheOverride.setTTL(30);
 
-  const resolveContentRefReq = new Request("https://helix-resolve-git-ref-as.edgecompute.app/?owner=" + contentOwner + "&repo=" + contentRepo + "&ref=" + contentRef, {});
+  const resolveContentRefReq: Request = new Request("https://helix-resolve-git-ref-as.edgecompute.app/?owner=" + contentOwner + "&repo=" + contentRepo + "&ref=" + contentRef, {});
 
   const resolveContentRefResPending = Fastly.fetch(resolveContentRefReq, {
     backend: "Fastly",
@@ -46,7 +46,7 @@ function main(req: Request): Response {
   let resolveContentRefRes: Response;
 
   if (contentOwner == staticOwner && contentRepo == staticRepo && contentRef == staticRef) {
-    resolveContentRefRes = resolveContentRefRes.wait();
+    resolveContentRefRes = resolveContentRefResPending.wait();
     resolveStaticRefRes = resolveContentRefRes;
   } else {
     const resolveStaticRefReq = new Request("https://helix-resolve-git-ref-as.edgecompute.app/?owner=" + staticOwner + "&repo=" + staticRepo + "&ref=" + staticRef, {});
@@ -54,7 +54,7 @@ function main(req: Request): Response {
     resolveStaticRefRes = Fastly.fetch(resolveStaticRefReq, {
       backend: "Fastly",
       cacheOverride,
-    });
+    }).wait();
 
     resolveContentRefRes = resolveContentRefResPending.wait();
   }
