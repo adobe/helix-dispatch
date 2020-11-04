@@ -1,12 +1,23 @@
+/*
+ * Copyright 2020 Adobe. All rights reserved.
+ * This file is licensed to you under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License. You may obtain a copy
+ * of the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under
+ * the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR REPRESENTATIONS
+ * OF ANY KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
 module.exports = {
   /**
    * A set of globs passed to the glob package that qualify typescript files for testing.
    */
-  include: ["test/assembly/**/*.spec.ts"],
+  include: ['test/assembly/**/*.spec.ts'],
   /**
    * A set of globs passed to the glob package that quality files to be added to each test.
    */
-  add: ["test/assembly/**/*.include.ts"],
+  add: ['test/assembly/**/*.include.ts'],
   /**
    * All the compiler flags needed for this test suite. Make sure that a binary file is output.
    */
@@ -14,7 +25,7 @@ module.exports = {
     /** To output a wat file, uncomment the following line. */
     // "--textFile": ["output.wat"],
     /** A runtime must be provided here. */
-    "--runtime": ["full"], // Acceptable values are: full, half, stub (arena), and none
+    '--runtime': ['full'], // Acceptable values are: full, half, stub (arena), and none
   },
   /**
    * A set of regexp that will disclude source files from testing.
@@ -24,11 +35,10 @@ module.exports = {
    * Add your required AssemblyScript imports here.
    */
   imports(memory, createImports, instantiateSync, binary) {
-    let instance; // Imports can reference this
     const myImports = {
       // put your web assembly imports here, and return the module
     };
-    instance = instantiateSync(binary, createImports(myImports));
+    const instance = instantiateSync(binary, createImports(myImports));
     return instance;
   },
   /**
