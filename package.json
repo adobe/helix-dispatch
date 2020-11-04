@@ -36,7 +36,7 @@
     "@semantic-release/git": "9.0.0",
     "@typescript-eslint/eslint-plugin": "^4.6.0",
     "@typescript-eslint/parser": "^4.6.0",
-    "assemblyscript": "0.10.0-nightly.20200611",
+    "assemblyscript": "^0.16.0",
     "chai": "^4.2.0",
     "chai-http": "^4.3.0",
     "codecov": "3.8.0",

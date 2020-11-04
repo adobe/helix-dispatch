@@ -1,5 +1,6 @@
 import { Request, Response, Fastly, Headers, ResponseInit } from "@fastly/as-compute";
 import { URL } from "./url";
+import { RefPair } from "./ref-pair";
 
 function main(req: Request): Response {
   let url = new URL(req.url());
@@ -32,37 +33,14 @@ function main(req: Request): Response {
   let root = url.queryparam("rootPath", "");
 
 
-  let cacheOverride = new Fastly.CacheOverride();
-  cacheOverride.setTTL(30);
-
-  const resolveContentRefReq: Request = new Request("https://helix-resolve-git-ref-as.edgecompute.app/?owner=" + contentOwner + "&repo=" + contentRepo + "&ref=" + contentRef, {});
-
-  const resolveContentRefResPending = Fastly.fetch(resolveContentRefReq, {
-    backend: "Fastly",
-    cacheOverride,
-  });
-
-  let resolveStaticRefRes: Response;
-  let resolveContentRefRes: Response;
-
-  if (contentOwner == staticOwner && contentRepo == staticRepo && contentRef == staticRef) {
-    resolveContentRefRes = resolveContentRefResPending.wait();
-    resolveStaticRefRes = resolveContentRefRes;
-  } else {
-    const resolveStaticRefReq = new Request("https://helix-resolve-git-ref-as.edgecompute.app/?owner=" + staticOwner + "&repo=" + staticRepo + "&ref=" + staticRef, {});
-
-    resolveStaticRefRes = Fastly.fetch(resolveStaticRefReq, {
-      backend: "Fastly",
-      cacheOverride,
-    }).wait();
-
-    resolveContentRefRes = resolveContentRefResPending.wait();
-  }
+  const refpair = RefPair.resolveRefs(contentOwner, contentRepo, contentRef, staticOwner, staticRepo, staticRef);
 
 
   return new Response(String.UTF8.encode("This method is not allowed"), {
     status: 405,
   });
+
+
 }
 
 
@@ -74,4 +52,5 @@ let resp = main(req);
 
 // Send the response back to the client.
 Fastly.respondWith(resp);
+
 
