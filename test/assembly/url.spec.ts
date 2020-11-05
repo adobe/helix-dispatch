@@ -36,5 +36,14 @@ describe("url", () => {
 
   it("appendParam", () => {
     expect<string>(example1.appendParam("greeting", "Hello & Good-Bye.").toString()).toBe("https://example.com/test.php?foo=bar&bar=nothing%20here&greeting=Hello%20%26%20Good-Bye.");
+    expect<string>(example1.appendParam("foo", "baz").toString()).toBe("https://example.com/test.php?foo=bar&bar=nothing%20here&greeting=Hello%20%26%20Good-Bye.");
+  });
+
+  it("appendParams", () => {
+    let params = new Map<string, string>();
+    params.set("foo", "bar");
+    params.set("bar", "nothing here");
+    params.set("greeting", "Hello & Good-Bye.");
+    expect<string>(example2.appendParams(params).toString()).toBe("https://example.com/test.php?foo=bar&bar=nothing%20here&greeting=Hello%20%26%20Good-Bye.");
   });
 });

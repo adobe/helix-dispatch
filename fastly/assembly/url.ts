@@ -89,9 +89,27 @@ export class URL {
   }
 
   appendParam(key: string, value: string): URL {
-    this.qs = this.qs + "&" + key + "=" + URL.encode(value);
+    if (this.queryparam(key, "")!="") {
+      return this;
+    }
+    if (this.qs != "") {
+      this.qs = this.qs + "&" + key + "=" + URL.encode(value);
+    } else {
+      this.qs = key + "=" + URL.encode(value);
+    }
+    
 
     this.url = this.path + "?" + this.qs;
+
+    return this;
+  }
+  
+  appendParams(params: Map<string, string>): URL {
+    const keys = params.keys();
+
+    for (let i = 0; i < keys.length; i++ ) {
+      this.appendParam(keys[i], params.get(keys[i]));
+    }
 
     return this;
   }
