@@ -16,6 +16,4 @@ describe("resolved-ref", () => {
   it("sha", () => {  
     expect<string>(example.sha).toBe("003d914ae1c4a2e3db527d89432ec6d9fbd6fc08c383");
   });
-
-  
 });
