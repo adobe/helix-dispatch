@@ -3,9 +3,9 @@ import { URL } from "./url";
 
 export class URLBuilder {
   protected baseURL = "https://adobeioruntime.net/api/v1/web/";
-  protected namespace = "helix";
-  protected static = "helix-services/static@v1";
-  protected redirect = "helix-services/redirect@v1";
+  protected namespace  = "helix";
+  protected staticAction  = "helix-services/static@v1";
+  protected redirectAction  = "helix-services/redirect@v1";
   protected contentOpts: Map<string, string>;
   protected staticOpts: Map<string, string>;
   protected rootPath = "";
@@ -18,13 +18,18 @@ export class URLBuilder {
     this.pack = pack;
   }
 
+  withNamespace(namespace: string): URLBuilder {
+    this.namespace = namespace;
+    return this;
+  }
+
   build404URLs(infos: PathInfo[]): Set<string> {
     const urls = new Set<string>();
 
     if (infos.length > 0 && infos[0].extension == "html") {
       urls.add(new URL(this.baseURL)
         .append(this.namespace)
-        .append(this.static)
+        .append(this.staticAction)
         .appendParam("path", "/404.html")
         .appendParam("esi", "false")
         .appendParam("plain", "true")
@@ -34,7 +39,7 @@ export class URLBuilder {
 
     urls.add(new URL(this.baseURL)
       .append(this.namespace)
-      .append(this.static)
+      .append(this.staticAction)
       .appendParam("path", "/404.html")
       .appendParam("esi", "false")
       .appendParam("plain", "true")
@@ -49,7 +54,7 @@ export class URLBuilder {
     for (let i = 0; i < infos.length; i++) {
       urls.add(new URL(this.baseURL)
         .append(this.namespace)
-        .append(this.static)
+        .append(this.staticAction)
         .appendParam("path", infos[i].path)
         .appendParam("esi", "false")
         .appendParam("plain", "true")
@@ -84,7 +89,7 @@ export class URLBuilder {
     for (let i = 0; i < infos.length; i++) {
       urls.add(new URL(this.baseURL)
         .append(this.namespace)
-        .append(this.static)
+        .append(this.staticAction)
         .appendParam("path", infos[i].path)
         .appendParam("esi", "false")
         .appendParam("plain", "true")
@@ -99,7 +104,7 @@ export class URLBuilder {
     const urls = new Set<string>();
     urls.add(new URL(this.baseURL)
       .append(this.namespace)
-      .append(this.redirect)
+      .append(this.redirectAction)
       .appendParam("path", path)
       .appendParams(this.contentOpts)
       .toString());

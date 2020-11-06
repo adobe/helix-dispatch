@@ -33,6 +33,8 @@ function main(req: Request, redirects: U8, redirectTo: string): Response {
   let contentIndex = url.queryparam("content.index", "").split(",");
   // + "&path=" + req.url.path
   let path = url.queryparam("path", "");
+
+  let namespace = url.queryparam("namespace", "namespace");
   if (redirectTo != "") {
     path = redirectTo;
   }
@@ -57,14 +59,17 @@ function main(req: Request, redirects: U8, redirectTo: string): Response {
   // list of path names to try
   let pathinfos = PathInfo.buildPathInfos(path, root, contentIndex);
 
-  const builder = new URLBuilder(contentOpts, staticOpts, root, contentPackage);
+  const builder = new URLBuilder(contentOpts, staticOpts, root, contentPackage)
+    .withNamespace(namespace);
 
   // first batch: action and fallback
   let firstBatch = new Array<FastlyPendingUpstreamRequest>();
   
   const rawURLs = builder.buildRawURLs(pathinfos).values();
   for (let i = 0; i < rawURLs.length; i++) {
-    const beReq = new Request(rawURLs[i], {});
+    const beReq = new Request(rawURLs[i], {
+      headers: req.headers()
+    });
     firstBatch.push(Fastly.fetch(beReq, {
       backend: "AdobeRuntime"
     }));
@@ -72,7 +77,9 @@ function main(req: Request, redirects: U8, redirectTo: string): Response {
 
   const actionURLs = builder.buildRawURLs(pathinfos).values();
   for (let i = 0; i < actionURLs.length; i++) {
-    const beReq = new Request(actionURLs[i], {});
+    const beReq = new Request(actionURLs[i], {
+      headers: req.headers()
+    });
     firstBatch.push(Fastly.fetch(beReq, {
       backend: "AdobeRuntime"
     }));
@@ -80,7 +87,9 @@ function main(req: Request, redirects: U8, redirectTo: string): Response {
 
   const fallbackURLs = builder.buildFallbackURLs(pathinfos).values();
   for (let i = 0; i < fallbackURLs.length; i++) {
-    const beReq = new Request(fallbackURLs[i], {});
+    const beReq = new Request(fallbackURLs[i], {
+      headers: req.headers()
+    });
     firstBatch.push(Fastly.fetch(beReq, {
       backend: "AdobeRuntime"
     }));
@@ -108,7 +117,9 @@ function main(req: Request, redirects: U8, redirectTo: string): Response {
 
   const redirectURLs = builder.buildRedirectURLs(path).values();
   for (let i = 0; i < redirectURLs.length; i++) {
-    const beReq = new Request(redirectURLs[i], {});
+    const beReq = new Request(redirectURLs[i], {
+      headers: req.headers()
+    });
     secondBatch.push(Fastly.fetch(beReq, {
       backend: "AdobeRuntime"
     }));
@@ -116,7 +127,9 @@ function main(req: Request, redirects: U8, redirectTo: string): Response {
 
   const error404URLs = builder.build404URLs(pathinfos).values();
   for (let i = 0; i < error404URLs.length; i++) {
-    const beReq = new Request(error404URLs[i], {});
+    const beReq = new Request(error404URLs[i], {
+      headers: req.headers()
+    });
     secondBatch.push(Fastly.fetch(beReq, {
       backend: "AdobeRuntime"
     }));

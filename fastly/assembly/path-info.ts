@@ -25,8 +25,6 @@ export class PathInfo {
     let pathinfos = new Array<PathInfo>();
     let urls = new Set<string>();
     let urlPath = PathInfo.cleanup(path);
-    
-    log("building path infos: " + urlPath);
 
     if (urlPath.lastIndexOf('.') <= urlPath.lastIndexOf('/')) {
       // ends with '/', get the directory index
@@ -45,7 +43,6 @@ export class PathInfo {
     const uniqueURLs = urls.values();
     for (let i = 0; i < uniqueURLs.length; i++) {
       const url = uniqueURLs[i];
-      log("unique URL: " + url);
       const lastSlash = url.lastIndexOf('/');
       const lastDot = url.lastIndexOf('.');
 
