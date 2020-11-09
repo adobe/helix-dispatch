@@ -107,6 +107,11 @@ jobs:
             fi
 
       - run:
+          name: Upgrade AssemblyScript version
+          # the assemblyscript versions needed by npm test and npm pack are not aligned
+          command: npm install -D "assemblyscript@0.14.11"
+          
+      - run:
           name: Package
           command: npm pack
 
