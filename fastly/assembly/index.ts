@@ -75,7 +75,7 @@ function main(req: Request, redirects: U8, redirectTo: string): Response {
     }));
   }
 
-  const actionURLs = builder.buildRawURLs(pathinfos).values();
+  const actionURLs = builder.buildActionURLs(pathinfos).values();
   for (let i = 0; i < actionURLs.length; i++) {
     const beReq = new Request(actionURLs[i], {
       headers: req.headers()
