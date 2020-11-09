@@ -134,6 +134,9 @@ module.exports = {
 
         // Utilized to achieve portability in some cases
         '@typescript-eslint/no-non-null-assertion': 'off',
+
+        // Increase compatibility with as-pect
+        '@typescript-eslint/no-inferrable-types': 'off',
       },
     },
   ],
