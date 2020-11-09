@@ -2,14 +2,14 @@ import { PathInfo } from "./path-info";
 import { URL } from "./url";
 
 export class URLBuilder {
-  protected baseURL = "https://adobeioruntime.net/api/v1/web/";
-  protected namespace  = "helix";
-  protected staticAction  = "helix-services/static@v1";
-  protected redirectAction  = "helix-services/redirect@v1";
+  protected baseURL: string = "https://adobeioruntime.net/api/v1/web/";
+  protected namespace: string = "helix";
+  protected staticAction: string = "helix-services/static@v1";
+  protected redirectAction: string = "helix-services/redirect@v1";
   protected contentOpts: Map<string, string>;
   protected staticOpts: Map<string, string>;
-  protected rootPath = "";
-  protected pack = "default";
+  protected rootPath: string = "";
+  protected pack: string = "default";
 
   constructor(contentOpts: Map<string, string>, staticOpts: Map<string, string>, root: string, pack: string) {
     this.contentOpts = contentOpts;
