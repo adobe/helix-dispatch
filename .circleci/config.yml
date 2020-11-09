@@ -122,6 +122,10 @@ jobs:
           command: npm pack
 
       - run:
+          name: Deploy to Fastly
+          command: fastly compute deploy --service-id=$ID
+
+      - run:
           name: Branch Deployment
           command: npm run deploy-ci
       - run:
