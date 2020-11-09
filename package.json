@@ -16,7 +16,7 @@
     "asbuild:optimized": "asc fastly/assembly/index.ts --target release",
     "asbuild": "npm run asbuild:untouched && npm run asbuild:optimized",
     "prepack": "npm run asbuild:optimized",
-    "postpack": "mkdir -p pkg && mv helix-dispatch-${npm_package_version}.tgz pkg/helix-dispatch.tar.gz",
+    "postpack": "mkdir -p pkg && mv adobe-helix-dispatch-${npm_package_version}.tgz pkg/adobe-helix-dispatch.tar.gz",
     "deploy": "wsk-builder -v --deploy --test=/_status_check/healthcheck.json",
     "deploy-sequences": "wsk-builder --no-build -no-hints -l latest -l major -l minor",
     "deploy-ci": "fastly compute deploy --service-id=${ID} && wsk-builder -v --deploy --test=/_status_check/healthcheck.json --pkgVersion=ci$CIRCLE_BUILD_NUM -l ci"
