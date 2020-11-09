@@ -1,12 +1,13 @@
 import { Request, Response, Fastly } from "@fastly/as-compute";
-import { FastlyPendingUpstreamRequest } from "@fastly/as-compute/fastly-upstream/fastly-pending-upstream-request";
+import { FastlyPendingUpstreamRequest } from "@fastly/as-compute";
+// import { FastlyPendingUpstreamRequest } from "../../node_modules/@fastly/as-compute/assembly/fastly/fastly-upstream/fastly-pending-upstream-request"
+// import { FastlyPendingUpstreamRequest } from "~lib/@fastly/as-compute/assembly/fastly/fastly-upstream/fastly-pending-upstream-request"
 import { URL } from "./url";
 import { RefPair } from "./ref-pair";
 import { PathInfo } from "./path-info";
 import { URLBuilder } from "./url-builder";
-import { redirect } from "../../src/redirects";
 
-function main(req: Request, redirects: U8, redirectTo: string): Response {
+function main(req: Request, redirects: u8, redirectTo: string): Response {
   let url = new URL(req.url());
 
   // // fallback repo
@@ -102,7 +103,7 @@ function main(req: Request, redirects: U8, redirectTo: string): Response {
       // response is ok, return to client
       return response;
     }
-    if (response.status > 500) {
+    if (response.status() > 500) {
       // TODO differentiate
       return new Response(String.UTF8.encode("Bad Gateway"), {
         status: 502,
@@ -138,19 +139,19 @@ function main(req: Request, redirects: U8, redirectTo: string): Response {
   for (let i = 0; i < secondBatch.length; i++) {
     const response: Response = secondBatch[i].wait();
 
-    if (response.status == 200) {
+    if (response.status() == 200) {
       // the 404 handler responded, use the response body and headers, but overwrite
       // the status code
-      return new Response(response, {
+      return new Response(String.UTF8.encode(response.text()), {
         headers: response.headers(),
         status: 404,
       });
-    } else if (response.status == 204) {
+    } else if (response.status() == 204) {
       // no redirect
-    } else if (response.status == 301 || response.status == 302) {
+    } else if (response.status() == 301 || response.status() == 302) {
       // regular redirect
-      return redirect;
-    } else if (response.status == 307) {
+      return response;
+    } else if (response.status() == 307) {
       // internal redirect
       if (redirects > 2) {
         return new Response(String.UTF8.encode("Too many internal redirects"), {
@@ -160,11 +161,11 @@ function main(req: Request, redirects: U8, redirectTo: string): Response {
 
       let target = "";
       if (response.headers().has("Location")) {
-        target = response.headers().get("Location");
+        target = response.headers().get("Location") as string;
         // restart from top
         return main(req, redirects + 1, target);
       }
-    } else if (response.status > 500) {
+    } else if (response.status() > 500) {
       // TODO differentiate
       return new Response(String.UTF8.encode("Bad Gateway"), {
         status: 502,
@@ -186,7 +187,7 @@ function main(req: Request, redirects: U8, redirectTo: string): Response {
 let req = Fastly.getClientRequest();
 
 // Pass the request to the main request handler function.
-let resp = main(req, 0, "");
+let resp = main(req, (0 as u8), "");
 
 // Send the response back to the client.
 Fastly.respondWith(resp);
