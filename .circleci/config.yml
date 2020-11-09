@@ -87,6 +87,30 @@ jobs:
           command: git checkout -- package-lock.json
       - helix-post-deploy/config-wsk
       - run:
+          name: Init Fastly Service
+          command: |
+            echo $(fastly service search --name=${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BRANCH} || echo "ID: null") | head -n 1 | sed -e 's/ID: /ID=/' | sed -e 's/ .*//' >> $BASH_ENV
+            source $BASH_ENV
+            echo $ID
+            if [ "$ID" = "null" ]; then
+              echo "ID is unset";
+              fastly service create --name=${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BRANCH} | sed -e "s/SUCCESS: Created service /ID=/" >> $BASH_ENV;
+              source $BASH_ENV;
+              echo New Service $ID;
+
+              fastly domain  add          -s $ID --version=1 --name=${CIRCLE_PROJECT_REPONAME}-${CIRCLE_BRANCH}.edgecompute.app
+              fastly backend add          -s $ID --version=1 --name=GitHub --address=github.com --use-ssl --override-host=github.com --port=443
+              fastly backend add          -s $ID --version=1 --name=AdobeRuntime --address=adobeioruntime.net --use-ssl --override-host=adobeioruntime.net --port=443
+              fastly logging https create -s $ID --version=1 --name=stdout --content-type=application/json --header-name=private_key --header-value=$CORALOGIX_KEY --url=https://api.coralogix.com/logs/rest/singles --json-format=1 --message-type=blank --placement=none
+            else
+              echo "ID is set to '$ID'";
+            fi
+
+      - run:
+          name: Package
+          command: npm pack
+
+      - run:
           name: Branch Deployment
           command: npm run deploy-ci
       - run:
