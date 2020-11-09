@@ -1,0 +1,6 @@
+version = 1
+name = "helix-dispatch"
+description = "Helix Dispatch on Edge"
+authors = ["trieloff@adobe.com"]
+language = "assemblyscript"
+service_id = "4KRGKViu9n9TaxCNorUeig"
