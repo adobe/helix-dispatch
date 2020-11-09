@@ -13,6 +13,10 @@ orbs:
 commands:
   setup:
     steps:
+      # do this prior to the checkout, as there might be a "fastly" directory
+      - run:
+          name: Installing Fastly CLI
+          command: mkdir ~/.bin && curl -L https://github.com/fastly/cli/releases/download/v0.18.0/fastly_v0.18.0_linux-386.tar.gz | tar zxv && mv fastly ~/.bin/ && echo 'export PATH=$PATH:~/.bin' >> $BASH_ENV
       - checkout
       - restore_cache:
           keys:
@@ -30,9 +34,6 @@ commands:
       - run:
           name: prepare test git user
           command: git config --global user.email "circleci@example.com" && git config --global user.name "CircleCi Build"
-      - run:
-          name: Installing Fastly CLI
-          command: mkdir ~/.bin && curl -L https://github.com/fastly/cli/releases/download/v0.18.0/fastly_v0.18.0_linux-386.tar.gz | tar zxv && mv fastly ~/.bin/ && echo 'export PATH=$PATH:~/.bin' >> $BASH_ENV
 
 
 jobs:
