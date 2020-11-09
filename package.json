@@ -19,7 +19,8 @@
     "postpack": "mkdir -p pkg && mv adobe-helix-dispatch-${npm_package_version}.tgz pkg/adobe-helix-dispatch.tar.gz",
     "deploy": "wsk-builder -v --deploy --test=/_status_check/healthcheck.json",
     "deploy-sequences": "wsk-builder --no-build -no-hints -l latest -l major -l minor",
-    "deploy-ci": "fastly compute deploy --service-id=${ID} && wsk-builder -v --deploy --test=/_status_check/healthcheck.json --pkgVersion=ci$CIRCLE_BUILD_NUM -l ci"
+    "deploy-ci": "fastly compute deploy --service-id=${ID} && wsk-builder -v --deploy --test=/_status_check/healthcheck.json --pkgVersion=ci$CIRCLE_BUILD_NUM -l ci",
+    "monkeypatch": "echo '' >> node_modules/@fastly/as-compute/assembly/index.ts && echo '// monkey patch' >> node_modules/@fastly/as-compute/assembly/index.ts && echo 'import { FastlyPendingUpstreamRequest } from \"./fastly/fastly-upstream/fastly-pending-upstream-request\";' >> node_modules/@fastly/as-compute/assembly/index.ts && echo 'export { FastlyPendingUpstreamRequest };' >> node_modules/@fastly/as-compute/assembly/index.ts"
   },
   "wsk": {
     "namespace": "helix",

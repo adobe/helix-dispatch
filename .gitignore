@@ -9,3 +9,4 @@ test-results.xml
 .env
 dist
 bin
+pkg

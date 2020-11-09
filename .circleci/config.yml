@@ -110,7 +110,12 @@ jobs:
           name: Upgrade AssemblyScript version
           # the assemblyscript versions needed by npm test and npm pack are not aligned
           command: npm install -D "assemblyscript@0.14.11"
-          
+
+      - run:
+          name: Monkey-patch Fastly AssemblyScript library
+          command: npm run monkeypatch
+          # no animals were harmed …
+
       - run:
           name: Package
           command: npm pack
