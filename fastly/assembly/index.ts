@@ -66,7 +66,7 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
   // first batch: action and fallback
   let firstBatch = new Array<FastlyPendingUpstreamRequest>();
   
-  const rawURLs = builder.buildRawURLs(pathinfos).values();
+  const rawURLs = builder.buildRawURLs(pathinfos);
   for (let i = 0; i < rawURLs.length; i++) {
     const beReq = new Request(rawURLs[i], {
       headers: req.headers()
@@ -76,7 +76,7 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
     }));
   }
 
-  const actionURLs = builder.buildActionURLs(pathinfos).values();
+  const actionURLs = builder.buildActionURLs(pathinfos);
   for (let i = 0; i < actionURLs.length; i++) {
     const beReq = new Request(actionURLs[i], {
       headers: req.headers()
@@ -86,7 +86,7 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
     }));
   }
 
-  const fallbackURLs = builder.buildFallbackURLs(pathinfos).values();
+  const fallbackURLs = builder.buildFallbackURLs(pathinfos);
   for (let i = 0; i < fallbackURLs.length; i++) {
     const beReq = new Request(fallbackURLs[i], {
       headers: req.headers()
@@ -116,7 +116,7 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
   // second batch: 404 and redirects
   let secondBatch = new Array<FastlyPendingUpstreamRequest>();
 
-  const redirectURLs = builder.buildRedirectURLs(path).values();
+  const redirectURLs = builder.buildRedirectURLs(path);
   for (let i = 0; i < redirectURLs.length; i++) {
     const beReq = new Request(redirectURLs[i], {
       headers: req.headers()
@@ -126,7 +126,7 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
     }));
   }
 
-  const error404URLs = builder.build404URLs(pathinfos).values();
+  const error404URLs = builder.build404URLs(pathinfos);
   for (let i = 0; i < error404URLs.length; i++) {
     const beReq = new Request(error404URLs[i], {
       headers: req.headers()

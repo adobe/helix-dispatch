@@ -23,7 +23,7 @@ export class URLBuilder {
     return this;
   }
 
-  build404URLs(infos: PathInfo[]): Set<string> {
+  build404URLs(infos: PathInfo[]): string[] {
     const urls = new Set<string>();
 
     if (infos.length > 0 && infos[0].extension == "html") {
@@ -46,10 +46,10 @@ export class URLBuilder {
       .appendParams(this.staticOpts)
       .toString());
 
-    return urls;
+    return urls.values();
   }
 
-  buildFallbackURLs(infos: PathInfo[]): Set<string> {
+  buildFallbackURLs(infos: PathInfo[]): string[] {
     const urls = new Set<string>();
     for (let i = 0; i < infos.length; i++) {
       urls.add(new URL(this.baseURL)
@@ -61,10 +61,10 @@ export class URLBuilder {
         .appendParams(this.staticOpts)
         .toString());
     }
-    return urls;
+    return urls.values();
   }
 
-  buildActionURLs(infos: PathInfo[]): Set<string> {
+  buildActionURLs(infos: PathInfo[]): string[] {
     const urls = new Set<string>();
     for (let i = 0; i < infos.length; i++) {
       let actionname = infos[i].extension;
@@ -81,10 +81,10 @@ export class URLBuilder {
         .appendParams(this.contentOpts)
         .toString());
     }
-    return urls;
+    return urls.values();
   }
 
-  buildRawURLs(infos: PathInfo[]): Set<string> {
+  buildRawURLs(infos: PathInfo[]): string[] {
     const urls = new Set<string>();
     for (let i = 0; i < infos.length; i++) {
       urls.add(new URL(this.baseURL)
@@ -97,10 +97,10 @@ export class URLBuilder {
         .appendParams(this.contentOpts)
         .toString());
     }
-    return urls;
+    return urls.values();
   }
 
-  buildRedirectURLs(path: string): Set<string> {
+  buildRedirectURLs(path: string): string[] {
     const urls = new Set<string>();
     urls.add(new URL(this.baseURL)
       .append(this.namespace)
@@ -108,6 +108,6 @@ export class URLBuilder {
       .appendParam("path", path)
       .appendParams(this.contentOpts)
       .toString());
-    return urls;
+    return urls.values();
   }
 }
