@@ -85,6 +85,8 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
   logger.debug("fallback urls:" + fallbackURLs.length.toString());
   const firstBatchURLs = rawURLs.concat(actionURLs).concat(fallbackURLs);
   
+  logger.debug("first batch:" + fallbackURLs.join(", "));
+
   let firstBatch = new PreferencePool(
     firstBatchURLs, 
     req.headers(), 
