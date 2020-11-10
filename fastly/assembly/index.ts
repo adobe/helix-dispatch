@@ -51,7 +51,7 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
 
   const refpair = RefPair.resolveRefs(contentOwner, contentRepo, contentRef, staticOwner, staticRepo, staticRef);
 
-  logger.debug("refpair received");
+  logger.debug("refpair received " + refpair.contentRef + "/" + refpair.staticRef);
 
   let contentOpts = new Map<string, string>();
   contentOpts.set("owner", contentOwner);

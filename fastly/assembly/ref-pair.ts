@@ -24,7 +24,7 @@ export class RefPair {
     let resolveStaticRefRes: Response;
     let resolveContentRefRes: Response;
 
-    if (contentOwner == staticOwner && contentRepo == staticRepo && contentRef == staticRef) {
+    if (false && contentOwner == staticOwner && contentRepo == staticRepo && contentRef == staticRef) {
       resolveContentRefRes = resolveContentRefResPending.wait();
       resolveStaticRefRes = resolveContentRefRes;
     } else {
