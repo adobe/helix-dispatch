@@ -18,10 +18,12 @@ export class PreferencePool {
       const req = new Request(urls[i], {
         headers: headers
       });
-      logger.debug("adding url to pool: " + urls[i]);
-      this.pool.push(Fastly.fetch(req, {
+      logger.debug("running fetch: " + urls[i]);
+      const pending = Fastly.fetch(req, {
         backend: backend
-      }));
+      });
+      logger.debug("adding url to pool: " + urls[i]);
+      this.pool.push(pending);
       logger.debug("done.");
     }
   }
