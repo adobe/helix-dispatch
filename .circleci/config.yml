@@ -103,6 +103,7 @@ jobs:
               fastly backend add          -s $ID --version=1 --name=AdobeRuntime --address=adobeioruntime.net --use-ssl --override-host=adobeioruntime.net --port=443
               fastly backend add          -s $ID --version=1 --name=Fastly --address=helix-resolve-git-ref-as.edgecompute.app --use-ssl --override-host=helix-resolve-git-ref-as.edgecompute.app --port=443
               fastly logging https create -s $ID --version=1 --name=stdout --content-type=application/json --header-name=private_key --header-value=$CORALOGIX_KEY --url=https://api.coralogix.com/logs/rest/singles --json-format=1 --message-type=blank --placement=none
+              fastly logging https create -s $ID --version=1 --name=Coralogix --content-type=application/json --header-name=private_key --header-value=$CORALOGIX_KEY --url=https://api.coralogix.com/logs/rest/singles --json-format=1 --message-type=blank --placement=none
             else
               echo "ID is set to '$ID'";
             fi
