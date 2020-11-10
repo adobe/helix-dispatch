@@ -39,7 +39,7 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
 
   let namespace = url.queryparam("namespace", "namespace");
 
-  logger.info("Request received: " + [staticOwner, staticRepo, contentOwner, contentRepo, path, namespace].join(", "));
+  logger.debug("Request received: " + [staticOwner, staticRepo, contentOwner, contentRepo, path, namespace].join(", "));
 
   if (redirectTo != "") {
     path = redirectTo;
@@ -50,6 +50,9 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
 
 
   const refpair = RefPair.resolveRefs(contentOwner, contentRepo, contentRef, staticOwner, staticRepo, staticRef);
+
+  logger.debug("refpair received");
+
   let contentOpts = new Map<string, string>();
   contentOpts.set("owner", contentOwner);
   contentOpts.set("repo", contentRepo);
@@ -64,6 +67,8 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
 
   // list of path names to try
   let pathinfos = PathInfo.buildPathInfos(path, root, contentIndex);
+
+  logger.debug("pathinfos constructed");
 
   const builder = new URLBuilder(contentOpts, staticOpts, root, contentPackage)
     .withNamespace(namespace);
