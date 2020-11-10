@@ -1,19 +1,24 @@
 import { Fastly } from "@fastly/as-compute";
 import { Request, Headers } from "@fastly/as-fetch";
+import { CoralogixLogger } from "./coralogix";
 
 export class PreferencePool {
   private pool: Fastly.FetchPool;
   private fufilled: Map<string, Fastly.FufilledRequest>;
+  private logger: CoralogixLogger;
 
-  constructor(urls: string[], headers: Headers, backend: string) {
+  constructor(urls: string[], headers: Headers, backend: string, logger: CoralogixLogger) {
+    this.logger = logger;
+    logger.debug("creating fetch pool");
     this.pool = new Fastly.FetchPool();
+    logger.debug("fetch pool created");
     this.fufilled = new Map<string, Fastly.FufilledRequest>();
 
     for (let i = 0; i < urls.length; i++) {
       const req = new Request(urls[i], {
         headers: headers
       });
-
+      logger.debug("adding url to pool: " + urls[i]);
       this.pool.push(Fastly.fetch(req, {
         backend: backend
       }));
@@ -21,6 +26,7 @@ export class PreferencePool {
   }
 
   get(url: string): Fastly.FufilledRequest | null {
+    this.logger.debug("getting url from pool: " + url);
     if (this.fufilled.has(url)) {
       return this.fufilled.get(url);
     }

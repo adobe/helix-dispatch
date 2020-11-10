@@ -85,12 +85,13 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
   logger.debug("fallback urls:" + fallbackURLs.length.toString());
   const firstBatchURLs = rawURLs.concat(actionURLs).concat(fallbackURLs);
   
-  logger.debug("first batch:" + fallbackURLs.join(", "));
+  logger.debug("first batch[" + fallbackURLs.length.toString() + "]: " + fallbackURLs.join(" , "));
 
   let firstBatch = new PreferencePool(
     firstBatchURLs, 
     req.headers(), 
-    "AdobeRuntime");
+    "AdobeRuntime",
+    logger);
 
   for (let i = 0; i < firstBatchURLs.length; i++) {
     logger.debug("trying " + firstBatchURLs[i]);
@@ -120,7 +121,8 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
   let secondBatch = new PreferencePool(
     secondBatchURLs,
     req.headers(),
-    "AdobeRuntime");
+    "AdobeRuntime",
+    logger);
 
   for (let i = 0; i < secondBatchURLs.length; i++) {
     const fulfilled = secondBatch.get(secondBatchURLs[i]);
