@@ -22,34 +22,34 @@ export class CoralogixLogger {
     let now = Date.now();
 
     encoder.pushObject("");
-      encoder.setInteger("timestamp", Math.floor(now));
-      encoder.setString("applicationName", "fastly-edgecompute");
-      encoder.setString("subsystemName", this.subsystemName);
-      encoder.setInteger("severity", level);
-      encoder.pushObject("json");
-        encoder.setString("message", message);
+    encoder.setInteger("timestamp", Math.floor(now));
+    encoder.setString("applicationName", "fastly-edgecompute");
+    encoder.setString("subsystemName", this.subsystemName);
+    encoder.setInteger("severity", level);
+    encoder.pushObject("json");
+    encoder.setString("message", message);
 
-        // json.cdn
-        encoder.pushObject("cdn");
-          encoder.setString("url", this.req.url());
+    // json.cdn
+    encoder.pushObject("cdn");
+    encoder.setString("url", this.req.url());
 
-          // json.cdn.time
-          encoder.pushObject("time");
-            encoder.setInteger("start_msec", Math.floor(this.start));
-            encoder.setInteger("elapsed", now - Math.floor(this.start));
-          encoder.popObject();
+    // json.cdn.time
+    encoder.pushObject("time");
+    encoder.setInteger("start_msec", Math.floor(this.start));
+    encoder.setInteger("elapsed", now - Math.floor(this.start));
+    encoder.popObject();
 
-          // json.cdn.request
-          encoder.pushObject("request");
-            encoder.setString("method", this.req.method());
-            if (this.req.headers().has("User-Agent")) {
-              encoder.setString("user_agent", this.req.headers().get("User-Agent") as string);
-            }
-          encoder.popObject();
+    // json.cdn.request
+    encoder.pushObject("request");
+    encoder.setString("method", this.req.method());
+    if (this.req.headers().has("User-Agent")) {
+      encoder.setString("user_agent", this.req.headers().get("User-Agent") as string);
+    }
+    encoder.popObject();
 
-        encoder.popObject();
+    encoder.popObject();
 
-      encoder.popObject();
+    encoder.popObject();
     encoder.popObject();
 
     return encoder.toString();
