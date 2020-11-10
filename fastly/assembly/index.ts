@@ -1,11 +1,12 @@
 import { Request, Response, Fastly } from "@fastly/as-compute";
-import { FastlyPendingUpstreamRequest } from "@fastly/as-compute";
+import { FufilledRequest } from "@fastly/as-compute";
 // import { FastlyPendingUpstreamRequest } from "../../node_modules/@fastly/as-compute/assembly/fastly/fastly-upstream/fastly-pending-upstream-request"
 // import { FastlyPendingUpstreamRequest } from "~lib/@fastly/as-compute/assembly/fastly/fastly-upstream/fastly-pending-upstream-request"
 import { URL } from "./url";
 import { RefPair } from "./ref-pair";
 import { PathInfo } from "./path-info";
 import { URLBuilder } from "./url-builder";
+import { PreferencePool } from "./preference-pool";
 
 function main(req: Request, redirects: u8, redirectTo: string): Response {
   let url = new URL(req.url());
@@ -64,119 +65,91 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
     .withNamespace(namespace);
 
   // first batch: action and fallback
-  let firstBatch = new Array<FastlyPendingUpstreamRequest>();
+  
   
   const rawURLs = builder.buildRawURLs(pathinfos);
-  for (let i = 0; i < rawURLs.length; i++) {
-    const beReq = new Request(rawURLs[i], {
-      headers: req.headers()
-    });
-    firstBatch.push(Fastly.fetch(beReq, {
-      backend: "AdobeRuntime"
-    }));
-  }
-
   const actionURLs = builder.buildActionURLs(pathinfos);
-  for (let i = 0; i < actionURLs.length; i++) {
-    const beReq = new Request(actionURLs[i], {
-      headers: req.headers()
-    });
-    firstBatch.push(Fastly.fetch(beReq, {
-      backend: "AdobeRuntime"
-    }));
-  }
-
   const fallbackURLs = builder.buildFallbackURLs(pathinfos);
-  for (let i = 0; i < fallbackURLs.length; i++) {
-    const beReq = new Request(fallbackURLs[i], {
-      headers: req.headers()
-    });
-    firstBatch.push(Fastly.fetch(beReq, {
-      backend: "AdobeRuntime"
-    }));
-  }
+  const firstBatchURLs = rawURLs.concat(actionURLs).concat(fallbackURLs);
+  
+  let firstBatch = new PreferencePool(
+    firstBatchURLs, 
+    req.headers(), 
+    "AdobeRuntime");
 
-  for (let i = 0; i < firstBatch.length; i++) {
-    const response: Response = firstBatch[i].wait();
-
-    if (response.ok()) {
-      // response is ok, return to client
-      return response;
-    }
-    if (response.status() > 500) {
-      // TODO differentiate
-      return new Response(String.UTF8.encode("Bad Gateway"), {
-        status: 502,
-      });
-    }
-    // else wait for next candidate
-  }
-
-
-  // second batch: 404 and redirects
-  let secondBatch = new Array<FastlyPendingUpstreamRequest>();
-
-  const redirectURLs = builder.buildRedirectURLs(path);
-  for (let i = 0; i < redirectURLs.length; i++) {
-    const beReq = new Request(redirectURLs[i], {
-      headers: req.headers()
-    });
-    secondBatch.push(Fastly.fetch(beReq, {
-      backend: "AdobeRuntime"
-    }));
-  }
-
-  const error404URLs = builder.build404URLs(pathinfos);
-  for (let i = 0; i < error404URLs.length; i++) {
-    const beReq = new Request(error404URLs[i], {
-      headers: req.headers()
-    });
-    secondBatch.push(Fastly.fetch(beReq, {
-      backend: "AdobeRuntime"
-    }));
-  }
-
-  for (let i = 0; i < secondBatch.length; i++) {
-    const response: Response = secondBatch[i].wait();
-
-    if (response.status() == 200) {
-      // the 404 handler responded, use the response body and headers, but overwrite
-      // the status code
-      return new Response(String.UTF8.encode(response.text()), {
-        headers: response.headers(),
-        status: 404,
-      });
-    } else if (response.status() == 204) {
-      // no redirect
-    } else if (response.status() == 301 || response.status() == 302) {
-      // regular redirect
-      return response;
-    } else if (response.status() == 307) {
-      // internal redirect
-      if (redirects > 2) {
-        return new Response(String.UTF8.encode("Too many internal redirects"), {
-          status: 508,
+  for (let i = 0; i < firstBatchURLs.length; i++) {
+    const fulfilled = firstBatch.get(firstBatchURLs[i]);
+    if (fulfilled != null) {
+      const response: Response = (fulfilled as FufilledRequest).response;
+      if (response.ok()) {
+        // response is ok, return to client
+        return response;
+      }
+      if (response.status() > 500) {
+        // TODO differentiate
+        return new Response(String.UTF8.encode("Bad Gateway"), {
+          status: 502,
         });
       }
-
-      let target = "";
-      if (response.headers().has("Location")) {
-        target = response.headers().get("Location") as string;
-        // restart from top
-        return main(req, redirects + 1, target);
-      }
-    } else if (response.status() > 500) {
-      // TODO differentiate
-      return new Response(String.UTF8.encode("Bad Gateway"), {
-        status: 502,
-      });
     }
     // else wait for next candidate
   }
 
+  const redirectURLs = builder.buildRedirectURLs(path);
+  const error404URLs = builder.build404URLs(pathinfos);
+  const secondBatchURLs = redirectURLs.concat(error404URLs);
 
-  return new Response(String.UTF8.encode("This method is not allowed"), {
-    status: 405,
+  // second batch: 404 and redirects
+  let secondBatch = new PreferencePool(
+    secondBatchURLs,
+    req.headers(),
+    "AdobeRuntime");
+
+  for (let i = 0; i < secondBatchURLs.length; i++) {
+    const fulfilled = secondBatch.get(secondBatchURLs[i]);
+    if (fulfilled != null) {
+      const response: Response = (fulfilled as FufilledRequest).response;
+      
+      if (response.status() == 200) {
+      // the 404 handler responded, use the response body and headers, but overwrite
+      // the status code
+        return new Response(String.UTF8.encode(response.text()), {
+          headers: response.headers(),
+          status: 404,
+        });
+      } else if (response.status() == 204) {
+      // no redirect
+      } else if (response.status() == 301 || response.status() == 302) {
+      // regular redirect
+        return response;
+      } else if (response.status() == 307) {
+      // internal redirect
+        if (redirects > 2) {
+          return new Response(String.UTF8.encode("Too many internal redirects"), {
+            status: 508,
+          });
+        }
+
+        let target = "";
+        if (response.headers().has("Location")) {
+          target = response.headers().get("Location") as string;
+          // restart from top
+          return main(req, redirects + 1, target);
+        }
+      } else if (response.status() > 500) {
+      // TODO differentiate
+        return new Response(String.UTF8.encode("Bad Gateway"), {
+          status: 502,
+        });
+      }
+    }
+
+    // else wait for next candidate
+  }
+
+
+  return new Response(String.UTF8.encode("There is nothing to satisfy this request"), {
+    status: 404,
   });
 
 
