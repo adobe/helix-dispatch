@@ -4,13 +4,13 @@ import  { Request, Fastly } from "@fastly/as-compute";
 
 export class CoralogixLogger {
   private subsystemName: string;
-  private start: f64;
+  private start: i64;
   private req: Request;
   private logger: Fastly.LogEndpoint;
 
   constructor(app: string, req: Request) {
     this.subsystemName = app;
-    this.start: i64 = Math.floor(Date.now()) as i64;
+    this.start = Math.floor(Date.now()) as i64;
     this.req = req;
     this.logger = Fastly.getLogEndpoint("Coralogix");
 
