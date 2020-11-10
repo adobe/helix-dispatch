@@ -91,10 +91,12 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
     "AdobeRuntime");
 
   for (let i = 0; i < firstBatchURLs.length; i++) {
+    logger.debug("trying " + firstBatch[i]);
     const fulfilled = firstBatch.get(firstBatchURLs[i]);
     if (fulfilled !== null) {
       const response: Response = (fulfilled as Fastly.FufilledRequest).response;
       if (response.ok()) {
+        console.log("response found " + response.url());
         // response is ok, return to client
         return response;
       }
