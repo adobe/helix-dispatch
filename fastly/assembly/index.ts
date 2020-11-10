@@ -38,6 +38,9 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
   let path = url.queryparam("path", "");
 
   let namespace = url.queryparam("namespace", "namespace");
+
+  logger.info("Request received: " + [staticOwner, staticRepo, contentOwner, contentRepo, path, namespace].join(", "));
+
   if (redirectTo != "") {
     path = redirectTo;
   }
