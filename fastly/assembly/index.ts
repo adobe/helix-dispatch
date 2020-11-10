@@ -6,8 +6,10 @@ import { RefPair } from "./ref-pair";
 import { PathInfo } from "./path-info";
 import { URLBuilder } from "./url-builder";
 import { PreferencePool } from "./preference-pool";
+import { CoralogixLogger } from "./coralogix";
 
 function main(req: Request, redirects: u8, redirectTo: string): Response {
+  const logger = new CoralogixLogger("helix-dispatch", req);
   let url = new URL(req.url());
 
   // // fallback repo
