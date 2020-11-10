@@ -24,6 +24,7 @@ export class RefPair {
     let resolveStaticRefRes: Response;
     let resolveContentRefRes: Response;
 
+    // eslint-disable-next-line no-constant-condition
     if (false && contentOwner == staticOwner && contentRepo == staticRepo && contentRef == staticRef) {
       resolveContentRefRes = resolveContentRefResPending.wait();
       resolveStaticRefRes = resolveContentRefRes;

@@ -68,17 +68,21 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
   // list of path names to try
   let pathinfos = PathInfo.buildPathInfos(path, root, contentIndex);
 
-  logger.debug("pathinfos constructed");
+  logger.debug("pathinfos constructed: " + pathinfos[0].path);
 
   const builder = new URLBuilder(contentOpts, staticOpts, root, contentPackage)
     .withNamespace(namespace);
 
   // first batch: action and fallback
   
+  logger.debug("urlbuilder initialized");
   
   const rawURLs = builder.buildRawURLs(pathinfos);
+  logger.debug("raw urls:" + rawURLs.length);
   const actionURLs = builder.buildActionURLs(pathinfos);
+  logger.debug("action urls:" + actionURLs.length);
   const fallbackURLs = builder.buildFallbackURLs(pathinfos);
+  logger.debug("fallback urls:" + fallbackURLs.length);
   const firstBatchURLs = rawURLs.concat(actionURLs).concat(fallbackURLs);
   
   let firstBatch = new PreferencePool(
