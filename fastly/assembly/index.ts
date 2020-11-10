@@ -78,11 +78,11 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
   logger.debug("urlbuilder initialized");
   
   const rawURLs = builder.buildRawURLs(pathinfos);
-  logger.debug("raw urls:" + rawURLs.length);
+  logger.debug("raw urls:" + rawURLs.length.toString());
   const actionURLs = builder.buildActionURLs(pathinfos);
-  logger.debug("action urls:" + actionURLs.length);
+  logger.debug("action urls:" + actionURLs.length.toString());
   const fallbackURLs = builder.buildFallbackURLs(pathinfos);
-  logger.debug("fallback urls:" + fallbackURLs.length);
+  logger.debug("fallback urls:" + fallbackURLs.length.toString());
   const firstBatchURLs = rawURLs.concat(actionURLs).concat(fallbackURLs);
   
   let firstBatch = new PreferencePool(
