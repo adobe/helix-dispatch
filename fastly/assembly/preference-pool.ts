@@ -22,6 +22,7 @@ export class PreferencePool {
       this.pool.push(Fastly.fetch(req, {
         backend: backend
       }));
+      logger.debug("done.");
     }
   }
 
