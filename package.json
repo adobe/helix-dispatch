@@ -42,7 +42,7 @@
     "@adobe/helix-status": "8.2.1",
     "@adobe/openwhisk-action-logger": "2.2.1",
     "@adobe/openwhisk-action-utils": "4.3.1",
-    "@fastly/as-compute": "^0.1.1",
+    "@fastly/as-compute": "^0.1.2",
     "as-wasi": "^0.4.0",
     "assemblyscript-json": "^0.3.3",
     "ferrum": "1.7.0",
