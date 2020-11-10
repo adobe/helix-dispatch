@@ -10,7 +10,7 @@ export class CoralogixLogger {
 
   constructor(app: string, req: Request) {
     this.subsystemName = app;
-    this.start = Date.now();
+    this.start: i64 = Math.floor(Date.now()) as i64;
     this.req = req;
     this.logger = Fastly.getLogEndpoint("Coralogix");
 
@@ -19,10 +19,10 @@ export class CoralogixLogger {
 
   public format(level: u8, message: string): string {
     let encoder = new JSONEncoder();
-    let now = Date.now();
+    let now: i64 = Math.floor(Date.now()) as i64;
 
     encoder.pushObject("");
-    encoder.setInteger("timestamp", Math.floor(now));
+    encoder.setInteger("timestamp", now);
     encoder.setString("applicationName", "fastly-edgecompute");
     encoder.setString("subsystemName", this.subsystemName);
     encoder.setInteger("severity", level);
@@ -35,8 +35,8 @@ export class CoralogixLogger {
 
     // json.cdn.time
     encoder.pushObject("time");
-    encoder.setInteger("start_msec", Math.floor(this.start));
-    encoder.setInteger("elapsed", now - Math.floor(this.start));
+    encoder.setInteger("start_msec", this.start);
+    encoder.setInteger("elapsed", now - this.start);
     encoder.popObject();
 
     // json.cdn.request
