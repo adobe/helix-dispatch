@@ -1,5 +1,4 @@
 import { Request, Response, Fastly } from "@fastly/as-compute";
-import { FufilledRequest } from "@fastly/as-compute";
 // import { FastlyPendingUpstreamRequest } from "../../node_modules/@fastly/as-compute/assembly/fastly/fastly-upstream/fastly-pending-upstream-request"
 // import { FastlyPendingUpstreamRequest } from "~lib/@fastly/as-compute/assembly/fastly/fastly-upstream/fastly-pending-upstream-request"
 import { URL } from "./url";
@@ -79,8 +78,8 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
 
   for (let i = 0; i < firstBatchURLs.length; i++) {
     const fulfilled = firstBatch.get(firstBatchURLs[i]);
-    if (fulfilled != null) {
-      const response: Response = (fulfilled as FufilledRequest).response;
+    if (fulfilled !== null) {
+      const response: Response = (fulfilled as Fastly.FufilledRequest).response;
       if (response.ok()) {
         // response is ok, return to client
         return response;
@@ -107,8 +106,8 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
 
   for (let i = 0; i < secondBatchURLs.length; i++) {
     const fulfilled = secondBatch.get(secondBatchURLs[i]);
-    if (fulfilled != null) {
-      const response: Response = (fulfilled as FufilledRequest).response;
+    if (fulfilled !== null) {
+      const response: Response = (fulfilled as Fastly.FufilledRequest).response;
       
       if (response.status() == 200) {
       // the 404 handler responded, use the response body and headers, but overwrite
