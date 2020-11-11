@@ -18,7 +18,7 @@ chai.use(chaiHttp);
 const { expect } = chai;
 
 function getbaseurl() {
-  const name = packjson.name.replace('@adobe/helix-', '');
+  const name = packjson.name.replace('@adobe/helix-', 'helix-');
   return `https://${name}-${process.env.CIRCLE_BRANCH || 'main'}.edgecompute.app`;
 }
 
