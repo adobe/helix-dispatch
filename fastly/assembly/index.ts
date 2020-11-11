@@ -99,8 +99,8 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
     const fulfilled = firstBatch.get(i);
     if (fulfilled !== null) {
       const response: Response = (fulfilled as Fastly.FufilledRequest).response;
-      if (response.ok()) {
-        logger.log("response found " + response.url());
+      logger.log("response[" + i.toString() + "] found " + response.url() + " " + response.status());
+      if (response.ok()) {  
         // response is ok, return to client
         return response;
       }

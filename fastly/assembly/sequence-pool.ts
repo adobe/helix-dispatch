@@ -43,7 +43,7 @@ export class SequencePool implements Pool {
     const fufilled = new Fastly.FufilledRequest(req, this.backend, response);
     this.fufilled.set(url, fufilled);
 
-    this.logger.debug("returning[" + item.toString() + "]: " + url);
+    this.logger.debug("returning[" + item.toString() + "]: " + url + " " + response.status());
 
     return fufilled;
   }
