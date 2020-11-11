@@ -94,9 +94,8 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
     "AdobeRuntime",
     logger);
 
-  for (let i = 0; i < firstBatchURLs.length; i++) {
-    logger.debug("trying " + firstBatchURLs[i]);
-    const fulfilled = firstBatch.get(firstBatchURLs[i]);
+  for (let i = 0; i < firstBatch.size; i++) {
+    const fulfilled = firstBatch.get(i);
     if (fulfilled !== null) {
       const response: Response = (fulfilled as Fastly.FufilledRequest).response;
       if (response.ok()) {
@@ -125,8 +124,8 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
     "AdobeRuntime",
     logger);
 
-  for (let i = 0; i < secondBatchURLs.length; i++) {
-    const fulfilled = secondBatch.get(secondBatchURLs[i]);
+  for (let i = 0; i < secondBatch.size; i++) {
+    const fulfilled = secondBatch.get(i);
     if (fulfilled !== null) {
       const response: Response = (fulfilled as Fastly.FufilledRequest).response;
       

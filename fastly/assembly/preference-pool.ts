@@ -35,13 +35,8 @@ export class PreferencePool implements Pool {
     return this.urls.length;
   }
 
-  get(item: string | i32): Fastly.FufilledRequest | null {
-    let url: string;
-    if (typeof item == "string") {
-      url = item as string;
-    } else {
-      url = this.urls[item as i32];
-    }
+  get(item: i32): Fastly.FufilledRequest | null {
+    let url: string = this.urls[item as i32];
 
     this.logger.debug("getting url from pool: " + url);
     if (this.fufilled.has(url)) {
