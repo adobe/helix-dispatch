@@ -4,11 +4,11 @@ import { CoralogixLogger } from "./coralogix";
 import { Pool } from "./pool";
 
 export class SequencePool implements Pool {
-  private pool: Fastly.FetchPool;
   private fufilled: Map<string, Fastly.FufilledRequest>;
   private logger: CoralogixLogger;
   private urls: string[];
   private backend: string;
+  private headers: Headers;
 
   constructor(urls: string[], headers: Headers, backend: string, logger: CoralogixLogger) {
     this.logger = logger;
@@ -16,6 +16,7 @@ export class SequencePool implements Pool {
     this.fufilled = new Map<string, Fastly.FufilledRequest>();
     this.urls = urls;
     this.backend = backend;
+    this.headers = headers;
   }
 
   get size(): i32 {
@@ -30,8 +31,8 @@ export class SequencePool implements Pool {
     }
 
     this.logger.debug("building request: " + url);
-    const req = new Request(urls[i], {
-      headers: headers
+    const req = new Request(url, {
+      headers: this.headers
     });
     this.logger.debug("fetching: " + url);
     const response = Fastly.fetch(req, {
