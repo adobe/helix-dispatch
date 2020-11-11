@@ -7,6 +7,7 @@ import { PathInfo } from "./path-info";
 import { URLBuilder } from "./url-builder";
 import { PreferencePool } from "./preference-pool";
 import { CoralogixLogger } from "./coralogix";
+import { Pool } from "./pool";
 
 function main(req: Request, redirects: u8, redirectTo: string): Response {
   const logger = new CoralogixLogger("helix-dispatch", req);
@@ -87,7 +88,7 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
   
   logger.debug("first batch[" + firstBatchURLs.length.toString() + "]: " + firstBatchURLs.join(" , "));
 
-  let firstBatch = new PreferencePool(
+  let firstBatch: Pool = new PreferencePool(
     firstBatchURLs, 
     req.headers(), 
     "AdobeRuntime",
@@ -118,7 +119,7 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
   const secondBatchURLs = redirectURLs.concat(error404URLs);
 
   // second batch: 404 and redirects
-  let secondBatch = new PreferencePool(
+  let secondBatch: Pool = new PreferencePool(
     secondBatchURLs,
     req.headers(),
     "AdobeRuntime",
