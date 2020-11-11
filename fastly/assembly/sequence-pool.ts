@@ -30,18 +30,20 @@ export class SequencePool implements Pool {
       return this.fufilled.get(url);
     }
 
-    this.logger.debug("building request: " + url);
+    this.logger.debug("building request[" + item.toString() + "]: " + url);
     const req = new Request(url, {
       headers: this.headers
     });
-    this.logger.debug("fetching: " + url);
+    this.logger.debug("fetching[" + item.toString() + "]: " + url);
     const response = Fastly.fetch(req, {
       backend: this.backend
     }).wait();
-    this.logger.debug("storing: " + url);
+    this.logger.debug("storing[" + item.toString() + "]: " + url);
 
     const fufilled = new Fastly.FufilledRequest(req, this.backend, response);
     this.fufilled.set(url, fufilled);
+
+    this.logger.debug("returning[" + item.toString() + "]: " + url);
 
     return fufilled;
   }
