@@ -23,10 +23,10 @@ function getbaseurl() {
 }
 
 describe('Running Post-Deployment Integration Tests (Fastly)', () => {
-  it(`Service is reachable at ${getbaseurl()}?static.owner=trieloff&static.repo=helix-demo&static.ref=master&path=/index.md`, async () => {
+  it(`Service is reachable at ${getbaseurl()}?static.owner=adobe&static.repo=helix-pages&static.ref=master&path=/index.md&content.owner=trieloff&content.repo=helix-demo&content-ref=master&namespace=helix-pages`, async () => {
     await chai
       .request(getbaseurl())
-      .get('?static.owner=trieloff&static.repo=helix-demo&static.ref=master&path=/index.md')
+      .get('?static.owner=adobe&static.repo=helix-pages&static.ref=master&path=/index.md&content.owner=trieloff&content.repo=helix-demo&content-ref=master&namespace=helix-pages')
       .then((response) => {
         expect(response).to.have.status(200);
       }).catch((e) => {
