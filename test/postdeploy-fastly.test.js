@@ -26,8 +26,8 @@ describe('Running Post-Deployment Integration Tests (Fastly)', () => {
   it(`Service is reachable at ${getbaseurl()}?static.owner=adobe&static.repo=helix-pages&static.ref=master&path=/index.md&content.owner=trieloff&content.repo=helix-demo&content-ref=master&namespace=helix-pages`, async () => {
     await chai
       .request(getbaseurl())
-      .set('X-CDN-URL', 'https://trieloff--helix-demo.hlx.page/index.md')
       .get('?static.owner=adobe&static.repo=helix-pages&static.ref=master&path=/index.md&content.owner=trieloff&content.repo=helix-demo&content-ref=master&namespace=helix-pages')
+      .set('X-CDN-URL', 'https://trieloff--helix-demo.hlx.page/index.md')
       .then((response) => {
         expect(response).to.have.status(200);
       })
