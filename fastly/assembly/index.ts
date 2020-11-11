@@ -35,7 +35,7 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
   // + "&content.package=" + var.package
   let contentPackage = url.queryparam("content.package", "");
   // + "&content.index=" + req.http.X-Index
-  let contentIndex = url.queryparam("content.index", "").split(",");
+  let contentIndex = url.queryparam("content.index", "index.html").split(",");
   // + "&path=" + req.url.path
   let path = url.queryparam("path", "");
 
