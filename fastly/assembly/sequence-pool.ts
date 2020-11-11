@@ -16,19 +16,6 @@ export class SequencePool implements Pool {
     this.fufilled = new Map<string, Fastly.FufilledRequest>();
     this.urls = urls;
     this.backend = backend;
-
-    for (let i = 0; i < urls.length; i++) {
-      const req = new Request(urls[i], {
-        headers: headers
-      });
-      logger.debug("running fetch: " + urls[i]);
-      const pending = Fastly.fetch(req, {
-        backend: backend
-      });
-      logger.debug("adding url to pool: " + urls[i]);
-      this.pool.push(pending);
-      logger.debug("done.");
-    }
   }
 
   get size(): i32 {
