@@ -29,9 +29,18 @@ export class CoralogixLogger {
     encoder.pushObject("json");
     encoder.setString("message", message);
 
+    encoder.pushObject("edgecompute");
+    encoder.setString("url", this.req.url());
+    encoder.popObject();
+
     // json.cdn
     encoder.pushObject("cdn");
-    encoder.setString("url", this.req.url());
+    if (this.req.headers().has("x-cdn-url")) {
+      encoder.setString("url", this.req.headers().get("x-cdn-url") as string);
+    } else {
+      encoder.setString("url", this.req.url());
+    }
+    
 
     // json.cdn.time
     encoder.pushObject("time");
