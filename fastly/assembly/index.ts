@@ -6,6 +6,7 @@ import { RefPair } from "./ref-pair";
 import { PathInfo } from "./path-info";
 import { URLBuilder } from "./url-builder";
 import { PreferencePool } from "./preference-pool";
+import { SequencePool } from "./sequence-pool";
 import { CoralogixLogger } from "./coralogix";
 import { Pool } from "./pool";
 
@@ -88,7 +89,7 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
   
   logger.debug("first batch[" + firstBatchURLs.length.toString() + "]: " + firstBatchURLs.join(" , "));
 
-  let firstBatch: Pool = new PreferencePool(
+  let firstBatch: Pool = new SequencePool(
     firstBatchURLs, 
     req.headers(), 
     "AdobeRuntime",
@@ -118,7 +119,7 @@ function main(req: Request, redirects: u8, redirectTo: string): Response {
   const secondBatchURLs = redirectURLs.concat(error404URLs);
 
   // second batch: 404 and redirects
-  let secondBatch: Pool = new PreferencePool(
+  let secondBatch: Pool = new SequencePool(
     secondBatchURLs,
     req.headers(),
     "AdobeRuntime",
