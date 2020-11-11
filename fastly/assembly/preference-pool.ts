@@ -51,7 +51,7 @@ export class PreferencePool implements Pool {
     this.fufilled.set(req.request.url(), req);
 
     // try again, maybe this time the pool has the requested url
-    return this.get(url);
+    return this.get(item);
   }
 
 
