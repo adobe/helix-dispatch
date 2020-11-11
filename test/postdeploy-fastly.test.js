@@ -23,7 +23,7 @@ function getbaseurl() {
 }
 
 describe('Running Post-Deployment Integration Tests (Fastly)', () => {
-  it(`Service is reachable at ${getbaseurl()}`, async () => {
+  it(`Service is reachable at ${getbaseurl()}?static.owner=trieloff&static.repo=helix-demo&static.ref=master&path=/index.md`, async () => {
     await chai
       .request(getbaseurl())
       .get('?static.owner=trieloff&static.repo=helix-demo&static.ref=master&path=/index.md')
@@ -34,7 +34,7 @@ describe('Running Post-Deployment Integration Tests (Fastly)', () => {
       });
   }).timeout(60000);
 
-  it('Redirects work', async () => {
+  it(`Redirects work at ${getbaseurl()}?static.owner=trieloff&static.repo=helix-demo&static.ref=master&path=/tag/coronavirus/&content.owner=trieloff&content.repo=helix-demo&content.ref=blog-redirects`, async () => {
     // this is using the spreadsheet from https://adobe.sharepoint.com/:x:/r/sites/TheBlog/_layouts/15/doc2.aspx?sourcedoc=%7Bb20ba4a8-5040-40da-a19c-bad381543fb6%7D&action=editnew&cid=0c46f5e7-178b-4783-96d6-3f49edbe3043
     await chai
       .request(getbaseurl())
