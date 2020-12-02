@@ -35,7 +35,7 @@
     "@adobe/helix-epsagon": "1.5.4",
     "@adobe/helix-status": "8.2.2",
     "@adobe/openwhisk-action-logger": "2.2.2",
-    "@adobe/openwhisk-action-utils": "4.3.2",
+    "@adobe/openwhisk-action-utils": "4.3.3",
     "ferrum": "1.7.0",
     "openwhisk": "3.21.3"
   },
