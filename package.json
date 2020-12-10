@@ -33,7 +33,7 @@
   "homepage": "https://github.com/adobe/helix-dispatch#readme",
   "dependencies": {
     "@adobe/helix-epsagon": "1.5.5",
-    "@adobe/helix-status": "8.2.2",
+    "@adobe/helix-status": "8.2.3",
     "@adobe/openwhisk-action-logger": "2.2.2",
     "@adobe/openwhisk-action-utils": "4.4.0",
     "ferrum": "1.7.0",
