@@ -1,3 +1,10 @@
+## [4.3.9](https://github.com/adobe/helix-dispatch/compare/v4.3.8...v4.3.9) (2020-12-10)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @adobe/helix-status to v8.2.3 ([#372](https://github.com/adobe/helix-dispatch/issues/372)) ([7896915](https://github.com/adobe/helix-dispatch/commit/7896915f1475435a1698f1977395c73eddc4718c))
+
 ## [4.3.8](https://github.com/adobe/helix-dispatch/compare/v4.3.7...v4.3.8) (2020-12-07)
 
 
