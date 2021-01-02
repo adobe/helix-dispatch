@@ -12,11 +12,14 @@
 
 /* eslint-env mocha */
 
-const proxyquire = require('proxyquire');
 const assert = require('assert');
-const OpenWhiskError = require('openwhisk/lib/openwhisk_error');
+const querystring = require('querystring');
+const { Request } = require('node-fetch');
+const nock = require('nock');
 const { MemLogger, SimpleInterface } = require('@adobe/helix-log');
 const pkgJson = require('../package.json');
+const index = require('../src/index.js').main;
+const { fetchContext } = require('../src/utils.js');
 
 function createLogger(level = 'info') {
   const logger = new MemLogger({
@@ -29,204 +32,137 @@ function createLogger(level = 'info') {
   return new SimpleInterface({ logger });
 }
 
-const OK_RESULT = () => Promise.resolve({
-  activationId: 'abcd-1234',
-  response: {
-    result: {
-      statusCode: 200,
-      body: 'Hello, world.',
-    },
-  },
-});
+const OK_RESULT = () => [200, 'Hello, world.', { 'x-openwhisk-activation-id': 'abcd-1234' }];
 
-const ERR_RESULT_404 = () => Promise.resolve({
-  activationId: 'abcd-1234',
-  response: {
-    result: {
-      statusCode: 404,
-      body: 'not found',
-    },
-  },
-});
+const OK_RESULT_404 = () => [200, '404 Page', { 'x-openwhisk-activation-id': 'abcd-1234' }];
 
-const SEVERE_RESULT = () => Promise.resolve({
-  activationId: 'abcd-1234',
-  response: {
-    result: {
-      statusCode: 500,
-      body: 'server error',
-    },
-  },
-});
+const ERR_RESULT_404 = () => [404, 'not found', { 'x-openwhisk-activation-id': 'abcd-1234' }];
 
-const TIMEOUT_RESULT = () => Promise.resolve({
-  activationId: 'abcd-1234',
-  response: {
-    result: {
-      statusCode: 503,
-      body: 'gateway timeout',
-    },
-  },
-});
+const SEVERE_RESULT = () => [500, 'server error', { 'x-openwhisk-activation-id': 'abcd-1234' }];
 
-const TIMEOUT_ERROR = () => {
-  throw new OpenWhiskError('POST https://runtime.adobe.io/api/v1/namespaces/helix-mini/actions/hello?blocking=true Returned HTTP 502 (Bad Gateway) --> "The action exceeded its time limits of 100 milliseconds."', {}, 502);
-};
+const TIMEOUT_RESULT = () => [503, 'gateway timeout', { 'x-openwhisk-activation-id': 'abcd-1234' }];
 
-const OVERLOAD_RESULT = () => Promise.resolve({
-  activationId: 'abcd-1234',
-  response: {
-    result: {
-      statusCode: 429,
-      body: 'too many requests',
-    },
-  },
-});
+const TIMEOUT_ERROR = () => [502, 'The action exceeded its time limits of 100 milliseconds.', { 'x-openwhisk-activation-id': 'abcd-1234' }];
+
+const OVERLOAD_RESULT = () => [429, 'too many requests', { 'x-openwhisk-activation-id': 'abcd-1234' }];
 
 const OVERLOAD_ERROR = () => {
-  throw new OpenWhiskError('POST https://runtime.adobe.io/api/v1/namespaces/helix-mini/actions/hellooo?blocking=true Returned HTTP 429 (Too Many Requests) --> "Too many requests in the last minute (count: 3, allowed: 2)."', {}, 429);
+  throw new Error('POST https://runtime.adobe.io/api/v1/namespaces/helix-mini/actions/hellooo?blocking=true Returned HTTP 429 (Too Many Requests) --> "Too many requests in the last minute (count: 3, allowed: 2)."', {}, 429);
 };
 
-const ACTION_TIMEOUT_RESULT = () => Promise.resolve({
-  activationId: 'abcd-1234',
-  response: {
-    result: {
-      statusCode: 502,
-      body: 'action timed out',
-    },
-  },
-});
+const ACTION_TIMEOUT_RESULT = () => [502, 'action timed out', { 'x-openwhisk-activation-id': 'abcd-1234' }];
 
-const ERR_RESULT_404_HANDLED = (resolver) => {
-  if (resolver.params.path === '/404.html') {
-    return OK_RESULT();
+const ERR_RESULT_404_HANDLED = (params) => {
+  if (params.path === '/404.html') {
+    return OK_RESULT_404();
   }
   return ERR_RESULT_404();
 };
 
-const FAIL_RESULT_404 = () => {
-  const error = new Error('OpenWhiskError: POST https://runtime.adobe.io/api/v1/namespaces/acme/default/html Returned HTTP 404 (Not Found)');
-  error.error = {
-    code: '46qNNODdPtdUc0BEwMJzvVqOBDcv18uA',
-    error: 'The requested resource does not exist.',
-  };
-  error.statusCode = 404;
-  throw error;
-};
+const FAIL_RESULT_404 = () => [404, 'The requested resource does not exist.'];
 
-const FAIL_RESULT_502 = () => {
-  const error = new Error('OpenWhiskError: POST https://runtime.adobe.io/api/v1/namespaces/acme/default/html Returned HTTP 502 (Bad Gateway)');
-  error.error = {
-    activationId: '1f92c2987a9a4eef92c2987a9abeefcf',
-    response: {
-      result: {
-        error: 'The action did not produce a valid response and exited unexpectedly.',
-      },
-      status: 'action developer error',
-      success: false,
-    },
-  };
-  error.statusCode = 502;
-  throw error;
-};
+const FAIL_RESULT_502 = () => [502, 'The action did not produce a valid response and exited unexpectedly.'];
 
-const REF_RESULT = () => Promise.resolve({
-  body: {
+const REF_RESULT = () => [
+  200,
+  {
     fqRef: 'refs/heads/master',
     sha: '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
   },
-  headers: { 'Content-Type': 'application/json' },
-  statusCode: 200,
-});
+  {
+    'Content-Type': 'application/json',
+  }];
 
-const NO_REDIR_RESULT = () => Promise.resolve({
-  statusCode: 204,
-});
+const NO_REDIR_RESULT = () => [204];
 
-const TEMP_REDIR_RESULT = () => Promise.resolve({
-  statusCode: 302,
-  headers: {
-    Location: '/look-here.html',
-  },
-});
+const TEMP_REDIR_RESULT = () => [302, '', { location: '/look-here.html' }];
 
-const PERM_REDIR_RESULT = () => Promise.resolve({
-  statusCode: 301,
-  headers: {
-    Location: '/look-here.html',
-  },
-});
+const PERM_REDIR_RESULT = () => [301, '', { location: '/look-here.html' }];
 
-const INTL_REDIR_RESULT = () => Promise.resolve({
-  statusCode: 307,
-  headers: {
-    Location: '/look-here.html',
-  },
-});
+const INTL_REDIR_RESULT = () => [307, '', { location: '/look-here.html' }];
 
-// this is a bit a hack, but I don't know how to change it during tests
 let staticResult = OK_RESULT;
 let invokeResult = OK_RESULT;
 let refResult = REF_RESULT;
 let redirResult = NO_REDIR_RESULT;
 
-// count how many time espagon was run.
-let epsagonified = 0;
+const runtimeInterceptor = (uri) => {
+  // console.log('intercept', uri);
+  const params = querystring.parse(uri.split('?')[1]);
+  if (uri.indexOf('resolve-git-ref') > 0) {
+    return refResult(params);
+  }
+  if (uri.indexOf('redirect') > 0) {
+    return redirResult(params);
+  }
+  if (uri.indexOf('static') > 0) {
+    return staticResult(params);
+  }
+  return invokeResult(params);
+};
 
-const index = proxyquire('../src/index.js', {
-  './openwhisk.js': () => ({
-    actions: {
-      invoke(...args) {
-        const { name } = args[0];
-        if (name.startsWith('helix-services/resolve-git-ref')) {
-          return refResult(...args);
-        } else if (name.startsWith('helix-services/redirect')) {
-          return redirResult(...args);
-        } else if (name.startsWith('helix-services/static')) {
-          return staticResult(...args);
-        }
-        return invokeResult(...args);
-      },
-      client: {
-        params: async () => ({
-          headers: {
-            'user-agent': 'helix-test',
-          },
-        }),
+function createRequest(params = {}, headers = {
+  host: 'foo.com',
+}) {
+  return new Request(`https://action.com/dispatch?${querystring.encode(params)}`, {
+    headers,
+  });
+}
+
+function createContext(opts) {
+  return {
+    log: createLogger(),
+    _log: {
+      // eslint-disable-next-line no-console
+      debug: console.debug,
+      // eslint-disable-next-line no-console
+      info: console.info,
+      // eslint-disable-next-line no-console
+      warn: console.warn,
+      // eslint-disable-next-line no-console
+      error: console.error,
+      // eslint-disable-next-line no-console
+      infoFields: console.info,
+    },
+    resolver: {
+      createURL({ package, name, version }) {
+        return new URL(`https://adobeioruntime.net/api/v1/web/helix/${package}/${name}@${version}`);
       },
     },
-  }),
-
-  epsagon: {
-    openWhiskWrapper(action) {
-      return (params) => {
-        epsagonified += 1;
-        return action(params);
-      };
-    },
-    '@global': true,
-  },
-}).main;
+    ...opts,
+  };
+}
 
 describe('Index Tests', () => {
+  before(() => {
+    nock('https://adobeioruntime.net')
+      .persist()
+      .get(/.*/)
+      .delay(Math.random() * 200 + 100)
+      .reply(runtimeInterceptor);
+  });
+
   beforeEach(() => {
     invokeResult = OK_RESULT;
     staticResult = OK_RESULT;
     redirResult = NO_REDIR_RESULT;
   });
 
+  after(async () => {
+    nock.cleanAll();
+    await fetchContext.disconnectAll();
+  });
+
   it('index returns status response', async () => {
-    const result = await index({
-      __ow_method: 'get',
-      __ow_path: '/_status_check/healthcheck.json',
-    });
-    delete result.actionOptions;
-    delete result.headers['X-Version'];
-    assert.equal(result.statusCode, 200);
-    assert.deepEqual(result.headers, {
-      'Content-Type': 'application/json',
-    });
-    const { body } = result;
+    const result = await index(createRequest(), createContext({
+      pathInfo: {
+        suffix: '/_status_check/healthcheck.json',
+      },
+    }));
+    assert.equal(result.status, 200);
+    assert.equal(result.headers.get('content-type'), 'application/json');
+
+    const body = JSON.parse(result.body.toString());
     delete body.process;
     delete body.response_time;
     assert.deepEqual(body, {
@@ -236,32 +172,28 @@ describe('Index Tests', () => {
   });
 
   it('index returns action response', async () => {
-    const result = await index({
+    const result = await index(createRequest({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-    });
-    delete result.actionOptions;
-    assert.deepEqual(result, {
-      statusCode: 200,
-      body: 'Hello, world.',
-    });
+    }), createContext());
+
+    assert.equal(result.status, 200);
+    assert.equal(await result.text(), 'Hello, world.');
   });
 
   it('index returns action response even with redirect', async () => {
     redirResult = PERM_REDIR_RESULT;
 
-    const result = await index({
+    const result = await index(createRequest({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.owner': 'adobe',
       'content.repo': 'helix-home',
       'content.path': '/redirect-me',
-    });
-    delete result.actionOptions;
-    assert.deepEqual(result, {
-      statusCode: 200,
-      body: 'Hello, world.',
-    });
+    }), createContext());
+
+    assert.equal(result.status, 200);
+    assert.equal(await result.text(), 'Hello, world.');
   });
 
   it('index returns 301 for permanent redirect', async () => {
@@ -269,47 +201,16 @@ describe('Index Tests', () => {
     staticResult = ERR_RESULT_404;
     redirResult = PERM_REDIR_RESULT;
 
-    const result = await index({
+    const result = await index(createRequest({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.owner': 'adobe',
       'content.repo': 'helix-home',
       'content.path': '/redirect-me',
-    });
+    }), createContext());
 
-    assert.deepEqual(result, {
-      statusCode: 301,
-      headers: {
-        Location: '/look-here.html',
-      },
-    });
-  });
-
-  it('index uses locked version for redirect', async () => {
-    invokeResult = ERR_RESULT_404;
-    staticResult = ERR_RESULT_404;
-    redirResult = (req) => {
-      assert.equal(req.name, 'helix-services/redirect@ci234');
-      return PERM_REDIR_RESULT();
-    };
-
-    const result = await index({
-      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-      'content.owner': 'adobe',
-      'content.repo': 'helix-home',
-      'content.path': '/redirect-me',
-      __ow_headers: {
-        'x-ow-version-lock': 'redirect=redirect@ci234',
-      },
-    });
-
-    assert.deepEqual(result, {
-      statusCode: 301,
-      headers: {
-        Location: '/look-here.html',
-      },
-    });
+    assert.equal(result.status, 301);
+    assert.equal(result.headers.get('location'), '/look-here.html');
   });
 
   it('index returns 302 for temporary redirect', async () => {
@@ -317,20 +218,16 @@ describe('Index Tests', () => {
     staticResult = ERR_RESULT_404;
     redirResult = TEMP_REDIR_RESULT;
 
-    const result = await index({
+    const result = await index(createRequest({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.owner': 'adobe',
       'content.repo': 'helix-home',
       'content.path': '/redirect-me',
-    });
+    }), createContext());
 
-    assert.deepEqual(result, {
-      statusCode: 302,
-      headers: {
-        Location: '/look-here.html',
-      },
-    });
+    assert.equal(result.status, 302);
+    assert.equal(result.headers.get('location'), '/look-here.html');
   });
 
   it('index returns 508 for internal redirect loop', async () => {
@@ -338,445 +235,249 @@ describe('Index Tests', () => {
     staticResult = ERR_RESULT_404;
     redirResult = INTL_REDIR_RESULT;
 
-    const result = await index({
+    const result = await index(createRequest({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.owner': 'adobe',
       'content.repo': 'helix-home',
       'content.path': '/redirect-me',
-    });
+    }), createContext());
 
-    assert.deepEqual(result, {
-      statusCode: 508,
-      body: 'Too many internal redirects to /look-here.html',
-    });
-  });
+    assert.equal(result.status, 508);
+    assert.equal(await result.text(), 'Too many internal redirects to /look-here.html');
+  }).timeout(4000);
 
   it('action does not reveal secrets', async () => {
-    const logger = createLogger('debug');
-    await index({
+    const log = createLogger('debug');
+    await index(createRequest({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       GITHUB_TOKEN: 'super-secret-token',
-      __ow_logger: logger,
-      __ow_headers: {
-        authorization: 'super-secret-authorization',
-      },
-    });
-    const output = JSON.stringify(logger.logger.buf);
+    }, {
+      authorization: 'super-secret-authorization',
+    }), createContext({ log }));
+
+    const output = JSON.stringify(log.logger.buf, null, 2);
     assert.ok(output.indexOf('super-secret-token') < 0, 'log should not contain GITHUB_TOKEN');
     assert.ok(output.indexOf('super-secret-authorization') < 0, 'log should not contain authorization header');
   });
 
   it('X-Dispatch-NoCache header is set, Cache-Control and Surrogate-Control response header are set', async () => {
-    const result = await index({
-      __ow_headers: {
-        'x-dispatch-nocache': 'true',
-      },
+    const result = await index(createRequest({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-    });
-    delete result.actionOptions;
-    assert.deepEqual(result, {
-      statusCode: 200,
-      body: 'Hello, world.',
-      headers: {
-        'Cache-Control': 'max-age=600, must-revalidate, private',
-      },
-    });
+    }, {
+      'x-dispatch-nocache': 'true',
+    }), createContext());
+
+    assert.equal(result.status, 200);
+    assert.equal(await result.text(), 'Hello, world.');
+    assert.equal(result.headers.get('cache-control'), 'max-age=600, must-revalidate, private');
   });
 
   it('index returns 404 response', async () => {
-    const logger = createLogger('debug');
+    const log = createLogger('debug');
     invokeResult = ERR_RESULT_404;
     staticResult = ERR_RESULT_404;
 
-    const result = await index({
+    const result = await index(createRequest({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-      __ow_logger: logger,
-    }, logger);
-    delete result.actionOptions;
-    assert.deepEqual(result, {
-      statusCode: 404,
-    });
-
-    const output = JSON.stringify(logger.logger.buf, null, 2);
-    // console.log(output);
-    assert.ok(output.indexOf('no valid response could be fetched') >= 0);
+    }), createContext({ log }));
+    assert.equal(result.status, 404);
   });
 
   it('index returns 200 response for static files', async () => {
-    const logger = createLogger('debug');
     invokeResult = ERR_RESULT_404;
-    staticResult = (req) => {
-      if (req.params.path === '/index.html') {
+    staticResult = (params) => {
+      if (params.path === '/index.html') {
         return OK_RESULT();
       } else {
-        return FAIL_RESULT_404(false);
+        return ERR_RESULT_404();
       }
     };
 
-    const result = await index({
+    const result = await index(createRequest({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-    }, logger);
-    delete result.actionOptions;
-    assert.deepEqual(result, {
-      body: 'Hello, world.',
-      statusCode: 200,
-    });
-  });
+    }), createContext());
 
-  it('index uses locked version for helix-static', async () => {
-    const logger = createLogger('debug');
-    invokeResult = ERR_RESULT_404;
-    staticResult = (req) => {
-      assert.equal(req.name, 'helix-services/static@ci234');
-      if (req.params.path === '/index.html') {
-        return OK_RESULT();
-      } else {
-        return FAIL_RESULT_404(false);
-      }
-    };
-
-    const result = await index({
-      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-      __ow_headers: {
-        'x-ow-version-lock': 'static=static@ci234',
-      },
-    }, logger);
-    delete result.actionOptions;
-    assert.deepEqual(result, {
-      body: 'Hello, world.',
-      statusCode: 200,
-    });
+    assert.equal(result.status, 200);
+    assert.equal(await result.text(), 'Hello, world.');
   });
 
   it('index returns 200 response for static files with ref=master', async () => {
-    const logger = createLogger('debug');
-    invokeResult = (req) => {
-      if (req.params.path === '/index.md') {
+    invokeResult = (params) => {
+      if (params.path === '/index.md') {
         return OK_RESULT();
       } else {
-        return FAIL_RESULT_404(false);
+        return ERR_RESULT_404();
       }
     };
 
-    const result = await index({
+    const result = await index(createRequest({
       'static.owner': 'trieloff',
       'static.repo': 'helix-demo',
       'static.ref': 'master',
       path: '/index.md',
-    }, logger);
-    delete result.actionOptions;
-    assert.deepEqual(result, {
-      body: 'Hello, world.',
-      statusCode: 200,
-    });
-  });
+    }), createContext());
 
-  it('index uses locked version for git-resolve-ref', async () => {
-    const logger = createLogger('debug');
-    invokeResult = ERR_RESULT_404;
-    refResult = (req) => {
-      assert.equal(req.name, 'helix-services/resolve-git-ref@ci234');
-      return {
-        body: {
-          fqRef: 'refs/heads/master',
-          sha: 'aaaaaaaaaaaabbbbbbbbbbbcccccccccccdddddd',
-        },
-        headers: { 'Content-Type': 'application/json' },
-        statusCode: 200,
-      };
-    };
-    staticResult = (req) => {
-      assert.equal(req.params.ref, 'aaaaaaaaaaaabbbbbbbbbbbcccccccccccdddddd');
-      return OK_RESULT();
-    };
-
-    const result = await index({
-      'static.owner': 'trieloff',
-      'static.repo': 'helix-demo',
-      'static.ref': 'master',
-      path: '/index.md',
-      __ow_headers: {
-        'x-ow-version-lock': 'resolve-git-ref=resolve-git-ref@ci234',
-      },
-    }, logger);
-    delete result.actionOptions;
-    assert.deepEqual(result, {
-      body: 'Hello, world.',
-      statusCode: 200,
-    });
+    assert.equal(result.status, 200);
+    assert.equal(await result.text(), 'Hello, world.');
   });
 
   it('index returns 500 response', async () => {
-    const logger = createLogger();
+    const log = createLogger();
     invokeResult = SEVERE_RESULT;
     staticResult = ERR_RESULT_404;
 
-    const result = await index({
+    const result = await index(createRequest({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-      __ow_logger: logger,
-    }, logger);
-    delete result.actionOptions;
-    assert.deepEqual(result, {
-      statusCode: 500,
-    });
+    }), createContext({ log }));
 
-    const output = JSON.stringify(logger.logger.buf);
+    const output = JSON.stringify(log.logger.buf, null, 2);
+    // console.log(output);
+
+    assert.equal(result.status, 500);
     assert.ok(output.indexOf('no valid response could be fetched') >= 0);
   });
 
   it('index returns 503 response', async () => {
-    const logger = createLogger();
+    const log = createLogger();
     invokeResult = TIMEOUT_RESULT;
     staticResult = ERR_RESULT_404;
 
-    const result = await index({
+    const result = await index(createRequest({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-      __ow_logger: logger,
-    }, logger);
-    delete result.actionOptions;
-    assert.deepEqual(result, {
-      statusCode: 503,
-    });
+    }), createContext({ log }));
 
-    const output = JSON.stringify(logger.logger.buf);
+    const output = JSON.stringify(log.logger.buf, null, 2);
+    // console.log(output);
+
+    assert.equal(result.status, 503);
     assert.ok(output.indexOf('no valid response could be fetched') >= 0);
   });
 
   it('index returns 429 response when seeing 429s', async () => {
-    const logger = createLogger();
+    const log = createLogger();
     invokeResult = OVERLOAD_RESULT;
     staticResult = ERR_RESULT_404;
 
-    const result = await index({
+    const result = await index(createRequest({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-      __ow_logger: logger,
-    }, logger);
-    delete result.actionOptions;
-    assert.deepEqual(result, {
-      statusCode: 429,
-    });
+    }), createContext({ log }));
 
-    const output = JSON.stringify(logger.logger.buf);
+    const output = JSON.stringify(log.logger.buf);
+    assert.equal(result.status, 429);
     assert.ok(output.indexOf('no valid response could be fetched') >= 0);
   });
 
   it('index returns 429 response when seeing 429s (as Errors)', async () => {
-    const logger = createLogger();
+    const log = createLogger();
     refResult = OVERLOAD_ERROR;
     invokeResult = OVERLOAD_RESULT;
     staticResult = ERR_RESULT_404;
 
-    const result = await index({
+    const result = await index(createRequest({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-      __ow_logger: logger,
-    }, logger);
-    delete result.actionOptions;
-    assert.deepEqual(result, {
-      statusCode: 429,
-    });
+    }), createContext({ log }));
 
-    const output = JSON.stringify(logger.logger.buf);
+    const output = JSON.stringify(log.logger.buf);
+    assert.equal(result.status, 429);
     assert.ok(output.indexOf('no valid response could be fetched') >= 0);
   });
 
   it('index returns 504 response when seeing 502s', async () => {
-    const logger = createLogger();
+    const log = createLogger();
     invokeResult = ACTION_TIMEOUT_RESULT;
     staticResult = ERR_RESULT_404;
 
-    const result = await index({
+    const result = await index(createRequest({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-      __ow_logger: logger,
-    }, logger);
-    delete result.actionOptions;
-    assert.deepEqual(result, {
-      statusCode: 504,
-    });
+    }), createContext({ log }));
 
-    const output = JSON.stringify(logger.logger.buf);
+    const output = JSON.stringify(log.logger.buf);
+    assert.equal(result.status, 504);
     assert.ok(output.indexOf('no valid response could be fetched') >= 0);
   });
 
   it('index returns 504 response when seeing 502s (as Errors)', async () => {
-    const logger = createLogger();
+    const log = createLogger();
     refResult = TIMEOUT_ERROR;
     invokeResult = TIMEOUT_ERROR;
     staticResult = ERR_RESULT_404;
 
-    const result = await index({
-      'static.ref': 'master',
-      'content.ref': 'master',
-      __ow_logger: logger,
-    }, logger);
-    delete result.actionOptions;
-    assert.deepEqual(result, {
-      statusCode: 504,
-    });
+    const result = await index(createRequest({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+    }), createContext({ log }));
 
-    const output = JSON.stringify(logger.logger.buf);
+    const output = JSON.stringify(log.logger.buf);
+    assert.equal(result.status, 504);
     assert.ok(output.indexOf('no valid response could be fetched') >= 0);
   });
 
   it('index produces 404 when fetcher fails due to missing action (with 404 handler).', async () => {
-    const logger = createLogger();
     invokeResult = FAIL_RESULT_404;
     staticResult = ERR_RESULT_404_HANDLED;
 
-    const result = await index({
+    const result = await index(createRequest({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-      __ow_logger: logger,
-    });
+    }), createContext());
 
-    // const output = JSON.stringify(logger.logger.buf, null, 2);
-    // console.log(output);
-
-    delete result.actionOptions;
-    assert.deepEqual(result, {
-      body: 'Hello, world.',
-      statusCode: 404,
-    });
+    assert.equal(result.status, 404);
+    assert.equal(await result.text(), '404 Page');
   });
 
   it('index produces 404 when fetcher fails due to missing action (without 404 handler).', async () => {
-    const logger = createLogger();
     invokeResult = FAIL_RESULT_404;
     staticResult = ERR_RESULT_404;
 
-    const result = await index({
+    const result = await index(createRequest({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-      __ow_logger: logger,
-    });
+    }), createContext());
 
-    // const output = JSON.stringify(logger.logger.buf, null, 2);
-    // console.log(output);
-
-    delete result.actionOptions;
-    assert.deepEqual(result, {
-      statusCode: 404,
-    });
+    assert.equal(result.status, 404);
+    assert.equal(await result.text(), '');
   });
 
   it('index produces 504 error when fetcher fails due to terminating action (with 404 handler).', async () => {
-    const logger = createLogger();
+    const log = createLogger();
     invokeResult = FAIL_RESULT_502;
     staticResult = ERR_RESULT_404_HANDLED;
 
-    const result = await index({
+    const result = await index(createRequest({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-      __ow_logger: logger,
-    });
-    const output = JSON.stringify(logger.logger.buf, null, 2);
+    }), createContext({ log }));
+
+    const output = JSON.stringify(log.logger.buf, null, 2);
     // console.log(output);
 
-    assert.deepEqual(result, {
-      statusCode: 504,
-    });
-    assert.ok(output.indexOf('Error: OpenWhiskError: POST https://runtime.adobe.io/api/v1/namespaces/acme/default/html Returned HTTP 502 (Bad Gateway)') >= 0);
+    assert.equal(result.status, 504);
+    assert.ok(output.indexOf(' 502 The action did not produce a valid response and exited unexpectedly.') >= 0);
   });
 
   it('index produces 504 error when fetcher fails due to terminating action (without 404 handler).', async () => {
-    const logger = createLogger();
+    const log = createLogger();
     invokeResult = FAIL_RESULT_502;
     staticResult = ERR_RESULT_404;
 
-    const result = await index({
+    const result = await index(createRequest({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-      __ow_logger: logger,
-    });
-    const output = JSON.stringify(logger.logger.buf, null, 2);
+    }), createContext({ log }));
+
+    const output = JSON.stringify(log.logger.buf, null, 2);
     // console.log(output);
-    assert.deepEqual(result, {
-      statusCode: 504,
-    });
-    assert.ok(output.indexOf('Error: OpenWhiskError: POST https://runtime.adobe.io/api/v1/namespaces/acme/default/html Returned HTTP 502 (Bad Gateway)') >= 0);
-  });
 
-  it('index function w/o token does not instrument epsagon', async () => {
-    const expected = epsagonified;
-    await index({});
-    assert.equal(expected, epsagonified, 'epsagon not instrumented');
-  });
-
-  it('index function instruments epsagon', async () => {
-    const expected = epsagonified + 1;
-    await index({
-      EPSAGON_TOKEN: 'foobar',
-    });
-    assert.equal(expected, epsagonified, 'epsagon instrumented');
-  });
-
-  it('index function runs epsagon once for each invocation', async () => {
-    const expected = epsagonified + 2;
-    await index({
-      EPSAGON_TOKEN: 'foobar',
-    });
-    await index({
-      EPSAGON_TOKEN: 'foobar',
-    });
-    assert.equal(expected, epsagonified, 'epsagon instrumented');
-  });
-
-  it('index does not crash with empty action response', async () => {
-    invokeResult = () => Promise.resolve({});
-    staticResult = () => Promise.resolve({});
-
-    const result = await index({
-      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-    });
-    delete result.actionOptions;
-    assert.deepEqual(result, {
-      statusCode: 500,
-      body: 'Invalid state',
-    });
-  });
-
-  it('index does not crash with no action response', async () => {
-    invokeResult = () => Promise.resolve();
-    staticResult = () => Promise.resolve();
-
-    const result = await index({
-      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-    });
-    delete result.actionOptions;
-    assert.deepEqual(result, {
-      statusCode: 500,
-      body: 'Invalid state',
-    });
-  });
-
-  it('index does not crash with incomplete action response', async () => {
-    invokeResult = () => Promise.resolve({
-      activationId: 'abcd-1234',
-      response: {
-      },
-    });
-    staticResult = () => Promise.resolve();
-
-    const result = await index({
-      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-    });
-    delete result.actionOptions;
-    assert.deepEqual(result, {
-      statusCode: 500,
-      body: 'Invalid state',
-    });
+    assert.equal(result.status, 504);
+    assert.ok(output.indexOf(' 502 The action did not produce a valid response and exited unexpectedly.') >= 0);
   });
 });

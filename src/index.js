@@ -10,15 +10,16 @@
  * governing permissions and limitations under the License.
  */
 
-const { wrap, VersionLock } = require('@adobe/openwhisk-action-utils');
+const { Response } = require('node-fetch');
+const { AbortController } = require('@adobe/helix-fetch');
+const { wrap } = require('@adobe/openwhisk-action-utils');
 const { logger } = require('@adobe/openwhisk-action-logger');
 const { wrap: status } = require('@adobe/helix-status');
-const { epsagon } = require('@adobe/helix-epsagon');
 const { deepclone } = require('ferrum');
-const openwhisk = require('./openwhisk.js');
 const resolvePreferred = require('./resolve-preferred');
 const { fetchers } = require('./fetchers');
 const { redirect, abortRedirect } = require('./redirects');
+const { fetch, getFetchOptions, appendURLParams } = require('./utils');
 
 /**
  * Executes the fetcher promise and catches the errors. It determines the most severe error and
@@ -37,7 +38,7 @@ async function deErrorify(log, promise) {
       let worst = 0;
       e.forEach((err, idx) => {
         if (!err.statusCode || err.statusCode >= 500 || err.statusCode === 429) {
-          const id = err.actionOptions ? err.actionOptions.idx : '-';
+          const id = err.invokeInfo ? err.invokeInfo.idx : '-';
           log.error(`[${id}] ${err.message}`);
           worst = idx;
         }
@@ -45,23 +46,33 @@ async function deErrorify(log, promise) {
       severe = e[worst];
     }
     if (severe.statusCode === 404) {
-      return severe;
+      return new Response('', {
+        status: 404,
+      });
     }
     throw severe;
   }
 }
 
+function extractActivationId(response) {
+  // todo: respect other targets / move to helix-deploy
+  return response.headers.get('x-openwhisk-activation-id');
+}
+
 /**
- * Helper function to safely get header, guarding against potentially missing __ow_headers
- * @param {object} params action params
- * @param {string} name header name
- * @returns {string} the header or the empty string.
+ * if requested, disable caching in the CDN (private) and
+ * tell browser to re-validate after 10 minutes (must-revalidate, max-age=600)
+ * @param {Request} req the request
+ * @param {Response} resp the response
+ * @param {Logger} log the logger
+ * @return {Response} the given `resp`
  */
-function getHeader(params, name) {
-  if (!params || !params.__ow_headers) {
-    return '';
+function handleNoCache(req, resp, log) {
+  if (req.headers.get('x-dispatch-nocache')) {
+    log.info('received no cache instruction via X-Dispatch-NoCache header');
+    resp.headers.set('Cache-Control', 'max-age=600, must-revalidate, private');
   }
-  return params.__ow_headers[name] || '';
+  return resp;
 }
 
 /**
@@ -77,6 +88,8 @@ const MAX_REDIRECTS = 3;
  * 3. fetch from the fallback (`static`) repository
  * 4. fetch `/404.html` from the content or fallback repository
  *
+ * @param {Request} req The request
+ * @param {Context} context Universal adapter context
  * @param {object} params the URL parameters
  * @param {string} params.content.owner the GitHub owner of the content (primary) repository
  * @param {string} params.content.repo the GitHub repo of the content repository
@@ -90,73 +103,74 @@ const MAX_REDIRECTS = 3;
  * @param {string} params.path the requested URL, without a query string
  * @returns {object} the HTTP response
  */
-async function executeActions(params) {
-  const { __ow_logger: log } = params;
-  const lock = new VersionLock(params);
-  const ow = lock.wrapOpenwhisk(openwhisk());
+async function executeActions(req, context, params) {
+  const { log, resolver } = context;
+  const controller = new AbortController();
 
-  const invoker = (actionPromise, idx) => Promise.resolve(actionPromise).then((actionOptions) => {
-    // todo: sanitizing the secrets should be better handled in the logging framework.
-    // maybe with https://github.com/adobe/helix-log/issues/44
-    const opts = {
-      name: actionOptions.name,
-      params: deepclone(actionOptions.params),
+  const invoker = async (preparePromise, idx) => {
+    // the prepare promise executes any tasks that need to happen before we can invoke the action
+    const actionOptions = await preparePromise;
+
+    const { action, params: invokeParams, fetchOpts } = actionOptions;
+    const invokeInfo = {
+      name: `${action.package}/${action.name}@${action.version}`,
+      params: deepclone(invokeParams),
       idx: idx + (actionOptions.idxOffset || 0),
     };
-    Object.keys(opts.params).forEach((key) => {
+    // todo: sanitizing the secrets should be better handled in the logging framework.
+    // maybe with https://github.com/adobe/helix-log/issues/44
+    Object.keys(invokeInfo.params).forEach((key) => {
       if (key.match(/^[A-Z0-9_]+$/)) {
-        opts.params[key] = '[undisclosed secret]';
+        invokeInfo.params[key] = '[undisclosed secret]';
       }
     });
-    if (getHeader(opts.params, 'authorization')) {
-      opts.params.__ow_headers.authorization = '[undisclosed secret]';
-    }
-    log.infoFields(`[${opts.idx}] Action: ${actionOptions.name}`, { actionOptions: opts });
-    return ow.actions.invoke(actionOptions)
-      .then((reply) => {
-        if (reply && reply.response && reply.response.result) {
-          const res = reply.response.result;
-          res.actionOptions = opts;
-          log.info(`[${opts.idx}] ${reply.activationId} ${res.statusCode} ${res.errorMessage || ''}`);
-          return actionOptions.resolve(res);
-        } else {
-          if (reply && reply.response) {
-            log.error(`[${opts.idx}] provided a response but no result. Unknown state for ${reply.activationId}`, reply);
-          } else {
-            /* istanbul ignore next */
-            log.error(`[${opts.idx}] did not provide a response. Unknown state for ${reply && reply.activationId ? reply.activationId : 'No activation id'}`, reply);
-          }
-          return {
-            statusCode: 500,
-            body: 'Invalid state',
-          };
-        }
-      }).catch((err) => {
-        // eslint-disable-next-line no-param-reassign
-        err.actionOptions = opts;
-        throw err;
-      });
-  });
+    // if (getHeader(opts.params, 'authorization')) {
+    //   opts.params.__ow_headers.authorization = '[undisclosed secret]';
+    // }
+    log.infoFields(`[${invokeInfo.idx}] Action: ${invokeInfo.name}`, { actionOptions: invokeInfo });
 
-  let fetch404Promise = Promise.reject().catch(() => {});
+    const url = appendURLParams(resolver.createURL(action), invokeParams);
+    try {
+      const res = await fetch(url, getFetchOptions({
+        ...fetchOpts,
+        signal: controller.signal,
+      }));
+      res.invokeInfo = invokeInfo; // remember options for resolver
+      const activationId = extractActivationId(res);
+      log.info(`[${invokeInfo.idx}] ${activationId} ${res.status}`);
+      return actionOptions.resolve(res);
+    } catch (e) {
+      e.invokeInfo = invokeInfo;
+      throw e;
+    }
+  };
+
+  // default response
+  let fetch404Promise = Promise.resolve(new Response('', { status: 404 }));
   try {
-    const tasks = fetchers(ow, params, log);
+    const tasks = fetchers(req, context, params);
 
     // start the base fetching processes
     const responsePromise = resolvePreferred(tasks.base.map(invoker));
+    // attach catch handler, in case promise resolves before we await for it later
+    responsePromise.catch(() => {});
 
     // start the 404 fetching processes
-    fetch404Promise = resolvePreferred(tasks.fetch404.map(invoker));
+    if (tasks.fetch404.length) {
+      fetch404Promise = resolvePreferred(tasks.fetch404.map(invoker));
+      // attach catch handler, in case promise resolves before we await for it later
+      fetch404Promise.catch(() => {});
+    }
 
     // we explicitly (a)wait here, so we can catch a potential exception.
     let resp = await deErrorify(log, responsePromise);
 
-    if (resp.statusCode === 404) {
+    if (resp.status === 404) {
       // check for redirect
-      const { type, target, result } = await redirect(params, ow);
+      const { type, target, response } = await redirect(req, context, params);
       if (type === 'temporary' || type === 'permanent') {
         log.info(`${type} redirect to ${target}`);
-        return result;
+        resp = response;
       } else if (type === 'internal' && target) {
         // increase the internal redirect counter
         const redirects = (params.redirects || 0) + 1;
@@ -165,53 +179,37 @@ async function executeActions(params) {
           return abortRedirect(target);
         }
         log.info(`${type} redirect to ${target}`);
-        return executeActions({
+        resp = executeActions(req, context, {
           ...params,
           redirects,
           path: target,
         });
+      } else {
+        // no redirect, handle 404
+        resp = await deErrorify(log, fetch404Promise);
       }
     }
 
-    try {
-      // todo: maybe we should also only load the 404.html if resp.statusCode === 404 ?
-      const resp404 = await fetch404Promise;
-      if (resp.statusCode === 404) {
-        resp = resp404;
-      }
-    } catch (e) {
-      if (resp.statusCode === 404) {
-        log.info('no valid response could be fetched');
-      }
-    }
-
-    // if requested, disable caching in the CDN (private) and
-    // tell browser to re-validate after 10 minutes (must-revalidate, max-age=600)
-    if (getHeader(params, 'x-dispatch-nocache')) {
-      log.info('received no cache instruction via X-Dispatch-NoCache header');
-      resp.headers = resp.headers || {};
-      resp.headers['Cache-Control'] = 'max-age=600, must-revalidate, private';
-    }
-
-    return resp;
+    return handleNoCache(req, resp, log);
   } catch (e) {
     /* istanbul ignore else */
     if (e.statusCode) {
       log.error(`no valid response could be fetched: ${e}`);
-      return {
-        statusCode: e.statusCode === 502 ? 504 : e.statusCode,
-      };
+      return new Response('', {
+        status: /* istanbul ignore next */ e.statusCode === 502 ? 504 : e.statusCode,
+      });
     }
 
     // a fetchers `resolve` should never throw an exception but report a proper status response.
-    // so we consider any exception thrown as application error and propagate it to openwhisk.
+    // so we consider any exception thrown as application error and bubble it up.
     /* istanbul ignore next */
     log.error(`error while invoking fetchers: ${e}`);
     /* istanbul ignore next */
-    return {
-      error: `${String(e.stack)}`,
-    };
+    throw e;
   } finally {
+    // terminate pending requests
+    controller.abort();
+
     try {
       // we need to wait for the 404 requests, otherwise we have unhandled promise rejections
       await fetch404Promise;
@@ -225,11 +223,17 @@ async function executeActions(params) {
  * Runs the action. This extra step is added because the resulting status code is most of the
  * time missing in the logs.
  */
-async function run(params) {
-  const { __ow_logger: log } = params;
-  const result = await executeActions(params);
-  log.info('dispatch status code: ', result.statusCode);
-  return result;
+async function run(req, context) {
+  const { log } = context;
+  const { searchParams } = new URL(req.url);
+  const params = Array.from(searchParams.entries()).reduce((p, [key, value]) => {
+    // eslint-disable-next-line no-param-reassign
+    p[key] = value;
+    return p;
+  }, {});
+  const response = await executeActions(req, context, params);
+  log.info('dispatch status code: ', response.status);
+  return response;
 }
 
 /**
@@ -238,7 +242,6 @@ async function run(params) {
  * @returns {Promise<*>} The response
  */
 module.exports.main = wrap(run)
-  .with(epsagon)
   .with(status)
   .with(logger.trace)
   .with(logger);

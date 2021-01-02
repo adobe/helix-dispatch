@@ -33,8 +33,8 @@ const resolvePreferred = (promises) => new Promise((resolve, reject) => {
         return;
       }
       if (r.type === 'value') {
-        resolve(r.payload);
         resolved = true;
+        resolve(r.payload);
         return;
       }
     }

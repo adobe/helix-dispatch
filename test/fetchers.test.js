@@ -12,6 +12,8 @@
 
 /* eslint-env mocha */
 const assert = require('assert');
+const { Request, Response } = require('node-fetch');
+const nock = require('nock');
 const { AssertionError } = require('assert');
 const {
   defaultResolver, errorPageResolver, getPathInfos, fetchers: originalFetchers,
@@ -24,39 +26,33 @@ const SHAS = {
 
 const SAMPLE_GITHUB_TOKEN = 'some-github-token-value';
 
-let resolverInvocationCount = 0;
-
-const openwhiskMock = {
-  actions: {
-    invoke({ params: { ref, owner } }) {
-      resolverInvocationCount += 1;
-      if (ref === 'branch') {
-        return Promise.reject(new Error('unknown'));
-      }
-      if (ref === 'notfound') {
-        return Promise.resolve({
-          statusCode: 404, // not found
-          body: 'ref not found',
-        });
-      }
-      if (ref === 'fail') {
-        return Promise.resolve({
-          statusCode: 503, // service unavailable
-          body: 'failed to fetch git repo info.',
-        });
-      }
-      return Promise.resolve({
-        body: {
-          fqRef: 'refs/heads/master',
-          sha: SHAS[owner],
-        },
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        statusCode: 200,
-      });
-    },
-  },
+const resolveGitRefInterceptor = (uri) => {
+  const url = new URL(`https://adobeioruntime.net${uri}`);
+  const ref = url.searchParams.get('ref');
+  if (!url.searchParams.get('owner')) {
+    return [500, 'owner and repo are mandatory parameters.'];
+  }
+  if (ref === 'branch') {
+    return [500];
+  }
+  if (ref === 'notfound') {
+    return [404, 'ref not found'];
+  }
+  if (ref === 'fail') {
+    return [503, 'failed to fetch git repo info.'];
+  }
+  if (ref === 'garbage') {
+    return [200, 'nope'];
+  }
+  if (ref === 'incomplete') {
+    return [200, {
+      fqRef: 'refs/heads/master',
+    }];
+  }
+  return [200, {
+    fqRef: 'refs/heads/master',
+    sha: SHAS[url.searchParams.get('owner')],
+  }];
 };
 
 /**
@@ -70,19 +66,25 @@ const fetchers = (...args) => {
   ];
 };
 
-const opts = {
+const DEFAULT_PARAMS = {
   'static.owner': 'adobe',
+  'static.repo': 'helix-pages',
   'static.ref': 'master',
   'content.owner': 'trieloff',
+  'content.repo': 'soupdemo',
   'content.package': '60ef2a011a6a91647eba00f798e9c16faa9f78ce',
   'content.ref': 'master',
 };
+
+function actionName({ package, name, version } = {}) {
+  return `${package}/${name}@${version}`;
+}
 
 function logres(r) {
   Promise.all(r).then((res) => {
     // eslint-disable-next-line no-console
     console.table(res.map((s) => ({
-      name: s.name,
+      action: actionName(s.action),
       owner: s.params.owner,
       path: s.params.path,
       ref: s.params.ref,
@@ -91,219 +93,415 @@ function logres(r) {
   }).catch(console.error);
 }
 
+function createRequest(headers = {}) {
+  return new Request('https://html.action.com', {
+    headers,
+  });
+}
+
+function createContext(opts) {
+  return {
+    log: console,
+    resolver: {
+      createURL({ package, name, version }) {
+        return new URL(`https://adobeioruntime.net/api/v1/web/helix/${package}/${name}@${version}`);
+      },
+    },
+    ...opts,
+  };
+}
+
 describe('testing fetchers.js', () => {
   it('fetch nothing', async () => {
-    const res = fetchers(openwhiskMock);
+    const scope = nock('https://adobeioruntime.net')
+      .get('/api/v1/web/helix/helix-services/resolve-git-ref@v1')
+      .query(true)
+      .reply(resolveGitRefInterceptor);
 
+    const res = await Promise.all(fetchers(createRequest(), createContext(), {}));
+    await scope.done();
     assert.equal(res.length, 5);
     logres(res);
   });
 
   it('fetch basic HTML', async () => {
-    const ric = resolverInvocationCount;
-    const res = await Promise.all(fetchers(openwhiskMock, {
-      ...opts,
+    const scope = nock('https://adobeioruntime.net')
+      .get('/api/v1/web/helix/helix-services/resolve-git-ref@v1')
+      .twice()
+      .query(true)
+      .reply(resolveGitRefInterceptor);
+
+    const res = await Promise.all(fetchers(createRequest(), createContext(), {
+      ...DEFAULT_PARAMS,
       path: '/dir/example.html',
     }));
 
+    await scope.done();
     logres(res);
     assert.equal(res.length, 5);
-    assert.equal(res[0].name, 'helix-services/static@v1');
+    assert.equal(actionName(res[0].action), 'helix-services/static@v1');
     assert.equal(res[0].params.ref, SHAS.trieloff);
     assert.equal(res[0].params.branch, 'master');
     assert.equal(res[0].params.path, '/dir/example.html');
-    assert.equal(res[1].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html');
+    assert.equal(actionName(res[1].action), '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html@');
     assert.equal(res[1].params.path, '/dir/example.md');
     assert.equal(res[1].params.ref, SHAS.trieloff);
     assert.equal(res[2].params.ref, SHAS.adobe);
     assert.equal(res[2].params.branch, 'master');
-    assert.equal(resolverInvocationCount - ric, 2);
   });
 
   it('fetch basic HTML invokes resolver only once if same repo', async () => {
-    const ric = resolverInvocationCount;
-    const res = await Promise.all(fetchers(openwhiskMock, {
-      ...opts,
+    const scope = nock('https://adobeioruntime.net')
+      .get('/api/v1/web/helix/helix-services/resolve-git-ref@v1')
+      .query(true)
+      .reply(resolveGitRefInterceptor);
+
+    const res = await Promise.all(fetchers(createRequest(), createContext(), {
+      ...DEFAULT_PARAMS,
       'content.owner': 'adobe',
+      'content.repo': 'helix-pages',
       path: '/dir/example.html',
     }));
 
+    await scope.done();
     logres(res);
     assert.equal(res.length, 5);
-    assert.equal(res[0].name, 'helix-services/static@v1');
+    assert.equal(actionName(res[0].action), 'helix-services/static@v1');
     assert.equal(res[0].params.ref, SHAS.adobe);
     assert.equal(res[0].params.branch, 'master');
     assert.equal(res[0].params.path, '/dir/example.html');
-    assert.equal(res[1].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html');
+    assert.equal(actionName(res[1].action), '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html@');
     assert.equal(res[1].params.path, '/dir/example.md');
     assert.equal(res[1].params.ref, SHAS.adobe);
     assert.equal(res[2].params.ref, SHAS.adobe);
-    assert.equal(resolverInvocationCount - ric, 1);
   });
 
   it('fetch basic HTML from sha', async () => {
-    const res = await Promise.all(fetchers(openwhiskMock, {
-      ...opts,
+    const scope = nock('https://adobeioruntime.net')
+      .get('/api/v1/web/helix/helix-services/resolve-git-ref@v1')
+      .query(true)
+      .reply(resolveGitRefInterceptor);
+
+    const res = await Promise.all(fetchers(createRequest(), createContext(), {
+      ...DEFAULT_PARAMS,
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       path: '/dir/example.html',
     }));
 
+    await scope.done();
     logres(res);
     assert.equal(res.length, 5);
-    assert.equal(res[0].name, 'helix-services/static@v1');
+    assert.equal(actionName(res[0].action), 'helix-services/static@v1');
     assert.equal(res[0].params.path, '/dir/example.html');
-    assert.equal(res[1].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html');
+    assert.equal(actionName(res[1].action), '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html@');
     assert.equal(res[1].params.path, '/dir/example.md');
   });
 
   it('fetch basic HTML from branch while resolver rejects', async () => {
-    const res = await Promise.all(fetchers(openwhiskMock, {
-      ...opts,
+    const scope = nock('https://adobeioruntime.net')
+      .get('/api/v1/web/helix/helix-services/resolve-git-ref@v1')
+      .twice()
+      .query(true)
+      .reply(resolveGitRefInterceptor);
+
+    const res = await Promise.all(fetchers(createRequest(), createContext(), {
+      ...DEFAULT_PARAMS,
       'static.ref': 'branch',
       path: '/dir/example.html',
-      __ow_logger: console,
     }));
 
+    await scope.done();
     logres(res);
     assert.equal(res.length, 5);
-    assert.equal(res[0].name, 'helix-services/static@v1');
+    assert.equal(actionName(res[0].action), 'helix-services/static@v1');
     assert.equal(res[0].params.path, '/dir/example.html');
-    assert.equal(res[1].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html');
+    assert.equal(actionName(res[1].action), '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html@');
     assert.equal(res[1].params.path, '/dir/example.md');
     assert.equal(res[2].params.ref, 'branch');
   });
 
   it('log info if resolver returns 404', async () => {
+    const scope = nock('https://adobeioruntime.net')
+      .get('/api/v1/web/helix/helix-services/resolve-git-ref@v1')
+      .twice()
+      .query(true)
+      .reply(resolveGitRefInterceptor);
+
     let test;
-    await Promise.all(fetchers(openwhiskMock, {
-      ...opts,
-      'static.ref': 'notfound',
-      path: '/dir/example.html',
-      __ow_logger: {
+    await Promise.all(fetchers(createRequest(), createContext({
+      log: {
         info: (msg) => { test = msg; },
         error: () => {},
       },
+    }), {
+      ...DEFAULT_PARAMS,
+      'static.ref': 'notfound',
+      path: '/dir/example.html',
     }));
+
+    await scope.done();
     assert.equal(test, 'Unable to resolve ref notfound: 404 ref not found',
       'expected console.info() to be called');
   });
 
   it('log error if resolver returns 503', async () => {
+    const scope = nock('https://adobeioruntime.net')
+      .get('/api/v1/web/helix/helix-services/resolve-git-ref@v1')
+      .twice()
+      .query(true)
+      .reply(resolveGitRefInterceptor);
+
     let test;
-    await Promise.all(fetchers(openwhiskMock, {
-      ...opts,
-      'static.ref': 'fail',
-      path: '/dir/example.html',
-      __ow_logger: {
+    await Promise.all(fetchers(createRequest(), createContext({
+      log: {
         info: () => {},
         error: (msg) => { test = msg; },
       },
+    }), {
+      ...DEFAULT_PARAMS,
+      'static.ref': 'fail',
+      path: '/dir/example.html',
     }));
+
+    await scope.done();
     assert.equal(test, 'Unable to resolve ref fail: 503 failed to fetch git repo info.',
       'expected console.error() to be called');
   });
 
   it('fetch basic HTML from branch while resolver fails', async () => {
-    const res = await Promise.all(fetchers(openwhiskMock, {
-      ...opts,
+    const scope = nock('https://adobeioruntime.net')
+      .get('/api/v1/web/helix/helix-services/resolve-git-ref@v1')
+      .twice()
+      .query(true)
+      .reply(resolveGitRefInterceptor);
+
+    const res = await Promise.all(fetchers(createRequest(), createContext(), {
+      ...DEFAULT_PARAMS,
       'static.ref': 'fail',
       'content.ref': 'fail',
       path: '/dir/example.html',
-      __ow_logger: console,
     }));
 
+    await scope.done();
     logres(res);
     assert.equal(res.length, 5);
-    assert.equal(res[0].name, 'helix-services/static@v1');
+    assert.equal(actionName(res[0].action), 'helix-services/static@v1');
     assert.equal(res[0].params.path, '/dir/example.html');
-    assert.equal(res[1].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html');
+    assert.equal(actionName(res[1].action), '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html@');
     assert.equal(res[1].params.path, '/dir/example.md');
     assert.equal(res[2].params.ref, 'fail');
   });
 
-  it('fetch HTML with selector', () => {
-    const res = fetchers(openwhiskMock, {
-      ...opts,
-      path: '/dir/example.nav.html',
-    });
+  it('fetch basic HTML from branch while resolver returns garbage', async () => {
+    const scope = nock('https://adobeioruntime.net')
+      .get('/api/v1/web/helix/helix-services/resolve-git-ref@v1')
+      .twice()
+      .query(true)
+      .reply(resolveGitRefInterceptor);
 
-    assert.equal(res.length, 5);
+    const res = await Promise.all(fetchers(createRequest(), createContext(), {
+      ...DEFAULT_PARAMS,
+      'static.ref': 'garbage',
+      'content.ref': 'garbage',
+      path: '/dir/example.html',
+    }));
+
+    await scope.done();
     logres(res);
+    assert.equal(res.length, 5);
+    assert.equal(actionName(res[0].action), 'helix-services/static@v1');
+    assert.equal(res[0].params.path, '/dir/example.html');
+    assert.equal(actionName(res[1].action), '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html@');
+    assert.equal(res[1].params.path, '/dir/example.md');
+    assert.equal(res[2].params.ref, 'garbage');
+  });
+
+  it('fetch basic HTML from branch while resolver returns incomplete json', async () => {
+    const scope = nock('https://adobeioruntime.net')
+      .get('/api/v1/web/helix/helix-services/resolve-git-ref@v1')
+      .twice()
+      .query(true)
+      .reply(resolveGitRefInterceptor);
+
+    const res = await Promise.all(fetchers(createRequest(), createContext(), {
+      ...DEFAULT_PARAMS,
+      'static.ref': 'incomplete',
+      'content.ref': 'incomplete',
+      path: '/dir/example.html',
+    }));
+
+    await scope.done();
+    logres(res);
+    assert.equal(res.length, 5);
+    assert.equal(actionName(res[0].action), 'helix-services/static@v1');
+    assert.equal(res[0].params.path, '/dir/example.html');
+    assert.equal(actionName(res[1].action), '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html@');
+    assert.equal(res[1].params.path, '/dir/example.md');
+    assert.equal(res[2].params.ref, 'incomplete');
+  });
+
+  it('fetch basic HTML from branch while resolver errors', async () => {
+    const scope = nock('https://adobeioruntime.net')
+      .get('/api/v1/web/helix/helix-services/resolve-git-ref@v1')
+      .twice()
+      .query(true)
+      .replyWithError('network error');
+
+    const res = await Promise.all(fetchers(createRequest(), createContext(), {
+      ...DEFAULT_PARAMS,
+      'static.ref': 'fail',
+      'content.ref': 'fail',
+      path: '/dir/example.html',
+    }));
+
+    await scope.done();
+    logres(res);
+    assert.equal(res.length, 5);
+    assert.equal(actionName(res[0].action), 'helix-services/static@v1');
+    assert.equal(res[0].params.path, '/dir/example.html');
+    assert.equal(actionName(res[1].action), '60ef2a011a6a91647eba00f798e9c16faa9f78ce/html@');
+    assert.equal(res[1].params.path, '/dir/example.md');
+    assert.equal(res[2].params.ref, 'fail');
+  });
+
+  it('fetch HTML with selector', async () => {
+    const scope = nock('https://adobeioruntime.net')
+      .get('/api/v1/web/helix/helix-services/resolve-git-ref@v1')
+      .twice()
+      .query(true)
+      .reply(resolveGitRefInterceptor);
+
+    const res = await Promise.all(fetchers(createRequest(), createContext(), {
+      ...DEFAULT_PARAMS,
+      path: '/dir/example.nav.html',
+    }));
+
+    await scope.done();
+    logres(res);
+    assert.equal(res.length, 5);
+    assert.equal(actionName(res[1].action), '60ef2a011a6a91647eba00f798e9c16faa9f78ce/nav_html@');
   });
 
   it('fetch HTML with selector for malformed extension', async () => {
-    const res = await Promise.all(fetchers(openwhiskMock, {
-      ...opts,
+    const scope = nock('https://adobeioruntime.net')
+      .get('/api/v1/web/helix/helix-services/resolve-git-ref@v1')
+      .twice()
+      .query(true)
+      .reply(resolveGitRefInterceptor);
+
+    const res = await Promise.all(fetchers(createRequest(), createContext(), {
+      ...DEFAULT_PARAMS,
       path: '/dir/example.navä.ht=%ml',
     }));
+
+    await scope.done();
     logres(res);
     assert.equal(res.length, 3);
-    assert.equal(await res[1].name, '60ef2a011a6a91647eba00f798e9c16faa9f78ce/nav_html');
+    assert.equal(actionName(res[1].action), '60ef2a011a6a91647eba00f798e9c16faa9f78ce/nav_html@');
   });
 
-  it('fetch directory index', () => {
-    const res = fetchers(openwhiskMock, {
-      ...opts,
+  it('fetch directory index', async () => {
+    const scope = nock('https://adobeioruntime.net')
+      .get('/api/v1/web/helix/helix-services/resolve-git-ref@v1')
+      .twice()
+      .query(true)
+      .reply(resolveGitRefInterceptor);
+
+    const res = await Promise.all(fetchers(createRequest(), createContext(), {
+      ...DEFAULT_PARAMS,
       path: '/example/dir',
-    });
+    }));
 
-    assert.equal(res.length, 5);
+    await scope.done();
     logres(res);
+    assert.equal(res.length, 5);
+    assert.equal(res[0].params.path, '/example/dir.html');
+    assert.equal(res[1].params.path, '/example/dir.md');
   });
 
-  it('fetch non html', () => {
-    const res = fetchers(openwhiskMock, {
-      ...opts,
-      path: '/style.css',
-    });
+  it('fetch non html', async () => {
+    const scope = nock('https://adobeioruntime.net')
+      .get('/api/v1/web/helix/helix-services/resolve-git-ref@v1')
+      .twice()
+      .query(true)
+      .reply(resolveGitRefInterceptor);
 
-    assert.equal(res.length, 3);
+    const res = await Promise.all(fetchers(createRequest(), createContext(), {
+      ...DEFAULT_PARAMS,
+      path: '/style.css',
+    }));
+
+    await scope.done();
     logres(res);
+    assert.equal(res.length, 3);
+    assert.equal(res[0].params.path, '/style.css');
+    assert.equal(actionName(res[1].action), '60ef2a011a6a91647eba00f798e9c16faa9f78ce/css@');
   });
 
   it('Github token provided via parameter is passed to fetchers', async () => {
-    const res = await Promise.all(fetchers(openwhiskMock, {
-      ...opts,
+    const scope = nock('https://adobeioruntime.net')
+      .get('/api/v1/web/helix/helix-services/resolve-git-ref@v1')
+      .twice()
+      .query(true)
+      .reply(resolveGitRefInterceptor);
+
+    const res = await Promise.all(fetchers(createRequest(), createContext(), {
+      ...DEFAULT_PARAMS,
       GITHUB_TOKEN: SAMPLE_GITHUB_TOKEN,
       path: '/style.css',
     }));
 
+    await scope.done();
+    logres(res);
     assert.equal(res.length, 3);
     assert.equal(res[0].params.GITHUB_TOKEN, SAMPLE_GITHUB_TOKEN);
     assert.equal(res[1].params.GITHUB_TOKEN, SAMPLE_GITHUB_TOKEN);
     assert.equal(res[2].params.GITHUB_TOKEN, SAMPLE_GITHUB_TOKEN);
-    logres(res);
   });
 
   it('Github token provided via header is passed to fetchers', async () => {
-    const res = await Promise.all(fetchers(openwhiskMock, {
-      ...opts,
-      __ow_headers: { 'x-github-token': SAMPLE_GITHUB_TOKEN },
+    const scope = nock('https://adobeioruntime.net')
+      .get('/api/v1/web/helix/helix-services/resolve-git-ref@v1')
+      .twice()
+      .query(true)
+      .reply(resolveGitRefInterceptor);
+
+    const res = await Promise.all(fetchers(createRequest({
+      'x-github-token': SAMPLE_GITHUB_TOKEN,
+    }), createContext(), {
+      ...DEFAULT_PARAMS,
       path: '/style.css',
     }));
 
+    await scope.done();
+    logres(res);
     assert.equal(res.length, 3);
     assert.equal(res[0].params.GITHUB_TOKEN, SAMPLE_GITHUB_TOKEN);
     assert.equal(res[1].params.GITHUB_TOKEN, SAMPLE_GITHUB_TOKEN);
     assert.equal(res[2].params.GITHUB_TOKEN, SAMPLE_GITHUB_TOKEN);
-    logres(res);
   });
 
   it('test if headers are passed to all fetchers', async () => {
-    const res = await Promise.all(fetchers(openwhiskMock, {
-      ...opts,
+    const scope = nock('https://adobeioruntime.net')
+      .get('/api/v1/web/helix/helix-services/resolve-git-ref@v1')
+      .twice()
+      .query(true)
+      .reply(resolveGitRefInterceptor);
+
+    const res = await Promise.all(fetchers(createRequest({
+      'a-header': 'its-value',
+    }), createContext(), {
+      ...DEFAULT_PARAMS,
       path: '/dir/example.html',
-      __ow_headers: {
-        'a-header': 'its-value',
-      },
     }));
 
+    await scope.done();
     logres(res);
     assert.equal(res.length, 5);
     // all fetchers should propagate the headers
     res.forEach((r) => {
-      assert.ok(r.params.__ow_headers);
-      assert.equal(r.params.__ow_headers['a-header'], 'its-value');
+      assert.ok(r.fetchOpts);
+      assert.equal(r.fetchOpts.headers['a-header'], 'its-value');
     });
   });
 });
@@ -318,57 +516,56 @@ describe('testing default promise resolver', () => {
 
   it('default promise resolver throws on status 400', async () => {
     try {
-      await Promise.resolve({
-        statusCode: 400,
-        actionOptions: {
-          idx: 1,
-          params: {
-            owner: 'adobe',
-            repo: 'helix-statix',
-            ref: 'master',
-            path: '/index.html',
-          },
+      const resp = new Response('error', {
+        status: 400,
+      });
+      resp.invokeInfo = {
+        idx: 1,
+        params: {
+          owner: 'adobe',
+          repo: 'helix-statix',
+          ref: 'master',
+          path: '/index.html',
         },
-      }).then(defaultResolver);
+      };
+      await Promise.resolve(resp).then(defaultResolver);
       assert.fail('this should never happen');
     } catch (e) {
       if (e instanceof AssertionError) {
         throw e;
       }
-      assert.equal(e.message, '[1] Error invoking undefined(adobe/helix-statix/master/index.html): 400');
+      assert.equal(e.message, '[1] Error invoking undefined(adobe/helix-statix/master/index.html): 400 error');
     }
   });
 });
 
 describe('testing error page promise resolver', () => {
   it('error page promise resolver accepts status 200', async () => {
-    const res = await Promise.resolve({
-      statusCode: 200,
-    }).then(errorPageResolver);
-    assert.equal(res.statusCode, 404);
-    assert.ok(res);
+    const res = await Promise.resolve(new Response('404 page')).then(errorPageResolver);
+    assert.equal(res.status, 404);
   });
 
   it('error page promise resolver throws on status 400', async () => {
     try {
-      await Promise.resolve({
-        statusCode: 400,
-        actionOptions: {
-          idx: 1,
-          params: {
-            owner: 'adobe',
-            repo: 'helix-statix',
-            ref: 'master',
-            path: '/index.html',
-          },
+      const resp = new Response('error', {
+        status: 400,
+      });
+      resp.invokeInfo = {
+        idx: 1,
+        params: {
+          owner: 'adobe',
+          repo: 'helix-statix',
+          ref: 'master',
+          path: '/index.html',
         },
-      }).then(errorPageResolver);
+      };
+      await Promise.resolve(resp).then(errorPageResolver);
       assert.fail('this should never happen');
     } catch (e) {
       if (e instanceof AssertionError) {
         throw e;
       }
-      assert.equal(e.message, '[1] Error invoking undefined(adobe/helix-statix/master/index.html): 400');
+      assert.equal(e.message, '[1] Error invoking undefined(adobe/helix-statix/master/index.html): 400 error');
     }
   });
 });
