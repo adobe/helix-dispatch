@@ -1,3 +1,10 @@
+# [4.4.0](https://github.com/adobe/helix-dispatch/compare/v4.3.11...v4.4.0) (2021-01-05)
+
+
+### Features
+
+* migrate to helix-deploy ([#378](https://github.com/adobe/helix-dispatch/issues/378)) ([f51dd3e](https://github.com/adobe/helix-dispatch/commit/f51dd3e48e44ded4ec19c8fbe7280726dbf96956)), closes [#376](https://github.com/adobe/helix-dispatch/issues/376) [#326](https://github.com/adobe/helix-dispatch/issues/326)
+
 ## [4.3.11](https://github.com/adobe/helix-dispatch/compare/v4.3.10...v4.3.11) (2020-12-17)
 
 
