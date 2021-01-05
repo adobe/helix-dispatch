@@ -9,41 +9,55 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
+const { Response } = require('node-fetch');
+const { fetch, getFetchOptions, appendURLParams } = require('./utils');
+
 const TYPES = {
   301: 'permanent',
   302: 'temporary',
   307: 'internal',
 };
 
-async function redirect(params, ow) {
-  const opts = {
-    name: 'helix-services/redirect@v1',
-    params: {
-      owner: params['content.owner'],
-      repo: params['content.repo'],
-      ref: params['content.ref'],
-      path: params.path,
-    },
-    blocking: true,
-    result: true,
+const HELIX_REDIRECT_ACTION = {
+  package: 'helix-services',
+  name: 'redirect',
+  version: 'v1',
+};
+
+async function redirect(req, context, params) {
+  const { resolver } = context;
+  const fetchOpts = {
+    redirect: 'manual',
+    headers: Array.from(req.headers.keys()).reduce((result, key) => {
+      // eslint-disable-next-line no-param-reassign
+      result[key] = req.headers.get(key);
+      return result;
+    }, {}),
   };
 
-  const result = await ow.actions.invoke(opts);
+  const opts = {
+    owner: params['content.owner'],
+    repo: params['content.repo'],
+    ref: params['content.ref'],
+    path: params.path,
+  };
+  const url = appendURLParams(resolver.createURL(HELIX_REDIRECT_ACTION), opts);
+  const res = await fetch(url, getFetchOptions(fetchOpts));
   return {
-    type: TYPES[result.statusCode] || null,
-    target: result.headers ? result.headers.Location : null,
-    result,
+    type: TYPES[res.status] || null,
+    target: res.headers.get('location'),
+    response: res,
   };
 }
 
-function abortRedirect(target) {
-  return {
-    statusCode: 508, // loop detected, from webdav
-    body: `Too many internal redirects to ${
-      (target || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;').replace(/>/g, '&gt;')}`,
-  };
+/* istanbul ignore next */
+function abortRedirect(target = '') {
+  const sanitized = target
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return new Response(`Too many internal redirects to ${sanitized}`, {
+    status: 508, // loop detected, from webdav
+  });
 }
 
 module.exports = {

@@ -10,8 +10,19 @@
  * governing permissions and limitations under the License.
  */
 const path = require('path').posix;
+const { fetch, getFetchOptions, appendURLParams } = require('./utils');
 
-const HELIX_STATIC_ACTION = 'helix-services/static@v1';
+const HELIX_STATIC_ACTION = {
+  package: 'helix-services',
+  name: 'static',
+  version: 'v1',
+};
+
+const HELIX_RESOLVE_GIT_REF_ACTION = {
+  package: 'helix-services',
+  name: 'resolve-git-ref',
+  version: 'v1',
+};
 
 /**
  * An order-preserving uniqueness filter
@@ -19,6 +30,7 @@ const HELIX_STATIC_ACTION = 'helix-services/static@v1';
  * @returns a new array in the same order, with duplicates omitted
  */
 const unique = (arr) => arr.reduce((retval, item) => {
+  /* istanbul ignore next */
   if (retval.indexOf(item) === -1) {
     retval.push(item);
   }
@@ -27,18 +39,20 @@ const unique = (arr) => arr.reduce((retval, item) => {
 
 /**
  * Default resolver that rejects statusCodes >= 400.
- * @param res action response
- * @returns {Promise<never>}
+ * @param {Response} res action response
+ * @returns {Promise<Response>}
  */
-function defaultResolver(res) {
-  if (res && res.statusCode >= 400) {
-    const { params } = res.actionOptions;
+async function defaultResolver(res) {
+  if (res.status >= 400) {
+    // ensure to consume body
+    const body = await res.text();
+    const { params, idx, name } = res.invokeInfo;
     const rp = `${params.owner}/${params.repo}/${params.ref}${params.path}`;
-    const error = new Error(`[${res.actionOptions.idx}] Error invoking ${res.actionOptions.name}(${rp}): ${res.statusCode}`);
-    error.statusCode = res.statusCode === 502 ? 504 : res.statusCode;
-    return Promise.reject(error);
+    const error = new Error(`[${idx}] Error invoking ${name}(${rp}): ${res.status} ${body}`);
+    error.statusCode = res.status === 502 ? 504 : res.status;
+    throw error;
   }
-  return Promise.resolve(res);
+  return res;
 }
 
 /**
@@ -46,10 +60,17 @@ function defaultResolver(res) {
  * @param res action response
  * @returns {Promise<any>}
  */
-function errorPageResolver(res) {
-  if (res && res.statusCode === 200) {
-    res.statusCode = 404;
-    return Promise.resolve(res);
+async function errorPageResolver(res) {
+  if (res.status === 200) {
+    // create proxy to return 404 status
+    return new Proxy(res, {
+      get(target, prop, receiver) {
+        if (prop === 'status') {
+          return 404;
+        }
+        return Reflect.get(target, prop, receiver);
+      },
+    });
   }
   return defaultResolver(res);
 }
@@ -127,6 +148,7 @@ function getPathInfos(urlPath, mount, indices) {
     let pth = url;
     if (mount && mount !== '/') {
       // strain selection should only select strains that match the url. but better check again
+      /* istanbul ignore next */
       if (`${relPath}/`.startsWith(`${mount}/`)) {
         relPath = relPath.substring(mount.length);
         pth = url.substring(mount.length);
@@ -147,39 +169,38 @@ function getPathInfos(urlPath, mount, indices) {
  * Gets the tasks to fetch the 404 files, one from the content repo, one
  * from the fallback repo
  * @param {PathInfo[]} infos the paths to fetch from
+ * @param {object} fetchOpts Additional options for fetch
  * @param {Promise<ActionOptions>} contentPromise coordinates for the content repo
  * @param {Promise<ActionOptions>} staticPromise coordinates for the fallback repo
  * @param {number} idxOffset helper variable for logging
  * @returns {object[]} list of actions that should get invoked
  */
-function fetch404tasks(infos, wskOpts, contentPromise, staticPromise, idxOffset) {
+function fetch404tasks(infos, fetchOpts, contentPromise, staticPromise, idxOffset) {
   const attempts = [];
   if (infos[0].ext === 'html') {
     // then get the 404.html from the content repo, but only for html requests
     attempts.push(contentPromise.then((contentOpts) => ({
       resolve: errorPageResolver,
-      name: HELIX_STATIC_ACTION,
-      blocking: true,
+      action: HELIX_STATIC_ACTION,
+      fetchOpts,
       idxOffset,
       params: {
         path: '/404.html',
         esi: false,
         plain: true,
-        ...wskOpts,
         ...contentOpts,
       },
     })));
     // if all fails, get the 404.html from the static repo
     attempts.push(staticPromise.then((staticOpts) => contentPromise.then(() => ({
       resolve: errorPageResolver,
-      name: HELIX_STATIC_ACTION,
-      blocking: true,
+      action: HELIX_STATIC_ACTION,
+      fetchOpts,
       idxOffset,
       params: {
         path: '/404.html',
         esi: false,
         plain: true,
-        ...wskOpts,
         ...staticOpts,
       },
     }))));
@@ -189,23 +210,22 @@ function fetch404tasks(infos, wskOpts, contentPromise, staticPromise, idxOffset)
 /**
  * Gets the tasks to fetch raw content from the fallback repo
  * @param {PathInfo[]} infos the paths to fetch from
- * @param {object} wskOpts additional options for the OpenWhisk invocation
+ * @param {object} fetchOpts Additional options for fetch
  * @param {Promise<ActionOptions>} contentPromise coordinates for the content repo
  * @param {Promise<ActionOptions>} staticPromise coordinates for the fallback repo
  * @returns {object[]} list of actions that should get invoked
  */
-function fetchfallbacktasks(infos, wskOpts, contentPromise, staticPromise) {
+function fetchfallbacktasks(infos, fetchOpts, contentPromise, staticPromise) {
   return infos.map((info) => staticPromise
     .then((staticOpts) => contentPromise
       .then(() => ({
         resolve: defaultResolver,
-        name: HELIX_STATIC_ACTION,
-        blocking: true,
+        action: HELIX_STATIC_ACTION,
+        fetchOpts,
         params: {
           path: info.path,
           esi: false,
           plain: true,
-          ...wskOpts,
           ...staticOpts,
         },
       }))));
@@ -213,24 +233,27 @@ function fetchfallbacktasks(infos, wskOpts, contentPromise, staticPromise) {
 /**
  * Gets the tasks to invoke the pipeline action
  * @param {PathInfo[]} infos the paths to fetch from
- * @param {object} wskOpts additional options for the OpenWhisk invocation
+ * @param {object} fetchOpts Additional options for fetch
+ * @param {object} params the action params
  * @param {Promise<ActionOptions>} contentPromise coordinates for the content repo
  * @returns {object[]} list of actions that should get invoked
  */
-function fetchactiontasks(infos, wskOpts, contentPromise, params) {
+function fetchactiontasks(infos, params, fetchOpts, contentPromise) {
   return infos.map((info) => contentPromise.then((contentOpts) => {
-    const actionname = `${contentOpts.package
-      || 'default'}/${info.selector
+    const actionname = `${info.selector
       ? `${info.selector.toLowerCase().replace(/[^a-z0-9]/g, '')}_`
       : ''}${info.ext.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
     return {
       resolve: defaultResolver,
-      name: actionname,
-      blocking: true,
+      action: {
+        package: contentOpts.package || 'default',
+        name: actionname,
+        version: '',
+      },
+      fetchOpts,
       params: {
         path: `${info.relPath}.md`,
         rootPath: params.rootPath || '',
-        ...wskOpts,
         ...contentOpts,
       },
     };
@@ -239,21 +262,21 @@ function fetchactiontasks(infos, wskOpts, contentPromise, params) {
 /**
  * Gets the tasks to fetch raw content from the content repo
  * @param {PathInfo[]} infos the paths to fetch from
- * @param {*} params - the openwhisk action params
+ * @param {object} params the action params
+ * @param {object} fetchOpts Additional options for fetch
  * @param {Promise<ActionOptions>} contentPromise coordinates for the content repo
  * @returns {object[]} list of actions that should get invoked
  */
-function fetchrawtasks(infos, params, contentPromise, wskOpts) {
+function fetchrawtasks(infos, params, fetchOpts, contentPromise) {
   return infos.map((info) => contentPromise.then((contentOpts) => ({
     resolve: defaultResolver,
-    name: HELIX_STATIC_ACTION,
-    blocking: true,
+    action: HELIX_STATIC_ACTION,
+    fetchOpts,
     params: {
       path: info.path,
       esi: false,
       plain: true,
       root: params['content.root'],
-      ...wskOpts,
       ...contentOpts,
     },
   })));
@@ -261,38 +284,39 @@ function fetchrawtasks(infos, params, contentPromise, wskOpts) {
 
 /**
  * Resolves the branch or tag name into a sha.
- * @param {openwhisk} ow Openwhisk client
  * @param {ActionOptions} opts action options
+ * @param {object} fetchOpts Additional options for fetch
+ * @param {Context} context - Universal adapter context
  * @returns {Promise<*>} returns a promise of the resolved ref.
  * options, with a sha instead of a branch name
  */
-async function resolveRef(ow, opts, wskOpts, log) {
+async function resolveRef(opts, fetchOpts, context) {
+  const { log, resolver } = context;
   const { ref } = opts;
   if (ref && ref.match(/^[a-f0-9]{40}$/i)) {
     return { ref };
   }
   try {
-    const res = await ow.actions.invoke({
-      name: 'helix-services/resolve-git-ref@v1',
-      blocking: true,
-      result: true,
-      params: {
-        ...opts,
-        ...wskOpts,
-      },
-    });
-    if (res.body && res.body.sha) {
-      return {
-        // use the resolved ref
-        ref: res.body.sha,
-        branch: ref,
-      };
+    const url = appendURLParams(resolver.createURL(HELIX_RESOLVE_GIT_REF_ACTION), opts);
+    const res = await fetch(url, getFetchOptions(fetchOpts));
+    let body;
+    if (res.ok) {
+      body = await res.json();
+      if (body.sha) {
+        return {
+          // use the resolved ref
+          ref: body.sha,
+          branch: ref,
+        };
+      }
+    } else {
+      body = await res.text();
     }
     let level = 'info';
-    if (!res.statusCode || res.statusCode >= 500) {
+    if (!res.status || res.status >= 500) {
       level = 'error';
     }
-    log[level](`Unable to resolve ref ${ref}: ${res.statusCode} ${res.body}`);
+    log[level](`Unable to resolve ref ${ref}: ${res.status} ${body}`);
   } catch (e) {
     log.error(`Unable to resolve ref ${ref}: ${e}`);
   }
@@ -324,27 +348,26 @@ function equalRepository(o1, o2) {
 /**
  * Extracts the Github token from the action params. The Github token can be provided either
  * via `GITHUB_TOKEN` action parameter or via `x-github-token` header.
+ * @param {Request} req The request
  * @param {object} params - action params
  * @returns {string} the Github token extracted from `params` or `undefined` if none was found
  */
 /* istanbul ignore next */
-function extractGithubToken(params = {}) {
-  // eslint-disable-next-line dot-notation
-  return params.GITHUB_TOKEN || (params['__ow_headers'] && params['__ow_headers']['x-github-token']);
+function extractGithubToken(req, params = {}) {
+  return params.GITHUB_TOKEN || req.headers.get('x-github-token');
 }
 
 /**
  * Returns the action options to fetch the contents from.
- * @param {openwhisk} ow - openwhisk client
+ * @param {Request} req Action request
+ * @param {Context} context - Universal adapter context
  * @param {object} params - action params
- * @returns {Array} Array of action options to use to ow.action.invoke
+ * @returns {Array} Array of options to use to fetch content from services
  */
-function fetchers(ow, params = {}) {
-  const { __ow_logger: log } = params;
+function fetchers(req, context, params) {
   const dirindex = (params['content.index'] || 'index.html').split(',');
   const infos = getPathInfos(params.path || '/', params.rootPath || '', dirindex);
-  const actioninfos = getPathInfos(params.path || '/', params.rootPath || '', dirindex);
-  const githubToken = extractGithubToken(params);
+  const githubToken = extractGithubToken(req, params);
 
   const staticOpts = {
     owner: params['static.owner'],
@@ -367,32 +390,33 @@ function fetchers(ow, params = {}) {
     contentOpts.GITHUB_TOKEN = githubToken;
   }
 
-  const wskOpts = {
-    // eslint-disable-next-line no-underscore-dangle
-    __ow_headers: params.__ow_headers,
-    // eslint-disable-next-line no-underscore-dangle
-    __ow_method: params.__ow_method,
+  const fetchOpts = {
+    headers: Array.from(req.headers.keys()).reduce((result, key) => {
+      // eslint-disable-next-line no-param-reassign
+      result[key] = req.headers.get(key);
+      return result;
+    }, {}),
   };
 
-  const staticResolver = resolveRef(ow, staticOpts, wskOpts, log);
+  const staticResolver = resolveRef(staticOpts, fetchOpts, context);
   const contentResolver = equalRepository(staticOpts, contentOpts)
     ? staticResolver
-    : resolveRef(ow, contentOpts, wskOpts, log);
+    : resolveRef(contentOpts, fetchOpts, context);
 
   const staticPromise = updateOpts(staticOpts, staticResolver);
   const contentPromise = updateOpts(contentOpts, contentResolver);
 
   const baseTasks = [
     // try to get the raw content from the content repo
-    ...fetchrawtasks(infos, params, contentPromise, wskOpts),
+    ...fetchrawtasks(infos, params, fetchOpts, contentPromise),
     // then, try to call the action
-    ...fetchactiontasks(actioninfos, wskOpts, contentPromise, params),
+    ...fetchactiontasks(infos, params, fetchOpts, contentPromise),
     // try to get the raw content from the static repo
-    ...fetchfallbacktasks(infos, wskOpts, contentPromise, staticPromise),
+    ...fetchfallbacktasks(infos, fetchOpts, contentPromise, staticPromise),
   ];
   return {
     base: baseTasks,
-    fetch404: fetch404tasks(infos, wskOpts, contentPromise, staticPromise, baseTasks.length),
+    fetch404: fetch404tasks(infos, fetchOpts, contentPromise, staticPromise, baseTasks.length),
   };
 }
 
