@@ -480,4 +480,17 @@ describe('Index Tests', () => {
     assert.equal(result.status, 504);
     assert.ok(output.indexOf(' 502 The action did not produce a valid response and exited unexpectedly.') >= 0);
   });
+
+  it('redirect from static is preserved.', async () => {
+    invokeResult = ERR_RESULT_404;
+    staticResult = INTL_REDIR_RESULT;
+
+    const result = await index(createRequest({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+    }), createContext());
+
+    assert.equal(result.status, 307);
+    assert.equal(result.headers.get('location'), '/look-here.html');
+  });
 });
