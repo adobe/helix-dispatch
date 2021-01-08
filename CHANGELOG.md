@@ -1,3 +1,10 @@
+## [4.4.1](https://github.com/adobe/helix-dispatch/compare/v4.4.0...v4.4.1) (2021-01-08)
+
+
+### Bug Fixes
+
+* don't follow redirects ([#386](https://github.com/adobe/helix-dispatch/issues/386)) ([9890dbc](https://github.com/adobe/helix-dispatch/commit/9890dbcb4c9ffebabae8b3ec1440175538e859ce))
+
 # [4.4.0](https://github.com/adobe/helix-dispatch/compare/v4.3.11...v4.4.0) (2021-01-05)
 
 
