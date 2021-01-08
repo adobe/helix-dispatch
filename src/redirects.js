@@ -27,7 +27,6 @@ const HELIX_REDIRECT_ACTION = {
 async function redirect(req, context, params) {
   const { resolver } = context;
   const fetchOpts = {
-    redirect: 'manual',
     headers: Array.from(req.headers.keys()).reduce((result, key) => {
       // eslint-disable-next-line no-param-reassign
       result[key] = req.headers.get(key);

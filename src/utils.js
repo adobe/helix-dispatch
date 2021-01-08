@@ -52,6 +52,7 @@ function getFetchOptions(options) {
   delete headers.connection;
   return {
     cache: 'no-cache',
+    redirect: 'manual',
     ...options,
     headers,
   };
