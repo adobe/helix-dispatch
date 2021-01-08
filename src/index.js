@@ -105,7 +105,7 @@ const MAX_REDIRECTS = 3;
  */
 async function executeActions(req, context, params) {
   const { log, resolver } = context;
-  const controller = new AbortController();
+  const controllers = [];
 
   const invoker = async (preparePromise, idx) => {
     // the prepare promise executes any tasks that need to happen before we can invoke the action
@@ -124,17 +124,20 @@ async function executeActions(req, context, params) {
         invokeInfo.params[key] = '[undisclosed secret]';
       }
     });
-    // if (getHeader(opts.params, 'authorization')) {
-    //   opts.params.__ow_headers.authorization = '[undisclosed secret]';
-    // }
     log.infoFields(`[${invokeInfo.idx}] Action: ${invokeInfo.name}`, { actionOptions: invokeInfo });
 
     const url = appendURLParams(resolver.createURL(action), invokeParams);
     try {
+      const controller = new AbortController();
+      const abortInfo = {
+        controller,
+      };
+      controllers.push(abortInfo);
       const res = await fetch(url, getFetchOptions({
         ...fetchOpts,
         signal: controller.signal,
       }));
+      abortInfo.res = res;
       res.invokeInfo = invokeInfo; // remember options for resolver
       const activationId = extractActivationId(res);
       log.info(`[${invokeInfo.idx}] ${activationId} ${res.status}`);
@@ -147,6 +150,7 @@ async function executeActions(req, context, params) {
 
   // default response
   let fetch404Promise = Promise.resolve(new Response('', { status: 404 }));
+  let resp;
   try {
     const tasks = fetchers(req, context, params);
 
@@ -163,7 +167,7 @@ async function executeActions(req, context, params) {
     }
 
     // we explicitly (a)wait here, so we can catch a potential exception.
-    let resp = await deErrorify(log, responsePromise);
+    resp = await deErrorify(log, responsePromise);
 
     if (resp.status === 404) {
       // check for redirect
@@ -207,15 +211,14 @@ async function executeActions(req, context, params) {
     /* istanbul ignore next */
     throw e;
   } finally {
-    // terminate pending requests
-    controller.abort();
-
-    try {
-      // we need to wait for the 404 requests, otherwise we have unhandled promise rejections
-      await fetch404Promise;
-    } catch {
-      // ignore
-    }
+    // terminate pending requests, if it's not the one we return
+    controllers.forEach(({ res, controller }) => {
+      if (!res || res !== resp) {
+        controller.abort();
+      }
+    });
+    // ignore errors
+    fetch404Promise.then(() => {}).catch(() => {});
   }
 }
 

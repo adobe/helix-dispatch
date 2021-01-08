@@ -17,15 +17,16 @@ const resolvePreferred = (promises) => new Promise((resolve, reject) => {
   const results = new Array(promises.length);
   let resolved = false;
   const unihandler = (idx, val, err) => {
-    // if already resolved, ignore further completions.
-    if (resolved) {
-      return;
-    }
     // store the result of the promise
     results[idx] = {
       type: val ? 'value' : 'error',
       payload: val || err,
     };
+
+    // if already resolved, ignore further completions.
+    if (resolved) {
+      return;
+    }
 
     // find the first successful result
     for (const r of results) {
