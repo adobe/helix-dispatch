@@ -1,3 +1,10 @@
+## [4.4.2](https://github.com/adobe/helix-dispatch/compare/v4.4.1...v4.4.2) (2021-01-10)
+
+
+### Bug Fixes
+
+* only abort unused requests ([#388](https://github.com/adobe/helix-dispatch/issues/388)) ([1d068eb](https://github.com/adobe/helix-dispatch/commit/1d068eb208579a817351f4bd091f3aadf8aa891f)), closes [#387](https://github.com/adobe/helix-dispatch/issues/387)
+
 ## [4.4.1](https://github.com/adobe/helix-dispatch/compare/v4.4.0...v4.4.1) (2021-01-08)
 
 
