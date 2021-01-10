@@ -16,20 +16,30 @@ const assert = require('assert');
 const querystring = require('querystring');
 const { Request } = require('node-fetch');
 const nock = require('nock');
-const { MemLogger, SimpleInterface } = require('@adobe/helix-log');
+const {
+  // eslint-disable-next-line no-unused-vars
+  MemLogger, ConsoleLogger, MultiLogger, SimpleInterface,
+} = require('@adobe/helix-log');
 const pkgJson = require('../package.json');
 const index = require('../src/index.js').main;
 const { fetchContext } = require('../src/utils.js');
 
 function createLogger(level = 'info') {
-  const logger = new MemLogger({
+  const mem = new MemLogger({
     level,
     filter: (fields) => ({
       ...fields,
       timestamp: '1970-01-01T00:00:00.000Z',
     }),
   });
-  return new SimpleInterface({ logger });
+  const logger = new MultiLogger({
+    // uncommet to debug
+    // cons: new ConsoleLogger({ level }),
+    mem,
+  });
+  const log = new SimpleInterface({ logger });
+  log.output = () => JSON.stringify(mem.buf, null, 2);
+  return log;
 }
 
 const OK_RESULT = () => [200, 'Hello, world.', { 'x-openwhisk-activation-id': 'abcd-1234' }];
@@ -112,18 +122,6 @@ function createRequest(params = {}, headers = {
 function createContext(opts) {
   return {
     log: createLogger(),
-    _log: {
-      // eslint-disable-next-line no-console
-      debug: console.debug,
-      // eslint-disable-next-line no-console
-      info: console.info,
-      // eslint-disable-next-line no-console
-      warn: console.warn,
-      // eslint-disable-next-line no-console
-      error: console.error,
-      // eslint-disable-next-line no-console
-      infoFields: console.info,
-    },
     resolver: {
       createURL({ package, name, version }) {
         return new URL(`https://adobeioruntime.net/api/v1/web/helix/${package}/${name}@${version}`);
@@ -180,6 +178,19 @@ describe('Index Tests', () => {
     assert.equal(result.status, 200);
     assert.equal(await result.text(), 'Hello, world.');
   });
+
+  it('index returns action response and aborts pending requests', async () => {
+    invokeResult = ERR_RESULT_404;
+    staticResult = INTL_REDIR_RESULT;
+    const result = await index(createRequest({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      path: '/test.png',
+    }), createContext());
+
+    assert.equal(result.status, 307);
+    assert.equal(await result.text(), '');
+  }).timeout(10000);
 
   it('index returns action response even with redirect', async () => {
     redirResult = PERM_REDIR_RESULT;
@@ -257,7 +268,7 @@ describe('Index Tests', () => {
       authorization: 'super-secret-authorization',
     }), createContext({ log }));
 
-    const output = JSON.stringify(log.logger.buf, null, 2);
+    const output = log.output();
     assert.ok(output.indexOf('super-secret-token') < 0, 'log should not contain GITHUB_TOKEN');
     assert.ok(output.indexOf('super-secret-authorization') < 0, 'log should not contain authorization header');
   });
@@ -336,7 +347,7 @@ describe('Index Tests', () => {
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
     }), createContext({ log }));
 
-    const output = JSON.stringify(log.logger.buf, null, 2);
+    const output = log.output();
     // console.log(output);
 
     assert.equal(result.status, 500);
@@ -352,7 +363,7 @@ describe('Index Tests', () => {
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
     }), createContext({ log }));
 
-    const output = JSON.stringify(log.logger.buf, null, 2);
+    const output = log.output();
     // console.log(output);
 
     assert.equal(result.status, 503);
@@ -369,7 +380,7 @@ describe('Index Tests', () => {
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
     }), createContext({ log }));
 
-    const output = JSON.stringify(log.logger.buf);
+    const output = log.output();
     assert.equal(result.status, 429);
     assert.ok(output.indexOf('no valid response could be fetched') >= 0);
   });
@@ -385,7 +396,7 @@ describe('Index Tests', () => {
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
     }), createContext({ log }));
 
-    const output = JSON.stringify(log.logger.buf);
+    const output = log.output();
     assert.equal(result.status, 429);
     assert.ok(output.indexOf('no valid response could be fetched') >= 0);
   });
@@ -400,7 +411,7 @@ describe('Index Tests', () => {
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
     }), createContext({ log }));
 
-    const output = JSON.stringify(log.logger.buf);
+    const output = log.output();
     assert.equal(result.status, 504);
     assert.ok(output.indexOf('no valid response could be fetched') >= 0);
   });
@@ -416,7 +427,7 @@ describe('Index Tests', () => {
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
     }), createContext({ log }));
 
-    const output = JSON.stringify(log.logger.buf);
+    const output = log.output();
     assert.equal(result.status, 504);
     assert.ok(output.indexOf('no valid response could be fetched') >= 0);
   });
@@ -457,7 +468,7 @@ describe('Index Tests', () => {
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
     }), createContext({ log }));
 
-    const output = JSON.stringify(log.logger.buf, null, 2);
+    const output = log.output();
     // console.log(output);
 
     assert.equal(result.status, 504);
@@ -474,7 +485,7 @@ describe('Index Tests', () => {
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
     }), createContext({ log }));
 
-    const output = JSON.stringify(log.logger.buf, null, 2);
+    const output = log.output();
     // console.log(output);
 
     assert.equal(result.status, 504);
