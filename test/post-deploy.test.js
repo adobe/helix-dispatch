@@ -36,6 +36,17 @@ createTargets().forEach((target) => {
         });
     }).timeout(30000);
 
+    it('Returns 404 for path with trailing dot.', async () => {
+      await chai
+        .request(target.host())
+        .get(`${target.urlPath()}?static.owner=trieloff&static.repo=helix-demo&static.ref=master&path=/foo/bar.`)
+        .then((response) => {
+          expect(response).to.have.status(404);
+        }).catch((e) => {
+          throw e;
+        });
+    }).timeout(60000);
+
     it('Redirects work', async () => {
       // this is using the spreadsheet from https://adobe.sharepoint.com/:x:/r/sites/TheBlog/_layouts/15/doc2.aspx?sourcedoc=%7Bb20ba4a8-5040-40da-a19c-bad381543fb6%7D&action=editnew&cid=0c46f5e7-178b-4783-96d6-3f49edbe3043
       await chai
@@ -46,6 +57,6 @@ createTargets().forEach((target) => {
         }).catch((e) => {
           throw e;
         });
-    }).timeout(30000);
+    }).timeout(60000);
   });
 });

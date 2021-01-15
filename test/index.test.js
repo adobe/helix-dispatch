@@ -124,6 +124,9 @@ function createContext(opts) {
     log: createLogger(),
     resolver: {
       createURL({ package, name, version }) {
+        if (!name) {
+          throw Error('missing action name');
+        }
         return new URL(`https://adobeioruntime.net/api/v1/web/helix/${package}/${name}@${version}`);
       },
     },
@@ -452,6 +455,20 @@ describe('Index Tests', () => {
     const result = await index(createRequest({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+    }), createContext());
+
+    assert.equal(result.status, 404);
+    assert.equal(await result.text(), '');
+  });
+
+  it('index produces 404 when fetcher fails due to wrong path.', async () => {
+    invokeResult = OK_RESULT;
+    staticResult = ERR_RESULT_404;
+
+    const result = await index(createRequest({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      path: '/foo/bar.',
     }), createContext());
 
     assert.equal(result.status, 404);

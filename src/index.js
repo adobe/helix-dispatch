@@ -56,7 +56,7 @@ async function deErrorify(log, promise) {
 
 function extractActivationId(response) {
   // todo: respect other targets / move to helix-deploy
-  return response.headers.get('x-openwhisk-activation-id');
+  return response.headers.get('x-openwhisk-activation-id') || '--------no-activation-id--------';
 }
 
 /**
@@ -126,18 +126,25 @@ async function executeActions(req, context, params) {
     });
     log.infoFields(`[${invokeInfo.idx}] Action: ${invokeInfo.name}`, { actionOptions: invokeInfo });
 
-    const url = appendURLParams(resolver.createURL(action), invokeParams);
     try {
-      const controller = new AbortController();
-      const abortInfo = {
-        controller,
-      };
-      controllers.push(abortInfo);
-      const res = await fetch(url, getFetchOptions({
-        ...fetchOpts,
-        signal: controller.signal,
-      }));
-      abortInfo.res = res;
+      let res;
+      if (!action.name) {
+        res = new Response('', {
+          status: 404,
+        });
+      } else {
+        const url = appendURLParams(resolver.createURL(action), invokeParams);
+        const controller = new AbortController();
+        const abortInfo = {
+          controller,
+        };
+        controllers.push(abortInfo);
+        res = await fetch(url, getFetchOptions({
+          ...fetchOpts,
+          signal: controller.signal,
+        }));
+        abortInfo.res = res;
+      }
       res.invokeInfo = invokeInfo; // remember options for resolver
       const activationId = extractActivationId(res);
       log.info(`[${invokeInfo.idx}] ${activationId} ${res.status}`);
