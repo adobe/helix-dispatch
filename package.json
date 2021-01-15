@@ -20,7 +20,10 @@
     "namespace": "helix",
     "name": "helix-services/dispatch@${version}",
     "concurrency": 40,
-    "memory": 512
+    "memory": 512,
+    "params": {
+      "EPSAGON_TOKEN": "NONE"
+    }
   },
   "repository": {
     "type": "git",
