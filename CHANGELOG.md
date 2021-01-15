@@ -1,3 +1,10 @@
+## [4.4.3](https://github.com/adobe/helix-dispatch/compare/v4.4.2...v4.4.3) (2021-01-15)
+
+
+### Bug Fixes
+
+* **dispatch:** request with trailing dot should 404 ([d1e86d9](https://github.com/adobe/helix-dispatch/commit/d1e86d9367604dda7ad2fddfb07d57739213ecb4)), closes [#390](https://github.com/adobe/helix-dispatch/issues/390)
+
 ## [4.4.2](https://github.com/adobe/helix-dispatch/compare/v4.4.1...v4.4.2) (2021-01-10)
 
 
