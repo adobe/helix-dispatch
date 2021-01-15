@@ -112,6 +112,12 @@ async function executeActions(req, context, params) {
     const actionOptions = await preparePromise;
 
     const { action, params: invokeParams, fetchOpts } = actionOptions;
+    if (!action.name) {
+      return new Response('', {
+        status: 404,
+      });
+    }
+
     const invokeInfo = {
       name: `${action.package}/${action.name}@${action.version}`,
       params: deepclone(invokeParams),
