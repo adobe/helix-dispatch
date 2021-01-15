@@ -41,7 +41,7 @@ createTargets().forEach((target) => {
         .request(target.host())
         .get(`${target.urlPath()}?static.owner=trieloff&static.repo=helix-demo&static.ref=master&path=/foo/bar.`)
         .then((response) => {
-          expect(response).to.have.status(200);
+          expect(response).to.have.status(404);
         }).catch((e) => {
           throw e;
         });
