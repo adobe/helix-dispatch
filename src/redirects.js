@@ -25,7 +25,7 @@ const HELIX_REDIRECT_ACTION = {
 };
 
 async function redirect(req, context, params) {
-  const { resolver } = context;
+  const { resolver, log } = context;
   const fetchOpts = {
     headers: Array.from(req.headers.keys()).reduce((result, key) => {
       // eslint-disable-next-line no-param-reassign
@@ -41,7 +41,9 @@ async function redirect(req, context, params) {
     path: params.path,
   };
   const url = appendURLParams(resolver.createURL(HELIX_REDIRECT_ACTION), opts);
+  log.info(`checking redirect for ${JSON.stringify(opts)} using ${url}`);
   const res = await fetch(url, getFetchOptions(fetchOpts));
+  log.info(`redirect response = ${res.status} -> ${res.headers.get('location')}`);
   return {
     type: TYPES[res.status] || null,
     target: res.headers.get('location'),

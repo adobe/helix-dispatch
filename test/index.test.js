@@ -244,6 +244,23 @@ describe('Index Tests', () => {
     assert.equal(result.headers.get('location'), '/look-here.html');
   });
 
+  it('index returns 302 for temporary redirect even if 404 is handled', async () => {
+    invokeResult = ERR_RESULT_404;
+    staticResult = ERR_RESULT_404_HANDLED;
+    redirResult = TEMP_REDIR_RESULT;
+
+    const result = await index(createRequest({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.owner': 'adobe',
+      'content.repo': 'helix-home',
+      'content.path': '/redirect-me',
+    }), createContext());
+
+    assert.equal(result.status, 302);
+    assert.equal(result.headers.get('location'), '/look-here.html');
+  });
+
   it('index returns 508 for internal redirect loop', async () => {
     invokeResult = ERR_RESULT_404;
     staticResult = ERR_RESULT_404;
