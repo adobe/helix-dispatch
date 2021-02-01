@@ -1,3 +1,10 @@
+## [4.4.4](https://github.com/adobe/helix-dispatch/compare/v4.4.3...v4.4.4) (2021-02-01)
+
+
+### Bug Fixes
+
+* **ci:** use latest orb and node 12 ([0d1009a](https://github.com/adobe/helix-dispatch/commit/0d1009a66efa9cf55ba544f30339b3bbf773350a))
+
 ## [4.4.3](https://github.com/adobe/helix-dispatch/compare/v4.4.2...v4.4.3) (2021-01-15)
 
 
