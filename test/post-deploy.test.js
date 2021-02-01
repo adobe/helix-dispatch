@@ -49,9 +49,12 @@ createTargets().forEach((target) => {
 
     it('Redirects work', async () => {
       // this is using the spreadsheet from https://adobe.sharepoint.com/:x:/r/sites/TheBlog/_layouts/15/doc2.aspx?sourcedoc=%7Bb20ba4a8-5040-40da-a19c-bad381543fb6%7D&action=editnew&cid=0c46f5e7-178b-4783-96d6-3f49edbe3043
+      const url = `${target.urlPath()}?static.owner=trieloff&static.repo=helix-demo&static.ref=master&path=/tag/coronavirus/&content.owner=trieloff&content.repo=helix-demo&content.ref=blog-redirects`;
+      // eslint-disable-next-line no-console
+      console.log(url);
       await chai
         .request(target.host())
-        .get(`${target.urlPath()}?static.owner=trieloff&static.repo=helix-demo&static.ref=master&path=/tag/coronavirus/&content.owner=trieloff&content.repo=helix-demo&content.ref=blog-redirects`)
+        .get(url)
         .then((response) => {
           expect(response).to.redirectTo('https://blog.adobe.com/en/topics/covid-19.html');
         }).catch((e) => {
