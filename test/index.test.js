@@ -163,7 +163,7 @@ describe('Index Tests', () => {
     assert.equal(result.status, 200);
     assert.equal(result.headers.get('content-type'), 'application/json');
 
-    const body = JSON.parse(result.body.toString());
+    const body = JSON.parse(await result.text());
     delete body.process;
     delete body.response_time;
     assert.deepEqual(body, {
