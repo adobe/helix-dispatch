@@ -1,3 +1,10 @@
+## [4.4.7](https://github.com/adobe/helix-dispatch/compare/v4.4.6...v4.4.7) (2021-02-02)
+
+
+### Bug Fixes
+
+* **ci:** enable project helix context ([36c6e7c](https://github.com/adobe/helix-dispatch/commit/36c6e7c28e698a00f00d661e69d570c79f2cda9a))
+
 ## [4.4.6](https://github.com/adobe/helix-dispatch/compare/v4.4.5...v4.4.6) (2021-02-02)
 
 
