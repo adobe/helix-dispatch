@@ -1,3 +1,10 @@
+## [4.4.5](https://github.com/adobe/helix-dispatch/compare/v4.4.4...v4.4.5) (2021-02-02)
+
+
+### Bug Fixes
+
+* **ci:** enable AWS monitor ([06e12b6](https://github.com/adobe/helix-dispatch/commit/06e12b68c6f1c0eb7186ecb020db0b16809535fe))
+
 ## [4.4.4](https://github.com/adobe/helix-dispatch/compare/v4.4.3...v4.4.4) (2021-02-01)
 
 
