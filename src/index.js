@@ -10,8 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-const { Response } = require('node-fetch');
-const { AbortController } = require('@adobe/helix-fetch');
+const { Response, AbortController } = require('@adobe/helix-fetch');
 const { wrap } = require('@adobe/openwhisk-action-utils');
 const { logger } = require('@adobe/openwhisk-action-logger');
 const { wrap: status } = require('@adobe/helix-status');
@@ -56,7 +55,14 @@ async function deErrorify(log, promise) {
 
 function extractActivationId(response) {
   // todo: respect other targets / move to helix-deploy
-  return response.headers.get('x-openwhisk-activation-id') || '--------no-activation-id--------';
+  let id = response.headers.get('x-last-activation-id');
+  if (!id) {
+    id = response.headers.get('x-openwhisk-activation-id');
+  }
+  if (!id) {
+    id = '--------no-activation-id--------';
+  }
+  return id;
 }
 
 /**

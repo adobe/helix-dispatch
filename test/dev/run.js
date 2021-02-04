@@ -12,7 +12,7 @@
 
 /* eslint-disable no-console,camelcase */
 const crypto = require('crypto');
-const { Request } = require('node-fetch');
+const { Request } = require('@adobe/helix-fetch');
 const action = require('../../src/index');
 
 require('dotenv').config();

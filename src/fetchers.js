@@ -296,21 +296,23 @@ async function resolveRef(opts, fetchOpts, context) {
   if (ref && ref.match(/^[a-f0-9]{40}$/i)) {
     return { ref };
   }
+  if (!opts.owner || !opts.repo) {
+    log.info(`Unable to resolve ref ${ref}: owner and repo are mandatory.`);
+    return { ref, branch: ref };
+  }
   try {
     const url = appendURLParams(resolver.createURL(HELIX_RESOLVE_GIT_REF_ACTION), opts);
     const res = await fetch(url, getFetchOptions(fetchOpts));
-    let body;
+    const body = await res.text();
     if (res.ok) {
-      body = await res.json();
-      if (body.sha) {
+      const data = JSON.parse(body);
+      if (data.sha) {
         return {
           // use the resolved ref
-          ref: body.sha,
+          ref: data.sha,
           branch: ref,
         };
       }
-    } else {
-      body = await res.text();
     }
     let level = 'info';
     if (!res.status || res.status >= 500) {
@@ -320,7 +322,7 @@ async function resolveRef(opts, fetchOpts, context) {
   } catch (e) {
     log.error(`Unable to resolve ref ${ref}: ${e}`);
   }
-  return { ref };
+  return { ref, branch: ref };
 }
 
 /**
