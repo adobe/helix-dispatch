@@ -39,7 +39,7 @@ createTargets().forEach((target) => {
     it('Returns 404 for path with trailing dot.', async () => {
       await chai
         .request(target.host())
-        .get(`${target.urlPath()}?static.owner=trieloff&static.repo=helix-demo&static.ref=master&path=/foo/bar.`)
+        .get(`${target.urlPath()}?static.owner=trieloff&static.repo=helix-demo&static.ref=master&path=/foo/bar.&content.owner=trieloff&content.repo=helix-demo&content.ref=master`)
         .then((response) => {
           expect(response).to.have.status(404);
         }).catch((e) => {
