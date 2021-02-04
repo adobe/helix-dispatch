@@ -28,13 +28,13 @@ createTargets().forEach((target) => {
     it('Service is reachable', async () => {
       await chai
         .request(target.host())
-        .get(`${target.urlPath()}?static.owner=trieloff&static.repo=helix-demo&static.ref=master&path=/index.md`)
+        .get(`${target.urlPath()}?static.owner=trieloff&static.repo=helix-demo&static.ref=master&path=/index.md&content.owner=trieloff&content.repo=helix-demo&content.ref=master`)
         .then((response) => {
           expect(response).to.have.status(200);
         }).catch((e) => {
           throw e;
         });
-    }).timeout(30000);
+    }).timeout(60000);
 
     it('Returns 404 for path with trailing dot.', async () => {
       await chai
