@@ -44,15 +44,8 @@ async function redirect(req, context, params) {
   log.info(`checking redirect for ${JSON.stringify(opts)} using ${url}`);
   const res = await fetch(url, getFetchOptions(fetchOpts));
 
-  let target = res.headers.get('location');
+  const target = res.headers.get('location');
   log.info(`redirect response = ${res.status} -> ${target}`);
-  // remove host prefix if included in location.
-  // todo: remove once https://github.com/adobe/helix-fetch/issues/131 is fixed
-  const reqPFX = `https://${new URL(url).hostname}/`;
-  if (target && target.startsWith(reqPFX)) {
-    target = target.substring(reqPFX.length - 1);
-    res.headers.set('location', target);
-  }
 
   return {
     type: TYPES[res.status] || null,
