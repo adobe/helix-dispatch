@@ -156,7 +156,9 @@ async function executeActions(req, context, params) {
       log.info(`[${invokeInfo.idx}] ${activationId} ${res.status}`);
       return actionOptions.resolve(res);
     } catch (e) {
+      /* istanbul ignore next */
       e.invokeInfo = invokeInfo;
+      /* istanbul ignore next */
       throw e;
     }
   };
