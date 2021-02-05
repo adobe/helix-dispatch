@@ -63,7 +63,7 @@ async function defaultResolver(res) {
 async function errorPageResolver(res) {
   if (res.status === 200) {
     // create proxy to return 404 status
-    return new Proxy(res, {
+    const ret = new Proxy(res, {
       get(target, prop, receiver) {
         if (prop === 'status') {
           return 404;
@@ -71,6 +71,8 @@ async function errorPageResolver(res) {
         return Reflect.get(target, prop, receiver);
       },
     });
+    ret.target = res;
+    return ret;
   }
   return defaultResolver(res);
 }

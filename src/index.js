@@ -226,8 +226,11 @@ async function executeActions(req, context, params) {
   } finally {
     // terminate pending requests, if it's not the one we return
     controllers.forEach(({ res, controller }) => {
+      // only abort request if we don't return the response (or the proxy of it(
       if (!res || res !== resp) {
-        controller.abort();
+        if (!resp || resp.target !== res) {
+          controller.abort();
+        }
       }
     });
     // ignore errors
