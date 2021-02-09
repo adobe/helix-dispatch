@@ -17,12 +17,10 @@ const fetchAPI = require('@adobe/helix-fetch');
 process.env.HELIX_FETCH_FORCE_HTTP1 = true;
 
 function createFetchContext() {
-  /* istanbul ignore next */
-  if (process.env.HELIX_FETCH_FORCE_HTTP1) {
-    return fetchAPI.context({ httpProtocol: 'http1', httpsProtocols: ['http1'] });
-  }
-  /* istanbul ignore next */
-  return fetchAPI.context({});
+  return process.env.HELIX_FETCH_FORCE_HTTP1
+    ? fetchAPI.context({ alpnProtocols: [fetchAPI.ALPN_HTTP1_1] })
+    /* istanbul ignore next */
+    : fetchAPI.context({});
 }
 const fetchContext = createFetchContext();
 const { fetch } = fetchContext;
@@ -51,7 +49,7 @@ function getFetchOptions(options) {
   delete headers.host;
   delete headers.connection;
   return {
-    cache: 'no-cache',
+    cache: 'no-store',
     redirect: 'manual',
     ...options,
     headers,

@@ -12,7 +12,7 @@
 
 /* eslint-env mocha */
 const assert = require('assert');
-const { Request, Response } = require('node-fetch');
+const { Request, Response } = require('@adobe/helix-fetch');
 const nock = require('nock');
 const { AssertionError } = require('assert');
 const {
@@ -113,13 +113,7 @@ function createContext(opts) {
 
 describe('testing fetchers.js', () => {
   it('fetch nothing', async () => {
-    const scope = nock('https://adobeioruntime.net')
-      .get('/api/v1/web/helix/helix-services/resolve-git-ref@v1')
-      .query(true)
-      .reply(resolveGitRefInterceptor);
-
     const res = await Promise.all(fetchers(createRequest(), createContext(), {}));
-    await scope.done();
     assert.equal(res.length, 5);
     logres(res);
   });

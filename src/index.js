@@ -10,8 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-const { Response } = require('node-fetch');
-const { AbortController } = require('@adobe/helix-fetch');
+const { Response, AbortController } = require('@adobe/helix-fetch');
 const { wrap } = require('@adobe/openwhisk-action-utils');
 const { logger } = require('@adobe/openwhisk-action-logger');
 const { wrap: status } = require('@adobe/helix-status');
@@ -56,7 +55,14 @@ async function deErrorify(log, promise) {
 
 function extractActivationId(response) {
   // todo: respect other targets / move to helix-deploy
-  return response.headers.get('x-openwhisk-activation-id') || '--------no-activation-id--------';
+  let id = response.headers.get('x-last-activation-id');
+  if (!id) {
+    id = response.headers.get('x-openwhisk-activation-id');
+  }
+  if (!id) {
+    id = '--------no-activation-id--------';
+  }
+  return id;
 }
 
 /**
@@ -150,7 +156,9 @@ async function executeActions(req, context, params) {
       log.info(`[${invokeInfo.idx}] ${activationId} ${res.status}`);
       return actionOptions.resolve(res);
     } catch (e) {
+      /* istanbul ignore next */
       e.invokeInfo = invokeInfo;
+      /* istanbul ignore next */
       throw e;
     }
   };
@@ -220,8 +228,11 @@ async function executeActions(req, context, params) {
   } finally {
     // terminate pending requests, if it's not the one we return
     controllers.forEach(({ res, controller }) => {
+      // only abort request if we don't return the response (or the proxy of it(
       if (!res || res !== resp) {
-        controller.abort();
+        if (!resp || resp.target !== res) {
+          controller.abort();
+        }
       }
     });
     // ignore errors
