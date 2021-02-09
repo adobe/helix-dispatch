@@ -1,3 +1,10 @@
+## [4.4.8](https://github.com/adobe/helix-dispatch/compare/v4.4.7...v4.4.8) (2021-02-09)
+
+
+### Bug Fixes
+
+* **dispatch:** upgrade to helix-fetch v2 ([#398](https://github.com/adobe/helix-dispatch/issues/398)) ([ac929cb](https://github.com/adobe/helix-dispatch/commit/ac929cb7c3eabc27e01af23766e0cddbb1598045))
+
 ## [4.4.7](https://github.com/adobe/helix-dispatch/compare/v4.4.6...v4.4.7) (2021-02-02)
 
 
