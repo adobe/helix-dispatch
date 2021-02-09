@@ -14,7 +14,7 @@
 
 const assert = require('assert');
 const querystring = require('querystring');
-const { Request } = require('node-fetch');
+const { Request } = require('@adobe/helix-fetch');
 const nock = require('nock');
 const {
   // eslint-disable-next-line no-unused-vars
@@ -44,7 +44,7 @@ function createLogger(level = 'info') {
 
 const OK_RESULT = () => [200, 'Hello, world.', { 'x-openwhisk-activation-id': 'abcd-1234' }];
 
-const OK_RESULT_404 = () => [200, '404 Page', { 'x-openwhisk-activation-id': 'abcd-1234' }];
+const OK_RESULT_404 = () => [200, '404 Page', { 'x-last-activation-id': 'abcd-1234' }];
 
 const ERR_RESULT_404 = () => [404, 'not found', { 'x-openwhisk-activation-id': 'abcd-1234' }];
 
@@ -90,6 +90,8 @@ const TEMP_REDIR_RESULT = () => [302, '', { location: '/look-here.html' }];
 const PERM_REDIR_RESULT = () => [301, '', { location: '/look-here.html' }];
 
 const INTL_REDIR_RESULT = () => [307, '', { location: '/look-here.html' }];
+
+const STATIC_REDIR_RESULT = () => [307, '', { location: 'https://raw.githubusercontent.com/adobe/helix-dispatch/main/README.md' }];
 
 let staticResult = OK_RESULT;
 let invokeResult = OK_RESULT;
@@ -151,7 +153,7 @@ describe('Index Tests', () => {
 
   after(async () => {
     nock.cleanAll();
-    await fetchContext.disconnectAll();
+    await fetchContext.reset();
   });
 
   it('index returns status response', async () => {
@@ -528,7 +530,7 @@ describe('Index Tests', () => {
 
   it('redirect from static is preserved.', async () => {
     invokeResult = ERR_RESULT_404;
-    staticResult = INTL_REDIR_RESULT;
+    staticResult = STATIC_REDIR_RESULT;
 
     const result = await index(createRequest({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
@@ -536,6 +538,6 @@ describe('Index Tests', () => {
     }), createContext());
 
     assert.equal(result.status, 307);
-    assert.equal(result.headers.get('location'), '/look-here.html');
+    assert.equal(result.headers.get('location'), 'https://raw.githubusercontent.com/adobe/helix-dispatch/main/README.md');
   });
 });

@@ -9,7 +9,7 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-const { Response } = require('node-fetch');
+const { Response } = require('@adobe/helix-fetch');
 const { fetch, getFetchOptions, appendURLParams } = require('./utils');
 
 const TYPES = {
@@ -43,10 +43,13 @@ async function redirect(req, context, params) {
   const url = appendURLParams(resolver.createURL(HELIX_REDIRECT_ACTION), opts);
   log.info(`checking redirect for ${JSON.stringify(opts)} using ${url}`);
   const res = await fetch(url, getFetchOptions(fetchOpts));
-  log.info(`redirect response = ${res.status} -> ${res.headers.get('location')}`);
+
+  const target = res.headers.get('location');
+  log.info(`redirect response = ${res.status} -> ${target}`);
+
   return {
     type: TYPES[res.status] || null,
-    target: res.headers.get('location'),
+    target,
     response: res,
   };
 }
