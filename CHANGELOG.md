@@ -1,3 +1,10 @@
+## [4.4.9](https://github.com/adobe/helix-dispatch/compare/v4.4.8...v4.4.9) (2021-02-11)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @adobe/helix-status to v9.0.2 ([#401](https://github.com/adobe/helix-dispatch/issues/401)) ([ef1a0ed](https://github.com/adobe/helix-dispatch/commit/ef1a0ed350cdf4f35a3766e317709d9a28545e31))
+
 ## [4.4.8](https://github.com/adobe/helix-dispatch/compare/v4.4.7...v4.4.8) (2021-02-09)
 
 
