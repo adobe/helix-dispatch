@@ -1,3 +1,10 @@
+# [4.5.0](https://github.com/adobe/helix-dispatch/compare/v4.4.13...v4.5.0) (2021-02-19)
+
+
+### Features
+
+* re-enable http/2 ([#414](https://github.com/adobe/helix-dispatch/issues/414)) ([c60978f](https://github.com/adobe/helix-dispatch/commit/c60978f2668ee773342e417e3eca9b1601a1b86d))
+
 ## [4.4.13](https://github.com/adobe/helix-dispatch/compare/v4.4.12...v4.4.13) (2021-02-17)
 
 
