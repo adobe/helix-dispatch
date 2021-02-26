@@ -1,3 +1,10 @@
+## [4.5.4](https://github.com/adobe/helix-dispatch/compare/v4.5.3...v4.5.4) (2021-02-26)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @adobe/helix-fetch to v2.1.6 ([#422](https://github.com/adobe/helix-dispatch/issues/422)) ([330837d](https://github.com/adobe/helix-dispatch/commit/330837d890846f71e6548bed7dd45d00d0b9e15b))
+
 ## [4.5.3](https://github.com/adobe/helix-dispatch/compare/v4.5.2...v4.5.3) (2021-02-25)
 
 
