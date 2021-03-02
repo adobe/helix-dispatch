@@ -10,17 +10,10 @@
  * governing permissions and limitations under the License.
  */
 const path = require('path').posix;
-const { fetch, getFetchOptions, appendURLParams } = require('./utils');
 
 const HELIX_STATIC_ACTION = {
   package: 'helix-services',
   name: 'static',
-  version: 'v1',
-};
-
-const HELIX_RESOLVE_GIT_REF_ACTION = {
-  package: 'helix-services',
-  name: 'resolve-git-ref',
   version: 'v1',
 };
 
@@ -172,16 +165,16 @@ function getPathInfos(urlPath, mount, indices) {
  * from the fallback repo
  * @param {PathInfo[]} infos the paths to fetch from
  * @param {object} fetchOpts Additional options for fetch
- * @param {Promise<ActionOptions>} contentPromise coordinates for the content repo
- * @param {Promise<ActionOptions>} staticPromise coordinates for the fallback repo
+ * @param {object} contentOpts coordinates for the content repo
+ * @param {object} staticOpts coordinates for the fallback repo
  * @param {number} idxOffset helper variable for logging
  * @returns {object[]} list of actions that should get invoked
  */
-function fetch404tasks(infos, fetchOpts, contentPromise, staticPromise, idxOffset) {
+function fetch404tasks(infos, fetchOpts, contentOpts, staticOpts, idxOffset) {
   const attempts = [];
   if (infos[0].ext === 'html') {
     // then get the 404.html from the content repo, but only for html requests
-    attempts.push(contentPromise.then((contentOpts) => ({
+    attempts.push({
       resolve: errorPageResolver,
       action: HELIX_STATIC_ACTION,
       fetchOpts,
@@ -192,9 +185,9 @@ function fetch404tasks(infos, fetchOpts, contentPromise, staticPromise, idxOffse
         plain: true,
         ...contentOpts,
       },
-    })));
+    });
     // if all fails, get the 404.html from the static repo
-    attempts.push(staticPromise.then((staticOpts) => contentPromise.then(() => ({
+    attempts.push({
       resolve: errorPageResolver,
       action: HELIX_STATIC_ACTION,
       fetchOpts,
@@ -205,43 +198,42 @@ function fetch404tasks(infos, fetchOpts, contentPromise, staticPromise, idxOffse
         plain: true,
         ...staticOpts,
       },
-    }))));
+    });
   }
   return attempts;
 }
+
 /**
  * Gets the tasks to fetch raw content from the fallback repo
  * @param {PathInfo[]} infos the paths to fetch from
  * @param {object} fetchOpts Additional options for fetch
- * @param {Promise<ActionOptions>} contentPromise coordinates for the content repo
- * @param {Promise<ActionOptions>} staticPromise coordinates for the fallback repo
+ * @param {object} staticOpts coordinates for the fallback repo
  * @returns {object[]} list of actions that should get invoked
  */
-function fetchfallbacktasks(infos, fetchOpts, contentPromise, staticPromise) {
-  return infos.map((info) => staticPromise
-    .then((staticOpts) => contentPromise
-      .then(() => ({
-        resolve: defaultResolver,
-        action: HELIX_STATIC_ACTION,
-        fetchOpts,
-        params: {
-          path: info.path,
-          esi: false,
-          plain: true,
-          ...staticOpts,
-        },
-      }))));
+function fetchfallbacktasks(infos, fetchOpts, staticOpts) {
+  return infos.map((info) => ({
+    resolve: defaultResolver,
+    action: HELIX_STATIC_ACTION,
+    fetchOpts,
+    params: {
+      path: info.path,
+      esi: false,
+      plain: true,
+      ...staticOpts,
+    },
+  }));
 }
+
 /**
  * Gets the tasks to invoke the pipeline action
  * @param {PathInfo[]} infos the paths to fetch from
  * @param {object} fetchOpts Additional options for fetch
  * @param {object} params the action params
- * @param {Promise<ActionOptions>} contentPromise coordinates for the content repo
+ * @param {object} contentOpts coordinates for the content repo
  * @returns {object[]} list of actions that should get invoked
  */
-function fetchactiontasks(infos, params, fetchOpts, contentPromise) {
-  return infos.map((info) => contentPromise.then((contentOpts) => {
+function fetchactiontasks(infos, params, fetchOpts, contentOpts) {
+  return infos.map((info) => {
     const actionname = `${info.selector
       ? `${info.selector.toLowerCase().replace(/[^a-z0-9]/g, '')}_`
       : ''}${info.ext.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
@@ -259,18 +251,18 @@ function fetchactiontasks(infos, params, fetchOpts, contentPromise) {
         ...contentOpts,
       },
     };
-  }));
+  });
 }
 /**
  * Gets the tasks to fetch raw content from the content repo
  * @param {PathInfo[]} infos the paths to fetch from
  * @param {object} params the action params
  * @param {object} fetchOpts Additional options for fetch
- * @param {Promise<ActionOptions>} contentPromise coordinates for the content repo
+ * @param {object} contentOpts coordinates for the content repo
  * @returns {object[]} list of actions that should get invoked
  */
-function fetchrawtasks(infos, params, fetchOpts, contentPromise) {
-  return infos.map((info) => contentPromise.then((contentOpts) => ({
+function fetchrawtasks(infos, params, fetchOpts, contentOpts) {
+  return infos.map((info) => ({
     resolve: defaultResolver,
     action: HELIX_STATIC_ACTION,
     fetchOpts,
@@ -281,72 +273,7 @@ function fetchrawtasks(infos, params, fetchOpts, contentPromise) {
       root: params['content.root'],
       ...contentOpts,
     },
-  })));
-}
-
-/**
- * Resolves the branch or tag name into a sha.
- * @param {ActionOptions} opts action options
- * @param {object} fetchOpts Additional options for fetch
- * @param {Context} context - Universal adapter context
- * @returns {Promise<*>} returns a promise of the resolved ref.
- * options, with a sha instead of a branch name
- */
-async function resolveRef(opts, fetchOpts, context) {
-  const { log, resolver } = context;
-  const { ref } = opts;
-  if (ref && ref.match(/^[a-f0-9]{40}$/i)) {
-    return { ref };
-  }
-  if (!opts.owner || !opts.repo) {
-    log.info(`Unable to resolve ref ${ref}: owner and repo are mandatory.`);
-    return { ref, branch: ref };
-  }
-  try {
-    const url = appendURLParams(resolver.createURL(HELIX_RESOLVE_GIT_REF_ACTION), opts);
-    const res = await fetch(url, getFetchOptions(fetchOpts));
-    const body = await res.text();
-    if (res.ok) {
-      const data = JSON.parse(body);
-      if (data.sha) {
-        return {
-          // use the resolved ref
-          ref: data.sha,
-          branch: ref,
-        };
-      }
-    }
-    let level = 'info';
-    if (!res.status || res.status >= 500) {
-      level = 'error';
-    }
-    log[level](`Unable to resolve ref ${ref}: ${res.status} ${body}`);
-  } catch (e) {
-    log.error(`Unable to resolve ref ${ref}: ${e}`);
-  }
-  return { ref, branch: ref };
-}
-
-/**
- * updates the options with the result of the resolver promise.
- * @param {ActionOptions} opts action options
- * @param {Promise<*>} resolverPromise The promise of the resolver.
- * @returns {Promise<ActionOptions>} returns a promise of the resolve action options
- */
-function updateOpts(opts, resolverPromise) {
-  return resolverPromise.then((ref) => ({ ...opts, ...ref }));
-}
-
-/**
- * Checks if the options have same repository coordinates
- * @param {ActionOptions} o1 - first options
- * @param {ActionOptions} o2 - second options
- * @returns {boolean} {@code true} if the two options have same repository coordinates.
- */
-function equalRepository(o1, o2) {
-  return (o1.owner === o2.owner
-    && o1.repo === o2.repo
-    && o1.ref === o2.ref);
+  }));
 }
 
 /**
@@ -377,6 +304,7 @@ function fetchers(req, context, params) {
     owner: params['static.owner'],
     repo: params['static.repo'],
     ref: params['static.ref'],
+    branch: params['static.branch'] || params['static.ref'],
     esi: params['static.esi'],
     root: params['static.root'],
   };
@@ -385,6 +313,7 @@ function fetchers(req, context, params) {
     owner: params['content.owner'],
     repo: params['content.repo'],
     ref: params['content.ref'],
+    branch: params['content.branch'] || params['content.ref'],
     package: params['content.package'],
     params: params.params,
   };
@@ -402,25 +331,17 @@ function fetchers(req, context, params) {
     }, {}),
   };
 
-  const staticResolver = resolveRef(staticOpts, fetchOpts, context);
-  const contentResolver = equalRepository(staticOpts, contentOpts)
-    ? staticResolver
-    : resolveRef(contentOpts, fetchOpts, context);
-
-  const staticPromise = updateOpts(staticOpts, staticResolver);
-  const contentPromise = updateOpts(contentOpts, contentResolver);
-
   const baseTasks = [
     // try to get the raw content from the content repo
-    ...fetchrawtasks(infos, params, fetchOpts, contentPromise),
+    ...fetchrawtasks(infos, params, fetchOpts, contentOpts),
     // then, try to call the action
-    ...fetchactiontasks(infos, params, fetchOpts, contentPromise),
+    ...fetchactiontasks(infos, params, fetchOpts, contentOpts),
     // try to get the raw content from the static repo
-    ...fetchfallbacktasks(infos, fetchOpts, contentPromise, staticPromise),
+    ...fetchfallbacktasks(infos, fetchOpts, staticOpts),
   ];
   return {
     base: baseTasks,
-    fetch404: fetch404tasks(infos, fetchOpts, contentPromise, staticPromise, baseTasks.length),
+    fetch404: fetch404tasks(infos, fetchOpts, contentOpts, staticOpts, baseTasks.length),
   };
 }
 
