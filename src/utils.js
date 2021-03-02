@@ -10,6 +10,16 @@
  * governing permissions and limitations under the License.
  */
 /* eslint-disable no-param-reassign */
+const {
+  HTTP2_HEADER_CONNECTION,
+  HTTP2_HEADER_UPGRADE,
+  HTTP2_HEADER_HOST,
+  HTTP2_HEADER_HTTP2_SETTINGS,
+  HTTP2_HEADER_KEEP_ALIVE,
+  HTTP2_HEADER_PROXY_CONNECTION,
+  HTTP2_HEADER_TRANSFER_ENCODING,
+  HTTP2_HEADER_TE,
+} = require('http2').constants;
 const fetchAPI = require('@adobe/helix-fetch');
 
 function createFetchContext() {
@@ -33,17 +43,36 @@ function appendURLParams(url, params) {
   return u.href;
 }
 
+function isIllegalConnectionSpecificHeader(name, value) {
+  switch (name) {
+    case HTTP2_HEADER_CONNECTION:
+    case HTTP2_HEADER_UPGRADE:
+    case HTTP2_HEADER_HOST:
+    case HTTP2_HEADER_HTTP2_SETTINGS:
+    case HTTP2_HEADER_KEEP_ALIVE:
+    case HTTP2_HEADER_PROXY_CONNECTION:
+    case HTTP2_HEADER_TRANSFER_ENCODING:
+      return true;
+    case HTTP2_HEADER_TE:
+      /* istanbul ignore next */
+      return value !== 'trailers';
+    default:
+      return false;
+  }
+}
+
 /**
  * Returns fetch compatible options for the given handler options.
  * @param {object} options Handler options
  * @return {object} fetch options.
  */
 function getFetchOptions(options) {
-  const headers = {
-    ...options.headers /* istanbul ignore next */ || {},
-  };
-  delete headers.host;
-  delete headers.connection;
+  const headers = Object.entries(options.headers /* istanbul ignore next */ || {})
+    .filter(([name, value]) => !isIllegalConnectionSpecificHeader(name, value))
+    .reduce((obj, [name, value]) => {
+      obj[name] = value;
+      return obj;
+    }, {});
   return {
     cache: 'no-store',
     redirect: 'manual',
