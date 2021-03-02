@@ -100,8 +100,18 @@ let invokeResult = OK_RESULT;
 let refResult = REF_RESULT;
 let redirResult = NO_REDIR_RESULT;
 
-const runtimeInterceptor = (uri) => {
+const runtimeInterceptor = function interceptor(uri) {
   // console.log('intercept', uri);
+
+  // check request headers
+  for (const name of ['connection', 'upgrade', 'http2-settings', 'keep-alive', 'proxy-connection', 'transfer-encoding', 'te']) {
+    if (name in this.req.headers) {
+      // eslint-disable-next-line no-console
+      console.error(`Illegal use of connection header: ${name}`);
+      return [400];
+    }
+  }
+
   const params = querystring.parse(uri.split('?')[1]);
   if (uri.indexOf('resolve-git-ref') > 0) {
     return refResult(params);
@@ -180,6 +190,25 @@ describe('Index Tests', () => {
     const result = await index(createRequest({
       'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
       'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+    }), createContext());
+
+    assert.equal(result.status, 200);
+    assert.equal(await result.text(), 'Hello, world.');
+  });
+
+  it('filters out illegal headers', async () => {
+    const result = await index(createRequest({
+      'static.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+      'content.ref': '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
+    }, {
+      host: 'foo',
+      connection: 'foo',
+      upgrade: 'foo',
+      'http2-settings': 'foo',
+      'Keep-Alive': 'foo',
+      'ProxY-Connection': 'foo',
+      'transfer-encoding': 'foo',
+      te: 'foo',
     }), createContext());
 
     assert.equal(result.status, 200);
