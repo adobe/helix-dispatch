@@ -1,3 +1,10 @@
+# [4.6.0](https://github.com/adobe/helix-dispatch/compare/v4.5.6...v4.6.0) (2021-03-02)
+
+
+### Features
+
+* **core:** don't use git-resolve-ref anymore ([#433](https://github.com/adobe/helix-dispatch/issues/433)) ([83d5e91](https://github.com/adobe/helix-dispatch/commit/83d5e91470c0dceab0b2cf4f994736bae1b73d59)), closes [#430](https://github.com/adobe/helix-dispatch/issues/430)
+
 ## [4.5.6](https://github.com/adobe/helix-dispatch/compare/v4.5.5...v4.5.6) (2021-03-02)
 
 
