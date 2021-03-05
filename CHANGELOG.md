@@ -1,3 +1,10 @@
+## [4.6.1](https://github.com/adobe/helix-dispatch/compare/v4.6.0...v4.6.1) (2021-03-05)
+
+
+### Bug Fixes
+
+* **deps:** update adobe fixes ([#440](https://github.com/adobe/helix-dispatch/issues/440)) ([aff83d8](https://github.com/adobe/helix-dispatch/commit/aff83d8481f1f8d4bba60cc3545163d51655ff77))
+
 # [4.6.0](https://github.com/adobe/helix-dispatch/compare/v4.5.6...v4.6.0) (2021-03-02)
 
 
