@@ -1,3 +1,10 @@
+## [4.6.4](https://github.com/adobe/helix-dispatch/compare/v4.6.3...v4.6.4) (2021-03-09)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @adobe/helix-deploy to v3.9.0 ([#446](https://github.com/adobe/helix-dispatch/issues/446)) ([19e57e7](https://github.com/adobe/helix-dispatch/commit/19e57e72dbacae0d0f1eefaf53299412d6743bb2))
+
 ## [4.6.3](https://github.com/adobe/helix-dispatch/compare/v4.6.2...v4.6.3) (2021-03-09)
 
 
