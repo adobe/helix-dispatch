@@ -1,6 +1,6 @@
 {
   "name": "@adobe/helix-dispatch",
-  "version": "4.6.4",
+  "version": "4.6.5",
   "description": "Helix dispatcher service.",
   "main": "src/index.js",
   "private": true,
