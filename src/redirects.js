@@ -61,6 +61,9 @@ function abortRedirect(target = '') {
     .replace(/</g, '&lt;').replace(/>/g, '&gt;');
   return new Response(`Too many internal redirects to ${sanitized}`, {
     status: 508, // loop detected, from webdav
+    headers: {
+      'x-error': `Too many internal redirects to ${sanitized}`,
+    },
   });
 }
 
