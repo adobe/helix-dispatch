@@ -216,6 +216,9 @@ async function executeActions(req, context, params) {
       log.error(`no valid response could be fetched: ${e}`);
       return new Response('', {
         status: /* istanbul ignore next */ e.statusCode === 502 ? 504 : e.statusCode,
+        headers: {
+          'x-error': e.message,
+        },
       });
     }
 
