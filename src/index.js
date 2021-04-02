@@ -213,11 +213,12 @@ async function executeActions(req, context, params) {
   } catch (e) {
     /* istanbul ignore else */
     if (e.statusCode) {
-      log.error(`no valid response could be fetched: ${e}`);
+      const propagated = (resp && resp.headers.get('x-error')) || '';
+      log.error(`no valid response could be fetched: ${e} ${propagated}`);
       return new Response('', {
         status: /* istanbul ignore next */ e.statusCode === 502 ? 504 : e.statusCode,
         headers: {
-          'x-error': e.message,
+          'x-error': `${e.message} ${propagated}`,
         },
       });
     }
