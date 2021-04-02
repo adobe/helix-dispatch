@@ -1,3 +1,59 @@
+# [4.7.0](https://github.com/adobe/helix-dispatch/compare/v4.6.13...v4.7.0) (2021-03-30)
+
+
+### Features
+
+* **error:** report error messages using x-error header ([#451](https://github.com/adobe/helix-dispatch/issues/451)) ([4de9d05](https://github.com/adobe/helix-dispatch/commit/4de9d05d3045c218cf618836a652ff05e2ac4757))
+
+## [4.6.13](https://github.com/adobe/helix-dispatch/compare/v4.6.12...v4.6.13) (2021-03-27)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @adobe/helix-status to v9.1.3 ([#465](https://github.com/adobe/helix-dispatch/issues/465)) ([3639bbe](https://github.com/adobe/helix-dispatch/commit/3639bbef19f3cfbf5a50640c0a2aa50faadad85d))
+
+## [4.6.12](https://github.com/adobe/helix-dispatch/compare/v4.6.11...v4.6.12) (2021-03-26)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @adobe/helix-status to v9.1.2 ([#463](https://github.com/adobe/helix-dispatch/issues/463)) ([485063a](https://github.com/adobe/helix-dispatch/commit/485063a0baa3b2eef7c0588b9347ba04e2c91c29))
+
+## [4.6.11](https://github.com/adobe/helix-dispatch/compare/v4.6.10...v4.6.11) (2021-03-26)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @adobe/helix-fetch to v2.1.9 ([#461](https://github.com/adobe/helix-dispatch/issues/461)) ([096c377](https://github.com/adobe/helix-dispatch/commit/096c37725a4b8003654b8d6cc4f857ca70e56819))
+
+## [4.6.10](https://github.com/adobe/helix-dispatch/compare/v4.6.9...v4.6.10) (2021-03-23)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @adobe/helix-status to v9.1.1 ([#458](https://github.com/adobe/helix-dispatch/issues/458)) ([9693fb1](https://github.com/adobe/helix-dispatch/commit/9693fb1c1d0561dca58b2b7ee26088304037761c))
+
+## [4.6.9](https://github.com/adobe/helix-dispatch/compare/v4.6.8...v4.6.9) (2021-03-23)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @adobe/helix-fetch to v2.1.8 ([#456](https://github.com/adobe/helix-dispatch/issues/456)) ([baf3ad0](https://github.com/adobe/helix-dispatch/commit/baf3ad0d1f6786add625967134736fb7510d42dc))
+
+## [4.6.8](https://github.com/adobe/helix-dispatch/compare/v4.6.7...v4.6.8) (2021-03-12)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @adobe/helix-deploy to v3.14.0 ([#452](https://github.com/adobe/helix-dispatch/issues/452)) ([b3b34db](https://github.com/adobe/helix-dispatch/commit/b3b34db1ddd1221f77e0eb7a4b4de9dd12033a6d))
+
+## [4.6.7](https://github.com/adobe/helix-dispatch/compare/v4.6.6...v4.6.7) (2021-03-11)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @adobe/helix-deploy to v3.11.0 ([#450](https://github.com/adobe/helix-dispatch/issues/450)) ([58651b1](https://github.com/adobe/helix-dispatch/commit/58651b1cb79873d0abd783dedaedf2b276411b83))
+
 ## [4.6.6](https://github.com/adobe/helix-dispatch/compare/v4.6.5...v4.6.6) (2021-03-09)
 
 
