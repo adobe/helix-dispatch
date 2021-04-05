@@ -41,7 +41,7 @@
   },
   "devDependencies": {
     "@adobe/eslint-config-helix": "1.1.4",
-    "@adobe/helix-deploy": "3.16.7",
+    "@adobe/helix-deploy": "3.16.8",
     "@adobe/helix-log": "5.0.2",
     "@semantic-release/changelog": "5.0.1",
     "@semantic-release/exec": "5.0.0",
