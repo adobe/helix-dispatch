@@ -29,9 +29,11 @@ createTargets().forEach((target) => {
       await chai
         .request(target.host())
         .get(`${target.urlPath()}?static.owner=trieloff&static.repo=helix-demo&static.ref=master&path=/index.md&content.owner=trieloff&content.repo=helix-demo&content.ref=master`)
+        .set('x-ow-version-lock', target.env())
         .then((response) => {
           expect(response).to.have.status(200);
-        }).catch((e) => {
+        })
+        .catch((e) => {
           throw e;
         });
     }).timeout(60000);
@@ -40,9 +42,11 @@ createTargets().forEach((target) => {
       await chai
         .request(target.host())
         .get(`${target.urlPath()}?static.owner=trieloff&static.repo=helix-demo&static.ref=master&path=/foo/bar.&content.owner=trieloff&content.repo=helix-demo&content.ref=master`)
+        .set('x-ow-version-lock', target.env())
         .then((response) => {
           expect(response).to.have.status(404);
-        }).catch((e) => {
+        })
+        .catch((e) => {
           throw e;
         });
     }).timeout(60000);
@@ -55,9 +59,11 @@ createTargets().forEach((target) => {
       await chai
         .request(target.host())
         .get(url)
+        .set('x-ow-version-lock', target.env())
         .then((response) => {
           expect(response).to.redirectTo('https://blog.adobe.com/en/topics/covid-19.html');
-        }).catch((e) => {
+        })
+        .catch((e) => {
           throw e;
         });
     }).timeout(60000);
