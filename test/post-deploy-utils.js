@@ -27,6 +27,10 @@ class OpenwhiskTarget {
     }
   }
 
+  env() {
+    return '';
+  }
+
   // eslint-disable-next-line class-methods-use-this
   title() {
     return 'OpenWhisk';
@@ -67,28 +71,34 @@ class AWSTarget extends OpenwhiskTarget {
     return process.env.HLX_AWS_API && process.env.HLX_AWS_REGION;
   }
 }
-class GoogleTarget extends OpenwhiskTarget {
+class UniversalGoogleTarget extends OpenwhiskTarget {
   title() {
-    return 'Google';
+    return 'Universal-Google';
   }
 
+  // eslint-disable-next-line class-methods-use-this
   host() {
-    return `https://${process.env.HLX_GOOGLE_REGION}-${process.env.HLX_GOOGLE_PROJECT_ID}.cloudfunctions.net`;
+    return 'https://helix-pages.anywhere.run';
   }
 
   urlPath() {
-    return `/${this.package}--${this.name}_${this.version.replace(/\./g, '_')}`;
+    return `/${this.package}/${this.name}@${this.version}`;
   }
 
+  // eslint-disable-next-line class-methods-use-this
   enabled() {
-    return process.env.HLX_GOOGLE_PROJECT_ID;
+    return process.env.HLX_AWS_API && process.env.HLX_AWS_REGION;
+  }
+
+  env() {
+    return 'env=google';
   }
 }
 
 const ALL_TARGETS = [
   OpenwhiskTarget,
   AWSTarget,
-  GoogleTarget,
+  UniversalGoogleTarget,
 ];
 
 function createTargets(opts) {
