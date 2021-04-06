@@ -59,6 +59,10 @@ function extractActivationId(response) {
   if (!id) {
     id = response.headers.get('x-openwhisk-activation-id');
   }
+  // google
+  if (!id) {
+    id = response.headers.get('function-execution-id');
+  }
   if (!id) {
     id = '--------no-activation-id--------';
   }
