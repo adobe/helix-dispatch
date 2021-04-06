@@ -1,3 +1,17 @@
+# [4.8.0](https://github.com/adobe/helix-dispatch/compare/v4.7.2...v4.8.0) (2021-04-06)
+
+
+### Bug Fixes
+
+* **index:** truncate logged URL effectively ([973f662](https://github.com/adobe/helix-dispatch/commit/973f6629a4bae8f9928c02f51ac972732b0fa961))
+* **logging:** truncate URL in logs ([9380a21](https://github.com/adobe/helix-dispatch/commit/9380a21f323afdb47426dfb2406b1a400256b0bc))
+
+
+### Features
+
+* **deploy:** deploy to google ([9aedd85](https://github.com/adobe/helix-dispatch/commit/9aedd85ba3c1a3bcc025a716e3c54aa3e4f51c19))
+* **google:** extract function execution id from google ([cebba0b](https://github.com/adobe/helix-dispatch/commit/cebba0b234a6a2b9e863606a9b329927603245f6))
+
 ## [4.7.2](https://github.com/adobe/helix-dispatch/compare/v4.7.1...v4.7.2) (2021-04-05)
 
 
