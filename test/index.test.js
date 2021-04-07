@@ -113,9 +113,6 @@ const runtimeInterceptor = function interceptor(uri) {
   }
 
   const params = querystring.parse(uri.split('?')[1]);
-  if (uri.indexOf('resolve-git-ref') > 0) {
-    return refResult(params);
-  }
   if (uri.indexOf('redirect') > 0) {
     return redirResult(params);
   }
