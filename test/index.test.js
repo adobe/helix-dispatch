@@ -58,10 +58,6 @@ const TIMEOUT_ERROR = () => [502, 'The action exceeded its time limits of 100 mi
 
 const OVERLOAD_RESULT = () => [429, 'too many requests', { 'x-openwhisk-activation-id': 'abcd-1234' }];
 
-const OVERLOAD_ERROR = () => {
-  throw new Error('POST https://runtime.adobe.io/api/v1/namespaces/helix-mini/actions/hellooo?blocking=true Returned HTTP 429 (Too Many Requests) --> "Too many requests in the last minute (count: 3, allowed: 2)."', {}, 429);
-};
-
 const ACTION_TIMEOUT_RESULT = () => [502, 'action timed out', { 'x-openwhisk-activation-id': 'abcd-1234' }];
 
 const ERR_RESULT_404_HANDLED = (params) => {
@@ -75,16 +71,6 @@ const FAIL_RESULT_404 = () => [404, 'The requested resource does not exist.'];
 
 const FAIL_RESULT_502 = () => [502, 'The action did not produce a valid response and exited unexpectedly.'];
 
-const REF_RESULT = () => [
-  200,
-  {
-    fqRef: 'refs/heads/master',
-    sha: '3e8dec3886cb75bcea6970b4b00783f69cbf487a',
-  },
-  {
-    'Content-Type': 'application/json',
-  }];
-
 const NO_REDIR_RESULT = () => [204];
 
 const TEMP_REDIR_RESULT = () => [302, '', { location: '/look-here.html' }];
@@ -97,7 +83,6 @@ const STATIC_REDIR_RESULT = () => [307, '', { location: 'https://raw.githubuserc
 
 let staticResult = OK_RESULT;
 let invokeResult = OK_RESULT;
-let refResult = REF_RESULT;
 let redirResult = NO_REDIR_RESULT;
 
 const runtimeInterceptor = function interceptor(uri) {
@@ -437,7 +422,6 @@ describe('Index Tests', () => {
 
   it('index returns 429 response when seeing 429s (as Errors)', async () => {
     const log = createLogger();
-    refResult = OVERLOAD_ERROR;
     invokeResult = OVERLOAD_RESULT;
     staticResult = ERR_RESULT_404;
 
@@ -468,7 +452,6 @@ describe('Index Tests', () => {
 
   it('index returns 504 response when seeing 502s (as Errors)', async () => {
     const log = createLogger();
-    refResult = TIMEOUT_ERROR;
     invokeResult = TIMEOUT_ERROR;
     staticResult = ERR_RESULT_404;
 
