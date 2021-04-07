@@ -10,6 +10,7 @@
  * governing permissions and limitations under the License.
  */
 const { Response } = require('@adobe/helix-fetch');
+const { cleanupHeaderValue } = require('@adobe/helix-shared').utils;
 const { fetch, getFetchOptions, appendURLParams } = require('./utils');
 
 const TYPES = {
@@ -62,7 +63,7 @@ function abortRedirect(target = '') {
   return new Response(`Too many internal redirects to ${sanitized}`, {
     status: 508, // loop detected, from webdav
     headers: {
-      'x-error': `Too many internal redirects to ${sanitized}`,
+      'x-error': cleanupHeaderValue(`Too many internal redirects to ${sanitized}`),
     },
   });
 }
