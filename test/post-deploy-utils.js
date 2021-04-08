@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 
-/* eslint-disable max-classes-per-file */
+/* eslint-disable max-classes-per-file, class-methods-use-this */
 const packjson = require('../package.json');
 require('dotenv').config();
 
@@ -25,6 +25,10 @@ class OpenwhiskTarget {
     if (process.env.CI && process.env.CIRCLE_BUILD_NUM && process.env.CIRCLE_BRANCH !== 'main' && !opts.version) {
       this.version = `ci${process.env.CIRCLE_BUILD_NUM}`;
     }
+  }
+
+  env() {
+    return '';
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -67,10 +71,34 @@ class AWSTarget extends OpenwhiskTarget {
     return process.env.HLX_AWS_API && process.env.HLX_AWS_REGION;
   }
 }
+class UniversalGoogleTarget extends OpenwhiskTarget {
+  title() {
+    return 'Universal-Google';
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  host() {
+    return 'https://helix-pages.anywhere.run';
+  }
+
+  urlPath() {
+    return `/${this.package}/${this.name}@${this.version}`;
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  enabled() {
+    return process.env.HLX_AWS_API && process.env.HLX_AWS_REGION;
+  }
+
+  env() {
+    return 'env=google';
+  }
+}
 
 const ALL_TARGETS = [
   OpenwhiskTarget,
   AWSTarget,
+  UniversalGoogleTarget,
 ];
 
 function createTargets(opts) {

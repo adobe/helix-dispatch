@@ -15,6 +15,7 @@ const { wrap } = require('@adobe/openwhisk-action-utils');
 const { logger } = require('@adobe/openwhisk-action-logger');
 const { wrap: status } = require('@adobe/helix-status');
 const { deepclone } = require('ferrum');
+const { cleanupHeaderValue } = require('@adobe/helix-shared').utils;
 const resolvePreferred = require('./resolve-preferred');
 const { fetchers } = require('./fetchers');
 const { redirect, abortRedirect } = require('./redirects');
@@ -58,6 +59,10 @@ function extractActivationId(response) {
   let id = response.headers.get('x-last-activation-id');
   if (!id) {
     id = response.headers.get('x-openwhisk-activation-id');
+  }
+  // google
+  if (!id) {
+    id = response.headers.get('function-execution-id');
   }
   if (!id) {
     id = '--------no-activation-id--------';
@@ -218,7 +223,7 @@ async function executeActions(req, context, params) {
       return new Response('', {
         status: /* istanbul ignore next */ e.statusCode === 502 ? 504 : e.statusCode,
         headers: {
-          'x-error': `${e.message} ${propagated}`,
+          'x-error': cleanupHeaderValue(e.message),
         },
       });
     }
