@@ -41,7 +41,8 @@ async function defaultResolver(res) {
     const body = await res.text();
     const { params, idx, name } = res.invokeInfo;
     const rp = `${params.owner}/${params.repo}/${params.ref}${params.path}`;
-    const error = new Error(`[${idx}] Error invoking ${name}(${rp}): ${res.status} ${body}`);
+    const propagated = (res.headers && res.headers.get('x-error')) || '';
+    const error = new Error(`[${idx}] Error invoking ${name}(${rp}): ${res.status} ${body} ${propagated}`);
     error.statusCode = res.status === 502 ? 504 : res.status;
     throw error;
   }
