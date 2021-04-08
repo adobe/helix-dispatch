@@ -1,3 +1,10 @@
+## [4.8.1](https://github.com/adobe/helix-dispatch/compare/v4.8.0...v4.8.1) (2021-04-08)
+
+
+### Bug Fixes
+
+* clean up x-error values ([d2e3c04](https://github.com/adobe/helix-dispatch/commit/d2e3c04272f6114ca1fcca12a045b6e22014dc98)), closes [adobe/helix-deploy#201](https://github.com/adobe/helix-deploy/issues/201)
+
 # [4.8.0](https://github.com/adobe/helix-dispatch/compare/v4.7.2...v4.8.0) (2021-04-06)
 
 
