@@ -218,6 +218,7 @@ async function executeActions(req, context, params) {
   } catch (e) {
     /* istanbul ignore else */
     if (e.statusCode) {
+      /* istanbul ignore next */
       const propagated = (resp && resp.headers.get('x-error')) || '';
       log.error(`no valid response could be fetched: ${e} ${propagated}`);
       return new Response('', {
