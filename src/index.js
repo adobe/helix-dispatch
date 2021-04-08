@@ -15,6 +15,7 @@ const { wrap } = require('@adobe/openwhisk-action-utils');
 const { logger } = require('@adobe/openwhisk-action-logger');
 const { wrap: status } = require('@adobe/helix-status');
 const { deepclone } = require('ferrum');
+const { cleanupHeaderValue } = require('@adobe/helix-shared').utils;
 const resolvePreferred = require('./resolve-preferred');
 const { fetchers } = require('./fetchers');
 const { redirect, abortRedirect } = require('./redirects');
@@ -221,7 +222,7 @@ async function executeActions(req, context, params) {
       return new Response('', {
         status: /* istanbul ignore next */ e.statusCode === 502 ? 504 : e.statusCode,
         headers: {
-          'x-error': e.message,
+          'x-error': cleanupHeaderValue(e.message),
         },
       });
     }
