@@ -1,3 +1,10 @@
+# [4.9.0](https://github.com/adobe/helix-dispatch/compare/v4.8.1...v4.9.0) (2021-04-08)
+
+
+### Features
+
+* **error:** report error messages using x-error header ([113b1ac](https://github.com/adobe/helix-dispatch/commit/113b1ac2c34db499f08876257ff4ed2e3ffdb9a2))
+
 ## [4.8.1](https://github.com/adobe/helix-dispatch/compare/v4.8.0...v4.8.1) (2021-04-08)
 
 
