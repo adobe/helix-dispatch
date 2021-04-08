@@ -345,7 +345,7 @@ describe('testing default promise resolver', () => {
       if (e instanceof AssertionError) {
         throw e;
       }
-      assert.equal(e.message, '[1] Error invoking undefined(adobe/helix-statix/master/index.html): 400 error');
+      assert.equal(e.message, '[1] Error invoking undefined(adobe/helix-statix/master/index.html): 400 error ');
     }
   });
 });
@@ -376,7 +376,7 @@ describe('testing error page promise resolver', () => {
       if (e instanceof AssertionError) {
         throw e;
       }
-      assert.equal(e.message, '[1] Error invoking undefined(adobe/helix-statix/master/index.html): 400 error');
+      assert.equal(e.message, '[1] Error invoking undefined(adobe/helix-statix/master/index.html): 400 error ');
     }
   });
 });
