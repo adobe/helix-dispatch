@@ -11,11 +11,11 @@
  */
 
 const { Response, AbortController } = require('@adobe/helix-fetch');
-const { wrap } = require('@adobe/openwhisk-action-utils');
-const { logger } = require('@adobe/openwhisk-action-logger');
+const { wrap } = require('@adobe/helix-shared');
+const { cleanupHeaderValue } = require('@adobe/helix-shared').utils;
+const { logger } = require('@adobe/helix-universal-logger');
 const { wrap: status } = require('@adobe/helix-status');
 const { deepclone } = require('ferrum');
-const { cleanupHeaderValue } = require('@adobe/helix-shared').utils;
 const resolvePreferred = require('./resolve-preferred');
 const { fetchers } = require('./fetchers');
 const { redirect, abortRedirect } = require('./redirects');
