@@ -1,3 +1,10 @@
+# [4.10.0](https://github.com/adobe/helix-dispatch/compare/v4.9.1...v4.10.0) (2021-04-10)
+
+
+### Features
+
+* **log:** use universal-logger ([#485](https://github.com/adobe/helix-dispatch/issues/485)) ([e4a4fea](https://github.com/adobe/helix-dispatch/commit/e4a4fea37509e4e099cb93d2d3bc52b2cde1f347))
+
 ## [4.9.1](https://github.com/adobe/helix-dispatch/compare/v4.9.0...v4.9.1) (2021-04-09)
 
 
