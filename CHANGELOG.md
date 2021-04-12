@@ -1,3 +1,10 @@
+## [4.10.2](https://github.com/adobe/helix-dispatch/compare/v4.10.1...v4.10.2) (2021-04-12)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @adobe/helix-shared to v7.23.1 ([#491](https://github.com/adobe/helix-dispatch/issues/491)) ([bc085aa](https://github.com/adobe/helix-dispatch/commit/bc085aa527a93b8493e91038004539e174a2f27c))
+
 ## [4.10.1](https://github.com/adobe/helix-dispatch/compare/v4.10.0...v4.10.1) (2021-04-12)
 
 
