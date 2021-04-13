@@ -10,7 +10,8 @@
  * governing permissions and limitations under the License.
  */
 
-const { Response, AbortController } = require('@adobe/helix-fetch');
+const { AbortController } = require('@adobe/helix-fetch');
+const { Response } = require('@adobe/helix-universal');
 const { wrap } = require('@adobe/helix-shared');
 const { cleanupHeaderValue } = require('@adobe/helix-shared').utils;
 const { logger } = require('@adobe/helix-universal-logger');
