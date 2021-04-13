@@ -1,3 +1,10 @@
+# [4.11.0](https://github.com/adobe/helix-dispatch/compare/v4.10.2...v4.11.0) (2021-04-13)
+
+
+### Features
+
+* use helix universal ([465b3c1](https://github.com/adobe/helix-dispatch/commit/465b3c1b6521ff882d05a0e089b325053d91e9f1))
+
 ## [4.10.2](https://github.com/adobe/helix-dispatch/compare/v4.10.1...v4.10.2) (2021-04-12)
 
 
