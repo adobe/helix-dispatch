@@ -1,3 +1,10 @@
+## [4.11.1](https://github.com/adobe/helix-dispatch/compare/v4.11.0...v4.11.1) (2021-04-15)
+
+
+### Bug Fixes
+
+* update universal-logger ([#493](https://github.com/adobe/helix-dispatch/issues/493)) ([1e2292d](https://github.com/adobe/helix-dispatch/commit/1e2292d5318aae861beac03f104641be812a3fd7))
+
 # [4.11.0](https://github.com/adobe/helix-dispatch/compare/v4.10.2...v4.11.0) (2021-04-13)
 
 
