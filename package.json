@@ -34,10 +34,10 @@
   "homepage": "https://github.com/adobe/helix-dispatch#readme",
   "dependencies": {
     "@adobe/helix-fetch": "2.2.0",
-    "@adobe/helix-shared": "7.23.1",
-    "@adobe/helix-status": "9.1.5",
+    "@adobe/helix-shared": "7.25.0",
+    "@adobe/helix-status": "9.1.6",
     "@adobe/helix-universal": "1.0.0",
-    "@adobe/helix-universal-logger": "1.0.1",
+    "@adobe/helix-universal-logger": "1.0.2",
     "ferrum": "1.8.0"
   },
   "devDependencies": {
