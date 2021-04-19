@@ -35,7 +35,7 @@ function createLogger(level = 'info') {
     }),
   });
   const logger = new MultiLogger({
-    // uncommet to debug
+    // un-comment to debug
     // cons: new ConsoleLogger({ level }),
     mem,
   });
@@ -44,21 +44,21 @@ function createLogger(level = 'info') {
   return log;
 }
 
-const OK_RESULT = () => [200, 'Hello, world.', { 'x-openwhisk-activation-id': 'abcd-1234' }];
+const OK_RESULT = () => [200, 'Hello, world.', { 'x-invocation-id': 'abcd-1234' }];
 
-const OK_RESULT_404 = () => [200, '404 Page', { 'x-last-activation-id': 'abcd-1234' }];
+const OK_RESULT_404 = () => [200, '404 Page', { 'x-invocation-id': 'abcd-1234' }];
 
-const ERR_RESULT_404 = () => [404, 'not found', { 'x-openwhisk-activation-id': 'abcd-1234' }];
+const ERR_RESULT_404 = () => [404, 'not found', { 'x-invocation-id': 'abcd-1234' }];
 
-const SEVERE_RESULT = () => [500, 'server error', { 'x-openwhisk-activation-id': 'abcd-1234' }];
+const SEVERE_RESULT = () => [500, 'server error', { 'x-invocation-id': 'abcd-1234' }];
 
-const TIMEOUT_RESULT = () => [503, 'gateway timeout', { 'x-openwhisk-activation-id': 'abcd-1234' }];
+const TIMEOUT_RESULT = () => [503, 'gateway timeout', { 'x-invocation-id': 'abcd-1234' }];
 
-const TIMEOUT_ERROR = () => [502, 'The action exceeded its time limits of 100 milliseconds.', { 'x-openwhisk-activation-id': 'abcd-1234' }];
+const TIMEOUT_ERROR = () => [502, 'The action exceeded its time limits of 100 milliseconds.', { 'x-invocation-id': 'abcd-1234' }];
 
-const OVERLOAD_RESULT = () => [429, 'too many requests', { 'x-openwhisk-activation-id': 'abcd-1234' }];
+const OVERLOAD_RESULT = () => [429, 'too many requests', { 'x-invocation-id': 'abcd-1234' }];
 
-const ACTION_TIMEOUT_RESULT = () => [502, 'action timed out', { 'x-openwhisk-activation-id': 'abcd-1234' }];
+const ACTION_TIMEOUT_RESULT = () => [502, 'action timed out', { 'x-invocation-id': 'abcd-1234' }];
 
 const ERR_RESULT_404_HANDLED = (params) => {
   if (params.path === '/404.html') {

@@ -55,18 +55,10 @@ async function deErrorify(log, promise) {
   }
 }
 
-function extractActivationId(response) {
-  // todo: respect other targets / move to helix-deploy
-  let id = response.headers.get('x-last-activation-id');
+function extractInvocationId(response) {
+  let id = response.headers.get('x-invocation-id');
   if (!id) {
-    id = response.headers.get('x-openwhisk-activation-id');
-  }
-  // google
-  if (!id) {
-    id = response.headers.get('function-execution-id');
-  }
-  if (!id) {
-    id = '--------no-activation-id--------';
+    id = '--------no-invocation-id--------';
   }
   return id;
 }
@@ -158,8 +150,7 @@ async function executeActions(req, context, params) {
         abortInfo.res = res;
       }
       res.invokeInfo = invokeInfo; // remember options for resolver
-      const activationId = extractActivationId(res);
-      log.info(`[${invokeInfo.idx}] ${activationId} ${res.status}`);
+      log.info(`[${invokeInfo.idx}] ${extractInvocationId(res)} ${res.status}`);
       return actionOptions.resolve(res);
     } catch (e) {
       /* istanbul ignore next */
