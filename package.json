@@ -38,7 +38,7 @@
     "@adobe/helix-status": "9.1.6",
     "@adobe/helix-universal": "1.0.0",
     "@adobe/helix-universal-logger": "1.0.2",
-    "ferrum": "1.8.0"
+    "ferrum": "1.9.0"
   },
   "devDependencies": {
     "@adobe/eslint-config-helix": "1.1.4",
