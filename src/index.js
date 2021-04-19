@@ -146,6 +146,7 @@ async function executeActions(req, context, params) {
         });
       } else {
         const url = appendURLParams(resolver.createURL(action), invokeParams);
+        log.info(`Resolved URL ${url}`);
         const controller = new AbortController();
         const abortInfo = {
           controller,
