@@ -1,3 +1,10 @@
+## [4.11.2](https://github.com/adobe/helix-dispatch/compare/v4.11.1...v4.11.2) (2021-04-21)
+
+
+### Bug Fixes
+
+* **dispatch:** use invocation id ([#495](https://github.com/adobe/helix-dispatch/issues/495)) ([4ab4180](https://github.com/adobe/helix-dispatch/commit/4ab4180b84814833fe5539412a25ced01c6a322b))
+
 ## [4.11.1](https://github.com/adobe/helix-dispatch/compare/v4.11.0...v4.11.1) (2021-04-15)
 
 
