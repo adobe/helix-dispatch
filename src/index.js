@@ -12,8 +12,8 @@
 
 const { AbortController } = require('@adobe/helix-fetch');
 const { Response } = require('@adobe/helix-universal');
-const { wrap } = require('@adobe/helix-shared');
-const { cleanupHeaderValue } = require('@adobe/helix-shared').utils;
+const wrap = require('@adobe/helix-shared-wrap');
+const { cleanupHeaderValue } = require('@adobe/helix-shared-utils');
 const { logger } = require('@adobe/helix-universal-logger');
 const { wrap: status } = require('@adobe/helix-status');
 const { deepclone } = require('ferrum');

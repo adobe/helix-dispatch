@@ -10,7 +10,7 @@
  * governing permissions and limitations under the License.
  */
 const { Response } = require('@adobe/helix-universal');
-const { cleanupHeaderValue } = require('@adobe/helix-shared').utils;
+const { cleanupHeaderValue } = require('@adobe/helix-shared-utils');
 const { fetch, getFetchOptions, appendURLParams } = require('./utils');
 
 const TYPES = {
