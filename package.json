@@ -42,7 +42,7 @@
     "ferrum": "1.9.0"
   },
   "devDependencies": {
-    "@adobe/eslint-config-helix": "1.1.4",
+    "@adobe/eslint-config-helix": "1.1.5",
     "@adobe/helix-deploy": "4.0.6",
     "@adobe/helix-log": "5.0.3",
     "@semantic-release/changelog": "5.0.1",
