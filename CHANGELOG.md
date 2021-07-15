@@ -1,3 +1,10 @@
+## [4.11.3](https://github.com/adobe/helix-dispatch/compare/v4.11.2...v4.11.3) (2021-07-15)
+
+
+### Bug Fixes
+
+* set memory to 1024 ([09f592b](https://github.com/adobe/helix-dispatch/commit/09f592b1e04ab60e22bfccfb0e1284227a692153)), closes [#508](https://github.com/adobe/helix-dispatch/issues/508)
+
 ## [4.11.2](https://github.com/adobe/helix-dispatch/compare/v4.11.1...v4.11.2) (2021-04-21)
 
 
