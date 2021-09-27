@@ -1,3 +1,10 @@
+## [4.11.4](https://github.com/adobe/helix-dispatch/compare/v4.11.3...v4.11.4) (2021-09-27)
+
+
+### Bug Fixes
+
+* **deps:** update external fixes ([#522](https://github.com/adobe/helix-dispatch/issues/522)) ([8e8ecf3](https://github.com/adobe/helix-dispatch/commit/8e8ecf37812c947fcf98cbef0bb6d719a5b30f2a))
+
 ## [4.11.3](https://github.com/adobe/helix-dispatch/compare/v4.11.2...v4.11.3) (2021-07-15)
 
 
