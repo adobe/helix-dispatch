@@ -5,8 +5,8 @@
   "main": "src/index.js",
   "private": true,
   "scripts": {
-    "test": "nyc --reporter=text --reporter=lcov --check-coverage --branches 100 --statements 100 --lines 100 mocha test/*.test.js -i -g 'Post-Deploy'",
-    "test-ci": "nyc --reporter=text --reporter=lcov --check-coverage --branches 100 --statements 100 --lines 100 mocha test/*.test.js --reporter xunit --reporter-options output=./junit/test-results.xml -i -g 'Post-Deploy' && codecov",
+    "test": "nyc mocha test/*.test.js -i -g 'Post-Deploy'",
+    "test-ci": "nyc mocha test/*.test.js --reporter xunit --reporter-options output=./junit/test-results.xml -i -g 'Post-Deploy' && codecov",
     "test-postdeploy": "mocha test/*.test.js --reporter xunit --reporter-options output=./junit/test-results.xml -g 'Post-Deploy'",
     "lint": "./node_modules/.bin/eslint .",
     "semantic-release": "semantic-release",

@@ -24,7 +24,6 @@ const {
 } = require('@adobe/helix-log');
 const pkgJson = require('../package.json');
 const index = require('../src/index.js').main;
-const { fetchContext } = require('../src/utils.js');
 
 function createLogger(level = 'info') {
   const mem = new MemLogger({
@@ -147,7 +146,6 @@ describe('Index Tests', () => {
 
   after(async () => {
     nock.cleanAll();
-    await fetchContext.reset();
   });
 
   it('index returns status response', async () => {
