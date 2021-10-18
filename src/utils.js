@@ -22,14 +22,9 @@ const {
 } = require('http2').constants;
 const fetchAPI = require('@adobe/helix-fetch');
 
-function createFetchContext() {
-  return process.env.HELIX_FETCH_FORCE_HTTP1
-    ? fetchAPI.context({ alpnProtocols: [fetchAPI.ALPN_HTTP1_1] })
-    /* istanbul ignore next */
-    : fetchAPI.context({});
-}
-const fetchContext = createFetchContext();
-const { fetch } = fetchContext;
+const { fetch } = process.env.HELIX_FETCH_FORCE_HTTP1
+  ? /* istanbul ignore next */ fetchAPI.h1()
+  : /* istanbul ignore next */ fetchAPI;
 
 function appendURLParams(url, params) {
   const u = new URL(url);
@@ -67,7 +62,7 @@ function isIllegalConnectionSpecificHeader(name, value) {
  * @return {object} fetch options.
  */
 function getFetchOptions(options) {
-  const headers = Object.entries(options.headers /* istanbul ignore next */ || {})
+  const headers = Object.entries(options.headers || /* istanbul ignore next */ {})
     .filter(([name, value]) => !isIllegalConnectionSpecificHeader(name, value))
     .reduce((obj, [name, value]) => {
       obj[name] = value;
@@ -84,6 +79,5 @@ function getFetchOptions(options) {
 module.exports = {
   appendURLParams,
   fetch,
-  fetchContext,
   getFetchOptions,
 };
