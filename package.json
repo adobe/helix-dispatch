@@ -1,6 +1,6 @@
 {
   "name": "@adobe/helix-dispatch",
-  "version": "4.11.4",
+  "version": "4.11.5",
   "description": "Helix dispatcher service.",
   "main": "src/index.js",
   "private": true,
@@ -33,7 +33,7 @@
   },
   "homepage": "https://github.com/adobe/helix-dispatch#readme",
   "dependencies": {
-    "@adobe/helix-fetch": "2.2.0",
+    "@adobe/helix-fetch": "3.0.0",
     "@adobe/helix-shared-utils": "1.0.3",
     "@adobe/helix-shared-wrap": "1.0.0",
     "@adobe/helix-status": "9.1.6",
