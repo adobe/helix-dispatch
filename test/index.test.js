@@ -39,6 +39,14 @@ function createLogger(level = 'info') {
     mem,
   });
   const log = new SimpleInterface({ logger });
+
+  // hack to keep our logger when it's overridden by universal-logger
+  Object.defineProperty(log, 'logger', {
+    get() { return logger; },
+    set(newLogger) { logger.loggers.set('newLogger', newLogger); },
+    enumerable: true,
+    configurable: true,
+  });
   log.output = () => JSON.stringify(mem.buf, null, 2);
   return log;
 }
