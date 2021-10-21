@@ -1,3 +1,10 @@
+## [4.11.6](https://github.com/adobe/helix-dispatch/compare/v4.11.5...v4.11.6) (2021-10-21)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @adobe/helix-universal-logger to v2 ([#527](https://github.com/adobe/helix-dispatch/issues/527)) ([52d714a](https://github.com/adobe/helix-dispatch/commit/52d714a0f18d1d9e8fc5b2d42b3621a5daf33427))
+
 ## [4.11.5](https://github.com/adobe/helix-dispatch/compare/v4.11.4...v4.11.5) (2021-10-18)
 
 
