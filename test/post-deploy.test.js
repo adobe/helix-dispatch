@@ -61,7 +61,7 @@ createTargets().forEach((target) => {
         .get(url)
         .set('x-ow-version-lock', target.env())
         .then((response) => {
-          expect(response).to.redirectTo('https://blog.adobe.com/en/topics/covid-19.html');
+          expect(response).to.redirectTo('https://blog.adobe.com/en/topics/covid-19');
         })
         .catch((e) => {
           throw e;
