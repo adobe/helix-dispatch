@@ -71,6 +71,8 @@ class AWSTarget extends OpenwhiskTarget {
     return process.env.HLX_AWS_API && process.env.HLX_AWS_REGION;
   }
 }
+
+// eslint-disable-next-line no-unused-vars
 class UniversalGoogleTarget extends OpenwhiskTarget {
   title() {
     return 'Universal-Google';
@@ -98,7 +100,7 @@ class UniversalGoogleTarget extends OpenwhiskTarget {
 const ALL_TARGETS = [
   OpenwhiskTarget,
   AWSTarget,
-  UniversalGoogleTarget,
+  // UniversalGoogleTarget,
 ];
 
 function createTargets(opts) {
