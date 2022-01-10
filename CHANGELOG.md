@@ -1,3 +1,10 @@
+## [4.11.7](https://github.com/adobe/helix-dispatch/compare/v4.11.6...v4.11.7) (2022-01-10)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @adobe/helix-universal to v2 ([#541](https://github.com/adobe/helix-dispatch/issues/541)) ([8696523](https://github.com/adobe/helix-dispatch/commit/86965238de8c313d24dabe850f08f41670d8b0b6))
+
 ## [4.11.6](https://github.com/adobe/helix-dispatch/compare/v4.11.5...v4.11.6) (2021-10-21)
 
 
