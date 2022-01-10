@@ -16,7 +16,7 @@ process.env.HELIX_FETCH_FORCE_HTTP1 = true;
 
 const assert = require('assert');
 const querystring = require('querystring');
-const { Request } = require('@adobe/helix-universal');
+const { Request } = require('@adobe/helix-fetch');
 const nock = require('nock');
 const {
   // eslint-disable-next-line no-unused-vars
