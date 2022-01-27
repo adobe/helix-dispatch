@@ -1,3 +1,10 @@
+## [4.11.8](https://github.com/adobe/helix-dispatch/compare/v4.11.7...v4.11.8) (2022-01-27)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @adobe/helix-shared-utils to v2 ([#547](https://github.com/adobe/helix-dispatch/issues/547)) ([a22190b](https://github.com/adobe/helix-dispatch/commit/a22190b2679d4da1e0cb5cdd703f64e07bbe9332))
+
 ## [4.11.7](https://github.com/adobe/helix-dispatch/compare/v4.11.6...v4.11.7) (2022-01-10)
 
 
